@@ -1,0 +1,86 @@
+import { useEffect, useRef, useState } from 'react';
+import CategoriesMegaMenu from './CategoriesMegaMenu';
+import { Link, localizePath, useRouter } from '../routing/Router';
+import { useCart } from '../context/CartContext';
+import AboutSubnav from './AboutSubnav';
+import { useI18n } from '../i18n/I18nContext';
+
+export default function Header({ introActive, solid = false }) {
+  const [brandsOpen, setBrandsOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const lastY = useRef(0);
+  const { itemCount } = useCart();
+  const { copy, locale, switchLanguage } = useI18n();
+  const { navigate } = useRouter();
+  const [search, setSearch] = useState('');
+
+  const submitSearch = (event) => {
+    event.preventDefault();
+    const query = search.trim();
+    if (query) navigate(localizePath(`/products?search=${encodeURIComponent(query)}`, locale));
+  };
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      setHidden(y > lastY.current && y > 160 && !brandsOpen && !aboutOpen && !mobileOpen);
+      lastY.current = y;
+    };
+    const onKey = (event) => event.key === 'Escape' && (setBrandsOpen(false), setAboutOpen(false), setMobileOpen(false));
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [aboutOpen, brandsOpen, mobileOpen]);
+
+  return (
+    <header className={`site-header ${solid ? 'site-header--solid' : ''} ${introActive ? 'is-entering' : ''} ${hidden ? 'is-hidden' : ''} ${brandsOpen || aboutOpen || mobileOpen ? 'is-open' : ''}`}>
+      <div className="utility-bar">
+        <span>{copy.header.tagline}</span>
+        <button type="button" onClick={() => switchLanguage()} aria-label={copy.header.languageLabel}>{copy.header.language}</button>
+      </div>
+      <div className="nav-bar">
+        <Link className="logo" to="/" aria-label="PLAY"><span>PLAY</span></Link>
+        <nav className={`main-nav ${mobileOpen ? 'is-open' : ''}`} aria-label={copy.header.nav}>
+          <button className="nav-link" type="button" aria-expanded={brandsOpen} onClick={() => { setBrandsOpen((value) => !value); setAboutOpen(false); if (mobileOpen) setMobileOpen(false); }}>
+            {copy.header.categories} <i className="chevron" />
+          </button>
+          <button className="nav-link" type="button" aria-expanded={aboutOpen} onClick={() => { setAboutOpen((value) => !value); setBrandsOpen(false); if (mobileOpen) setMobileOpen(false); }}>
+            {copy.header.about} <i className="chevron" />
+          </button>
+          <Link className="nav-link" to="/products" onClick={() => setMobileOpen(false)}>{copy.header.products}</Link>
+        </nav>
+        <div className="header-actions">
+          <form className="search-pill" onSubmit={submitSearch}>
+            <span>{copy.header.search}</span>
+            <input value={search} onChange={(event) => setSearch(event.target.value)} aria-label={copy.header.searchLabel} />
+            <button className="search-pill__submit" type="submit" aria-label={copy.header.searchLabel}><i /></button>
+          </form>
+          <Link className="header-icon-button header-cart-link" to="/cart" aria-label={`${copy.header.cart}: ${itemCount}`}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3.5 4.5h2l1.8 10.1a2 2 0 0 0 2 1.7h7.9a2 2 0 0 0 1.9-1.5l1.2-6.3H6.2" />
+              <circle cx="9.4" cy="19.2" r="1.1" />
+              <circle cx="17.4" cy="19.2" r="1.1" />
+            </svg>
+            {itemCount > 0 && <span className="header-cart-count">{itemCount > 99 ? '99+' : itemCount}</span>}
+          </Link>
+          <button className="header-icon-button" type="button" aria-label={copy.header.account}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.6" />
+              <path d="M5.2 20c.6-4 3-6.1 6.8-6.1s6.2 2.1 6.8 6.1" />
+            </svg>
+          </button>
+        </div>
+        <button className="menu-toggle" type="button" aria-label={copy.header.menu} aria-expanded={mobileOpen} onClick={() => { setMobileOpen((value) => !value); setBrandsOpen(false); setAboutOpen(false); }}>
+          <span /><span />
+        </button>
+      </div>
+      <CategoriesMegaMenu open={brandsOpen} onClose={() => setBrandsOpen(false)} />
+      <AboutSubnav open={aboutOpen} onClose={() => setAboutOpen(false)} />
+    </header>
+  );
+}

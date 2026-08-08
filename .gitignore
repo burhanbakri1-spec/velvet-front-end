@@ -1,0 +1,7 @@
+node_modules/
+dist/
+codex_reference_frames/
+*-preview.png
+*-final.png
+intro-*.png
+npm-debug.log*
