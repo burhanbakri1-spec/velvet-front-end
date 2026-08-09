@@ -79,12 +79,13 @@ const aboutStoryElements = aboutSections.flatMap((story, index) => [
   imageElement(`about-story-${index + 1}-image`, story.image, story.title, story.titleAr),
 ]);
 
-export function buildSiteManifest({ generatedAt = new Date().toISOString() } = {}) {
+export function buildSiteManifest({ generatedAt = new Date().toISOString(), baseUrl = SITE_MANIFEST_IDENTITY.baseUrl } = {}) {
   const en = translations.en;
   const ar = translations.ar;
 
   return {
     ...SITE_MANIFEST_IDENTITY,
+    baseUrl: new URL(baseUrl).origin,
     generatedAt,
     pages: [
       page({

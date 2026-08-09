@@ -56,7 +56,7 @@ test('manifest payload contains no environment variables or secret-shaped fields
   assert.doesNotMatch(serialized, /process\.env|database_url|postgres_url|secret|token|password|api[_-]?key/i);
 });
 
-test('HTTP handler returns JSON with the manifest media type', () => {
+test('HTTP handler returns JSON with the manifest media type and request origin', () => {
   const headers = {};
   const response = {
     statusCode: null,
@@ -65,10 +65,17 @@ test('HTTP handler returns JSON with the manifest media type', () => {
     status(code) { this.statusCode = code; return this; },
     json(value) { this.body = value; return this; },
   };
-  handler({ method: 'GET' }, response);
+  handler({
+    method: 'GET',
+    headers: {
+      'x-forwarded-host': 'i-play-git-feature-cpanel.example.vercel.app',
+      'x-forwarded-proto': 'https',
+    },
+  }, response);
   assert.equal(response.statusCode, 200);
   assert.match(headers['Content-Type'], /^application\/vnd\.igroup\.site-manifest\+json/);
   assert.equal(response.body.companyId, 'kids-velvet');
+  assert.equal(response.body.baseUrl, 'https://i-play-git-feature-cpanel.example.vercel.app');
 });
 
 test('Vercel serves filesystem routes before the SPA fallback', async () => {
