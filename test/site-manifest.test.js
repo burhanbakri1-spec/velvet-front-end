@@ -44,6 +44,11 @@ test('product, category, news, contact-form and cart runtime data remain read-on
   const collections = sourceBound.filter((element) => ['productCollection', 'categoryCollection'].includes(element.type));
   assert.equal(collections.length, 3);
   assert.ok(manifest.pages.find((page) => page.id === 'cart').editable === false);
+  const catalogSources = sourceBound.filter((element) => element.source.kind === 'platform-catalog');
+  assert.equal(catalogSources.length, 3);
+  assert.ok(catalogSources.every((element) => element.source.managementPath.startsWith('/admin/')));
+  const staticElements = walkElements(manifest).filter((element) => !element.source);
+  assert.ok(staticElements.every((element) => element.editable === false), 'Site Editor must not claim direct persistence that the storefront does not consume');
 });
 
 test('manifest payload contains no environment variables or secret-shaped fields', () => {

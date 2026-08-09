@@ -15,7 +15,7 @@ export const SITE_MANIFEST_IDENTITY = Object.freeze({
 const localized = (en, ar) => ({ en, ar });
 const localizedText = (en, ar) => localized({ text: en }, { text: ar });
 
-const textElement = (id, type, en, ar, editable = true) => ({
+const textElement = (id, type, en, ar, editable = false) => ({
   id,
   type,
   editable,
@@ -23,7 +23,7 @@ const textElement = (id, type, en, ar, editable = true) => ({
   editableProperties: editable ? ['content'] : [],
 });
 
-const imageElement = (id, src, enAlt, arAlt, editable = true) => ({
+const imageElement = (id, src, enAlt, arAlt, editable = false) => ({
   id,
   type: 'image',
   editable,
@@ -40,9 +40,10 @@ const sourceElement = (id, type, source) => ({
   editable: false,
   content: localized({ label: source.label }, { label: source.labelAr }),
   source: {
-    kind: 'static-module',
+    kind: source.kind || 'static-module',
     module: source.module,
     export: source.export,
+    managementPath: source.managementPath,
   },
   editableProperties: [],
 });
@@ -92,11 +93,11 @@ export function buildSiteManifest({ generatedAt = new Date().toISOString() } = {
         title: en.meta.home,
         titleAr: ar.meta.home,
         sections: [
-          section('home-hero', 'hero', 0, true, [
+          section('home-hero', 'hero', 0, false, [
             textElement('home-hero-tagline', 'heading', en.header.tagline, ar.header.tagline),
             imageElement('home-hero-poster', '/media/poster-about.jpg', en.home.feature, ar.home.feature),
           ]),
-          section('home-introduction', 'content', 1, true, [
+          section('home-introduction', 'content', 1, false, [
             textElement('home-introduction-title', 'heading', en.home.introTitle.join(' '), ar.home.introTitle.join(' ')),
             textElement('home-introduction-primary', 'text', en.home.introP1, ar.home.introP1),
             textElement('home-introduction-secondary', 'text', en.home.introP2, ar.home.introP2),
@@ -108,9 +109,11 @@ export function buildSiteManifest({ generatedAt = new Date().toISOString() } = {
               labelAr: ar.home.worlds,
               module: 'src/data/products.js',
               export: 'homeCategories',
+              kind: 'platform-catalog',
+              managementPath: '/admin/categories',
             }),
           ]),
-          section('home-careers', 'callToAction', 3, true, [
+          section('home-careers', 'callToAction', 3, false, [
             textElement('home-careers-eyebrow', 'text', en.home.careersEyebrow, ar.home.careersEyebrow),
             textElement('home-careers-title', 'heading', en.home.careersTitle.join(' '), ar.home.careersTitle.join(' ')),
             textElement('home-careers-body', 'text', en.home.careersBody, ar.home.careersBody),
@@ -124,7 +127,7 @@ export function buildSiteManifest({ generatedAt = new Date().toISOString() } = {
         title: en.meta.products,
         titleAr: ar.meta.products,
         sections: [
-          section('products-hero', 'hero', 0, true, [
+          section('products-hero', 'hero', 0, false, [
             textElement('products-hero-eyebrow', 'text', en.products.eyebrow, ar.products.eyebrow),
             textElement('products-hero-title', 'heading', en.products.title.join(' '), ar.products.title.join(' ')),
             textElement('products-hero-introduction', 'text', en.products.intro, ar.products.intro),
@@ -135,12 +138,16 @@ export function buildSiteManifest({ generatedAt = new Date().toISOString() } = {
               labelAr: ar.products.categories,
               module: 'src/data/products.js',
               export: 'productCategories',
+              kind: 'platform-catalog',
+              managementPath: '/admin/categories',
             }),
             sourceElement('products-product-collection', 'productCollection', {
               label: en.products.products,
               labelAr: ar.products.products,
               module: 'src/data/products.js',
               export: 'products',
+              kind: 'platform-catalog',
+              managementPath: '/admin/products',
             }),
           ]),
         ],
@@ -151,13 +158,13 @@ export function buildSiteManifest({ generatedAt = new Date().toISOString() } = {
         title: en.meta.about,
         titleAr: ar.meta.about,
         sections: [
-          section('about-hero', 'hero', 0, true, [
+          section('about-hero', 'hero', 0, false, [
             textElement('about-hero-eyebrow', 'text', en.about.eyebrow, ar.about.eyebrow),
             textElement('about-hero-title', 'heading', en.about.title, ar.about.title),
             imageElement('about-hero-poster', '/media/poster-about.jpg', en.about.video, ar.about.video),
           ]),
-          section('about-stories', 'content', 1, true, aboutStoryElements),
-          section('about-careers', 'callToAction', 2, true, [
+          section('about-stories', 'content', 1, false, aboutStoryElements),
+          section('about-careers', 'callToAction', 2, false, [
             textElement('about-careers-eyebrow', 'text', en.about.careersEyebrow, ar.about.careersEyebrow),
             textElement('about-careers-title', 'heading', en.about.careersTitle.join(' '), ar.about.careersTitle.join(' ')),
             textElement('about-careers-link', 'button', en.about.careersCta, ar.about.careersCta),
@@ -170,7 +177,7 @@ export function buildSiteManifest({ generatedAt = new Date().toISOString() } = {
         title: en.meta.news,
         titleAr: ar.meta.news,
         sections: [
-          section('news-hero', 'hero', 0, true, [
+          section('news-hero', 'hero', 0, false, [
             textElement('news-hero-title', 'heading', en.news.title, ar.news.title),
           ]),
           section('news-listing', 'content', 1, false, [
@@ -189,12 +196,12 @@ export function buildSiteManifest({ generatedAt = new Date().toISOString() } = {
         title: en.meta.contact,
         titleAr: ar.meta.contact,
         sections: [
-          section('contact-hero', 'hero', 0, true, [
+          section('contact-hero', 'hero', 0, false, [
             textElement('contact-hero-eyebrow', 'text', en.contact.eyebrow, ar.contact.eyebrow),
             textElement('contact-hero-title', 'heading', en.contact.title, ar.contact.title),
             imageElement('contact-hero-poster', '/media/poster-contact.jpg', en.contact.title, ar.contact.title),
           ]),
-          section('contact-introduction', 'content', 1, true, [
+          section('contact-introduction', 'content', 1, false, [
             textElement('contact-introduction-eyebrow', 'text', en.contact.talk, ar.contact.talk),
             textElement('contact-introduction-title', 'heading', en.contact.heading, ar.contact.heading),
             textElement('contact-introduction-body', 'text', en.contact.intro, ar.contact.intro),
