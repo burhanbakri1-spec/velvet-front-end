@@ -1,15 +1,37 @@
 import { useState } from 'react';
 import { velvetBrands } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
-import { Link } from '../routing/Router';
-import { shopHref } from '../hooks/useShopState';
+import { Link, localizePath, useRouter } from '../routing/Router';
+import { buildShopQuery } from '../hooks/useShopState';
+
+const shopPath = (state) => {
+  const query = buildShopQuery(state);
+  return `/products${query ? `?${query}` : ''}`;
+};
 
 export default function CategoriesMegaMenu({ open, onClose }) {
   const { copy, locale } = useI18n();
+  const { navigate } = useRouter();
   const [activeBrand, setActiveBrand] = useState(velvetBrands[0].slug);
   const brand = velvetBrands.find((item) => item.slug === activeBrand) || velvetBrands[0];
   const [activeCategory, setActiveCategory] = useState(brand.categories[0].slug);
   const category = brand.categories.find((item) => item.slug === activeCategory) || brand.categories[0];
+
+  const selectBrand = (slug) => {
+    const next = velvetBrands.find((item) => item.slug === slug) || velvetBrands[0];
+    setActiveBrand(next.slug);
+    setActiveCategory(next.categories[0].slug);
+  };
+  const goBrand = (slug) => {
+    selectBrand(slug);
+    navigate(localizePath(shopPath({ brand: slug }), locale));
+    onClose();
+  };
+  const goCategory = (slug) => {
+    setActiveCategory(slug);
+    navigate(localizePath(shopPath({ brand: brand.slug, category: slug }), locale));
+    onClose();
+  };
 
   return (
     <div className={`mega-menu ${open ? 'is-open' : ''}`} aria-hidden={!open}>
@@ -21,9 +43,9 @@ export default function CategoriesMegaMenu({ open, onClose }) {
               type="button"
               className={item.slug === brand.slug ? 'is-active' : ''}
               key={item.slug}
-              onMouseEnter={() => { setActiveBrand(item.slug); setActiveCategory(item.categories[0].slug); }}
-              onFocus={() => { setActiveBrand(item.slug); setActiveCategory(item.categories[0].slug); }}
-              onClick={() => { setActiveBrand(item.slug); setActiveCategory(item.categories[0].slug); }}
+              onMouseEnter={() => selectBrand(item.slug)}
+              onFocus={() => selectBrand(item.slug)}
+              onClick={() => goBrand(item.slug)}
             >
               {item.name[locale]}
             </button>
@@ -31,7 +53,7 @@ export default function CategoriesMegaMenu({ open, onClose }) {
         </nav>
         <nav className="mega-cascade__col" aria-label={copy.shop.category}>
           <span className="mega-cascade__col-title">{copy.shop.category}</span>
-          <Link to={shopHref({ brand: brand.slug }, locale)} onClick={onClose}>{copy.shop.allCategories}</Link>
+          <Link to={shopPath({ brand: brand.slug })} onClick={onClose}>{copy.shop.allCategories}</Link>
           {brand.categories.map((item) => (
             <button
               type="button"
@@ -39,7 +61,7 @@ export default function CategoriesMegaMenu({ open, onClose }) {
               key={item.slug}
               onMouseEnter={() => setActiveCategory(item.slug)}
               onFocus={() => setActiveCategory(item.slug)}
-              onClick={() => setActiveCategory(item.slug)}
+              onClick={() => goCategory(item.slug)}
             >
               {item.name[locale]}
             </button>
@@ -47,9 +69,9 @@ export default function CategoriesMegaMenu({ open, onClose }) {
         </nav>
         <nav className="mega-cascade__col" aria-label={copy.shop.subcategory}>
           <span className="mega-cascade__col-title">{copy.shop.subcategory}</span>
-          <Link to={shopHref({ brand: brand.slug, category: category.slug }, locale)} onClick={onClose}>{copy.shop.allSubcategories}</Link>
+          <Link to={shopPath({ brand: brand.slug, category: category.slug })} onClick={onClose}>{copy.shop.allSubcategories}</Link>
           {category.subs.map((item) => (
-            <Link to={shopHref({ brand: brand.slug, category: category.slug, subcategory: item.slug }, locale)} onClick={onClose} key={item.slug}>
+            <Link to={shopPath({ brand: brand.slug, category: category.slug, subcategory: item.slug })} onClick={onClose} key={item.slug}>
               {item.name[locale]}
             </Link>
           ))}
