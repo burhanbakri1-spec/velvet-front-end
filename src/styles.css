@@ -973,6 +973,16 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
 
 /* Compact cascade row (like reference header cascade) */
 .shop-page__top { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+@media (min-width: 981px) {
+  .shop-page__top {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 40;
+    background: #f4f4f2;
+    margin-inline: -1.25rem;
+    padding-inline: 1.25rem;
+  }
+}
 .cascade-row { display: flex; flex-wrap: wrap; gap: .55rem; flex: 1; align-items: stretch; }
 .cascade-dd { position: relative; min-width: min(180px, 100%); flex: 1 1 160px; }
 .cascade-dd__button {
