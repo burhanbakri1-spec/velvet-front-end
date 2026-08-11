@@ -981,6 +981,10 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
     background: #f4f4f2;
     margin-inline: -1.25rem;
     padding-inline: 1.25rem;
+    transition: top .55s cubic-bezier(.22, 1, .36, 1);
+  }
+  body:has(.site-header.is-hidden) .shop-page__top {
+    top: 0;
   }
 }
 .cascade-row { display: flex; flex-wrap: wrap; gap: .55rem; flex: 1; align-items: stretch; }
