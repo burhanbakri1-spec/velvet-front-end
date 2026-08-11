@@ -972,7 +972,7 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
 .shop-page { max-width: 1320px; margin: 0 auto; padding: 1.25rem 1.25rem 3rem; }
 
 /* Compact cascade row (like reference header cascade) */
-.shop-page__top { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; }
+.shop-page__top { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem; padding-block: .4rem; }
 @media (min-width: 981px) {
   .shop-page__top {
     position: sticky;
@@ -987,49 +987,49 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
     top: 0;
   }
 }
-.cascade-row { display: flex; flex-wrap: wrap; gap: .55rem; flex: 1; align-items: stretch; }
-.cascade-dd { position: relative; min-width: min(180px, 100%); flex: 1 1 160px; }
+.cascade-row { display: flex; flex-wrap: wrap; gap: .85rem; flex: 1; align-items: stretch; }
+.cascade-dd { position: relative; min-width: min(215px, 100%); flex: 1 1 200px; }
 .cascade-dd__button {
-  width: 100%; min-height: 52px; display: flex; justify-content: space-between; align-items: center; gap: .5rem;
-  border: 1.5px solid #e3e3df; background: #fff; border-radius: 12px; padding: .55rem .75rem;
-  font: inherit; font-size: .84rem; font-weight: 600; color: var(--ink); text-align: start; cursor: pointer;
+  width: 100%; min-height: 66px; display: flex; justify-content: space-between; align-items: center; gap: .6rem;
+  border: 1.5px solid #e3e3df; background: #fff; border-radius: 12px; padding: .75rem .95rem;
+  font: inherit; font-size: .9rem; font-weight: 600; color: var(--ink); text-align: start; cursor: pointer;
   transition: border-color .2s, box-shadow .2s, opacity .2s;
 }
 .cascade-dd__button:hover:not(:disabled) { border-color: var(--red); }
 .cascade-dd__button:disabled { opacity: .45; cursor: not-allowed; background: #f5f5f2; }
 .cascade-dd.is-open .cascade-dd__button { border-color: var(--red); box-shadow: 0 0 0 3px rgba(228,7,33,.1); }
 .cascade-dd__label { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; min-width: 0; }
-.cascade-dd__hint { font-size: .66rem; font-weight: 500; color: #9a9a9e; }
-.cascade-dd__value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 170px; }
-.cascade-dd__chevron { color: #9a9a9e; transition: transform .2s; flex-shrink: 0; font-size: .8rem; }
+.cascade-dd__hint { font-size: .74rem; font-weight: 500; color: #9a9a9e; }
+.cascade-dd__value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 210px; }
+.cascade-dd__chevron { color: #9a9a9e; transition: transform .2s; flex-shrink: 0; font-size: .95rem; }
 .cascade-dd.is-open .cascade-dd__chevron { transform: rotate(180deg); }
 
 .cascade-dd__menu {
   position: absolute; top: calc(100% + 6px); inset-inline-start: 0;
-  min-width: 100%; width: max-content; max-width: min(320px, 90vw);
-  max-height: 340px; overflow-y: auto;
+  min-width: 100%; width: max-content; max-width: min(340px, 90vw);
+  max-height: 360px; overflow-y: auto;
   background: #fff; border: 1px solid #e3e3df; border-radius: 14px;
-  box-shadow: 0 18px 50px rgba(18,18,20,.14); padding: .4rem; z-index: 90;
+  box-shadow: 0 18px 50px rgba(18,18,20,.14); padding: .45rem; z-index: 90;
   opacity: 0; visibility: hidden; transform: translateY(6px);
   transition: opacity .2s ease, transform .2s ease, visibility .2s;
 }
 .cascade-dd.is-open .cascade-dd__menu { opacity: 1; visibility: visible; transform: translateY(0); }
 .cascade-dd__menu button {
   display: block; width: 100%; text-align: start;
-  border: 0; background: transparent; font: inherit; font-size: .84rem;
-  padding: .55rem .7rem; border-radius: 10px; cursor: pointer; color: #3f3f43;
+  border: 0; background: transparent; font: inherit; font-size: .88rem;
+  padding: .68rem .8rem; border-radius: 10px; cursor: pointer; color: #3f3f43;
 }
 .cascade-dd__menu button:hover { background: #fdecee; color: var(--red); }
 .cascade-dd__menu button.is-active { background: var(--ink); color: #fff; font-weight: 600; }
 .cascade-dd__menu .cascade-dd__option-label { display: block; }
-.cascade-dd__menu .cascade-dd__sub { display: block; font-size: .72rem; opacity: .75; margin-top: 1px; }
-.cascade-dd__menu .cascade-dd__count { float: inline-end; font-size: .7rem; opacity: .6; }
+.cascade-dd__menu .cascade-dd__sub { display: block; font-size: .76rem; opacity: .75; margin-top: 1px; }
+.cascade-dd__menu .cascade-dd__count { float: inline-end; font-size: .74rem; opacity: .6; }
 
-.shop-page__tools { display: flex; gap: .45rem; flex-shrink: 0; padding-top: .3rem; }
+.shop-page__tools { display: flex; gap: .65rem; flex-shrink: 0; padding-top: .35rem; }
 .tool-btn {
   border: 1px solid #e3e3df; background: #fff; border-radius: 999px;
-  padding: .5rem .9rem; font: inherit; font-size: .8rem; font-weight: 600; cursor: pointer;
-  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .65rem 1.15rem; font: inherit; font-size: .86rem; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; gap: .45rem;
 }
 .tool-btn:hover { border-color: var(--red); color: var(--red); }
 .shop-mobile-filters { display: none; }
