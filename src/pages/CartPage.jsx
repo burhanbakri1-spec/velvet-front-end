@@ -1,5 +1,6 @@
 import { useCart } from '../context/CartContext';
-import { getOptionName, getOptionValue, getProductBySlug } from '../data/products';
+import { getOptionName, getOptionValue } from '../data/products';
+import { getProductBySlug } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 

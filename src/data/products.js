@@ -1,4 +1,4 @@
-function artwork(title, colors, scene = 0) {
+export function artwork(title, colors, scene = 0) {
   const [a, b, c] = colors;
   const safeTitle = title.replace(/&/g, '&amp;');
   const shapes = [

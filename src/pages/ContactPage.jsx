@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import PageVideoHero from '../components/PageVideoHero';
 import { useI18n } from '../i18n/I18nContext';
+import { getPlatformMedia } from '../data/platformContent';
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -9,7 +10,7 @@ export default function ContactPage() {
 
   return (
     <div className="contact-page">
-      <PageVideoHero title={copy.contact.title} eyebrow={copy.contact.eyebrow} poster="/media/poster-contact.jpg" theme="contact" overlay={0.4} />
+      <PageVideoHero title={copy.contact.title} eyebrow={copy.contact.eyebrow} poster={getPlatformMedia('contact.hero.poster', '/media/poster-contact.jpg')} theme="contact" overlay={0.4} />
       <section className="contact-form-section">
         <div className="contact-form-intro">
           <span className="store-eyebrow">{copy.contact.talk}</span>

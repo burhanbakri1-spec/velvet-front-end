@@ -42,11 +42,12 @@ export function RouterProvider({ children }) {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  const navigate = useCallback((to, { replace = false } = {}) => {
+  const navigate = useCallback((to, { replace = false, scroll = true } = {}) => {
     const next = new URL(to, window.location.origin);
     const method = replace ? 'replaceState' : 'pushState';
     window.history[method]({}, '', `${next.pathname}${next.search}${next.hash}`);
     setLocation(readLocation());
+    if (!scroll) return;
     window.requestAnimationFrame(() => {
       if (next.hash) document.getElementById(next.hash.slice(1))?.scrollIntoView();
       else window.scrollTo({ top: 0, behavior: 'auto' });
