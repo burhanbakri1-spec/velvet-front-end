@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
-import { getAvailability, getCategoryLabel, getOptionName, getOptionValue, getProductBadge, getProductBySlug, getProductDescription, products } from '../data/products';
+import { getAvailability, getCategoryLabel, getOptionName, getOptionValue, getProductBadge, getProductDescription } from '../data/products';
+import { getProductBySlug, getVelvetPathLabel, velvetProducts } from '../data/velvetCatalog';
 import { Link } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -25,9 +26,11 @@ export default function ProductDetailsPage({ slug }) {
   const optionDelta = product.options.reduce((sum, option) => sum + Number(option.values.find((value) => value.label === selections[option.name])?.priceDelta || 0), 0);
   const currentPrice = product.price + optionDelta;
   const unavailable = product.availability === 'Out of stock';
+  const pathLabel = getVelvetPathLabel(product, locale) || getCategoryLabel(product.categoryId, locale);
   const related = [
-    ...products.filter((item) => item.id !== product.id && item.categoryId === product.categoryId),
-    ...products.filter((item) => item.id !== product.id && item.categoryId !== product.categoryId),
+    ...velvetProducts.filter((item) => item.id !== product.id && item.velvetPath?.brandId === product.velvetPath?.brandId && item.velvetPath?.subcategoryId === product.velvetPath?.subcategoryId),
+    ...velvetProducts.filter((item) => item.id !== product.id && item.velvetPath?.brandId === product.velvetPath?.brandId && item.velvetPath?.subcategoryId !== product.velvetPath?.subcategoryId),
+    ...velvetProducts.filter((item) => item.id !== product.id && item.velvetPath?.brandId !== product.velvetPath?.brandId),
   ].slice(0, 4);
 
   const handleAdd = () => {
@@ -48,7 +51,7 @@ export default function ProductDetailsPage({ slug }) {
 
         <aside className="product-purchase-panel">
           <div className="product-purchase-panel__top">
-            <span className="product-detail-category">{getCategoryLabel(product.categoryId, locale)}</span>
+            <span className="product-detail-category">{pathLabel}</span>
             {product.badge && <span className="product-detail-badge">{getProductBadge(product, locale)}</span>}
           </div>
           <h1>{product.name}</h1>

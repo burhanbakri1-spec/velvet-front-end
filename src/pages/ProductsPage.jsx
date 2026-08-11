@@ -1,62 +1,126 @@
 import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
-import { getCategoryBySlug, productCategories, products } from '../data/products';
+import CategoryCascade from '../components/CategoryCascade';
+import ProductFilters from '../components/ProductFilters';
+import ActiveFilters from '../components/ActiveFilters';
+import MobileFilterDrawer from '../components/MobileFilterDrawer';
+import TreeMap from '../components/TreeMap';
+import { filterProducts, getManufacturerName, resolvePath } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
-import { Link, useRouter } from '../routing/Router';
+import { useShopState } from '../hooks/useShopState';
+
+const MAX_VISIBLE = 48;
 
 export default function ProductsPage() {
   const { copy, locale } = useI18n();
-  const { location } = useRouter();
-  const params = new URLSearchParams(location.search);
-  const activeCategory = getCategoryBySlug(params.get('category') || 'all');
-  const [query, setQuery] = useState(params.get('search') || '');
+  const { state, select, toggle, removeFilter, clearFilters, resetAll, setSearch, activeFilterCount } = useShopState();
+  const [limit, setLimit] = useState(MAX_VISIBLE);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [queryInput, setQueryInput] = useState(state.search);
 
-  useEffect(() => setQuery(new URLSearchParams(location.search).get('search') || ''), [location.search]);
+  useEffect(() => setQueryInput(state.search), [state.search]);
+  useEffect(() => setLimit(MAX_VISIBLE), [state]);
 
-  const visibleProducts = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    return products.filter((product) => {
-      const matchesCategory = activeCategory.id === 'all' || product.categoryId === activeCategory.id;
-      const matchesSearch = !normalized || `${product.name} ${product.category} ${product.description} ${product.descriptionAr}`.toLowerCase().includes(normalized);
-      return matchesCategory && matchesSearch;
-    });
-  }, [activeCategory.id, query]);
+  const results = useMemo(() => filterProducts(state), [state]);
+  const path = useMemo(() => resolvePath(state), [state]);
+  const shown = results.slice(0, limit);
+
+  const heroTitle = path.sub ? path.sub.name[locale] : path.category ? path.category.name[locale] : path.brand ? path.brand.name[locale] : null;
+  const heroDescription = heroTitle
+    ? (path.sub ? `${path.category.name[locale]} · ${path.brand.name[locale]}` : path.category ? path.brand.name[locale] : path.brand ? path.brand.tagline[locale] : '')
+    : copy.products.intro;
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    const next = queryInput.trim();
+    if (next === state.search) return;
+    setSearch(next);
+  };
+
+  const showAllNote = results.length > shown.length;
 
   return (
-    <div className="products-page">
-      <section className="store-hero">
-        <span className="store-eyebrow">{copy.products.eyebrow}</span>
-        <h1>{copy.products.title[0]}<br />{copy.products.title[1]}</h1>
-        <p>{copy.products.intro}</p>
-      </section>
+    <div className="shop-page">
+      <div className="shop-page__top">
+        <CategoryCascade state={state} onSelect={select} />
+        <div className="shop-page__tools">
+          <button type="button" className="tool-btn shop-mobile-filters" onClick={() => setDrawerOpen(true)}>
+            {copy.shop.filters}
+            {activeFilterCount > 0 && <span className="shop-mobile-filters__count">{activeFilterCount}</span>}
+          </button>
+          <button type="button" className="tool-btn" onClick={resetAll}>{copy.shop.resetAll}</button>
+        </div>
+      </div>
 
-      <section className="product-browser" aria-labelledby="products-title">
-        <div className="product-browser__head">
-          <div>
-            <span className="store-eyebrow">{copy.products.collection}</span>
-            <h2 id="products-title">{copy.products.products}</h2>
+      <div className="shop-page__grid">
+        <aside className="shop-filters" aria-label={copy.shop.filters}>
+          <ProductFilters state={state} onToggle={toggle} onClear={clearFilters} />
+        </aside>
+
+        <main className="shop-content">
+          <section className="shop-hero">
+            <div className="shop-hero__text">
+              <h1>{heroTitle || 'VELVET'}</h1>
+              <p>{heroDescription}</p>
+            </div>
+            <div className="path-pills" aria-label={copy.shop.browseBy}>
+              <span className="path-pill path-pill--root">VELVET</span>
+              {path.brand && <span className="path-pill">{path.brand.name[locale]}</span>}
+              {path.category && <span className="path-pill">{path.category.name[locale]}</span>}
+              {path.sub && <span className="path-pill">{path.sub.name[locale]}</span>}
+              {state.manufacturer && <span className="path-pill">{getManufacturerName(state.manufacturer)}</span>}
+            </div>
+          </section>
+
+          <div className="shop-toolbar">
+            <ActiveFilters state={state} onRemove={removeFilter} onClear={clearFilters} />
+            <div className="shop-toolbar__right">
+              <form className="shop-search" onSubmit={handleSearchSubmit} role="search">
+                <label className="sr-only" htmlFor="shop-search-input">{copy.products.search}</label>
+                <input
+                  id="shop-search-input"
+                  value={queryInput}
+                  onChange={(event) => setQueryInput(event.target.value)}
+                  placeholder={copy.products.placeholder}
+                  type="search"
+                />
+                <i aria-hidden="true" />
+              </form>
+              <span className="shop-meta">{results.length} {results.length === 1 ? copy.products.countOne : copy.products.count}</span>
+            </div>
           </div>
-          <label className="store-search">
-            <span className="sr-only">{copy.products.search}</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={copy.products.placeholder} type="search" />
-            <i aria-hidden="true" />
-          </label>
-        </div>
 
-        <div className="category-filter" aria-label={copy.products.categories}>
-          {productCategories.map((item) => (
-            <Link className={activeCategory.id === item.id ? 'is-active' : ''} to={`/products?category=${item.slug}${query ? `&search=${encodeURIComponent(query)}` : ''}`} key={item.id}>{item.name[locale]}</Link>
-          ))}
-        </div>
+          <TreeMap state={state} onSelect={select} />
 
-        <div className="product-results-line"><span>{visibleProducts.length} {visibleProducts.length === 1 ? copy.products.countOne : copy.products.count}</span>{query && <Link to={`/products?category=${activeCategory.slug}`}>{copy.products.clear}</Link>}</div>
+          {results.length > 0 ? (
+            <>
+              <div className="shop-products">
+                {shown.map((product) => <ProductCard product={product} key={product.id} />)}
+              </div>
+              {showAllNote && (
+                <div className="shop-more">
+                  <button type="button" onClick={() => setLimit(results.length)}>
+                    {copy.shop.showAll} {copy.shop.of} {results.length}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="shop-empty">
+              <h3>{copy.shop.emptyTitle}</h3>
+              <p>{copy.shop.emptyBody}</p>
+              <div className="shop-empty__actions">
+                <button type="button" onClick={clearFilters}>{copy.shop.resetFilters}</button>
+                <button type="button" onClick={resetAll}>{copy.shop.resetAll}</button>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
 
-        {visibleProducts.length > 0 ? (
-          <div className="product-grid">{visibleProducts.map((product) => <ProductCard product={product} key={product.id} />)}</div>
-        ) : (
-          <div className="product-empty-results"><h3>{copy.products.emptyTitle}</h3><p>{copy.products.emptyBody}</p><Link to="/products?category=all">{copy.products.showAll}</Link></div>
-        )}
-      </section>
+      <MobileFilterDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onClear={clearFilters}>
+        <ProductFilters state={state} onToggle={toggle} onClear={clearFilters} />
+      </MobileFilterDrawer>
     </div>
   );
 }
