@@ -24,11 +24,11 @@ export default function ProductFilters({ state, onToggle, onClear }) {
           <button type="button" className="product-filters__clear" onClick={onClear}>{s.clearAll}</button>
         )}
       </div>
-      <FilterGroup title={s.age} options={withLabels('age')} selected={state.age} onToggle={(id) => onToggle('age', id)} defaultOpen />
-      <FilterGroup title={s.gender} options={withLabels('gender')} selected={state.gender} onToggle={(id) => onToggle('gender', id)} defaultOpen />
+      <FilterGroup title={s.age} options={withLabels('age')} selected={state.age} onToggle={(id) => onToggle('age', id)} />
+      <FilterGroup title={s.gender} options={withLabels('gender')} selected={state.gender} onToggle={(id) => onToggle('gender', id)} />
       <FilterGroup title={s.skill} options={withLabels('skill')} selected={state.skill} onToggle={(id) => onToggle('skill', id)} />
       <FilterGroup title={s.occasion} options={withLabels('occasion')} selected={state.occasion} onToggle={(id) => onToggle('occasion', id)} />
-      <FilterGroup title={s.quickShop} options={withLabels('shopping')} selected={state.shopping} onToggle={(id) => onToggle('shopping', id)} variant="chip" defaultOpen />
+      <FilterGroup title={s.quickShop} options={withLabels('shopping')} selected={state.shopping} onToggle={(id) => onToggle('shopping', id)} variant="chip" />
     </div>
   );
 }
