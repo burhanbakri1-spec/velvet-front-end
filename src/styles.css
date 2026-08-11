@@ -1052,11 +1052,11 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
 .filter-group:first-of-type { border-top: 0; padding-top: 0; }
 .filter-group__head {
   width: 100%; padding: 0; border: 0; background: none; display: flex; justify-content: space-between; align-items: center;
-  font-weight: 700; font-size: .9rem; cursor: pointer;
+  font-weight: 700; font-size: .9rem; cursor: pointer; list-style: none;
 }
-.filter-group__chevron { font-style: normal; color: #9a9a9e; font-weight: 400; font-size: .95rem; transition: transform .2s; }
-.filter-group__head[aria-expanded="false"] .filter-group__chevron { transform: rotate(0deg); }
-.filter-group__head[aria-expanded="true"] .filter-group__chevron { transform: rotate(45deg); }
+.filter-group__head::-webkit-details-marker { display: none; }
+.filter-group__head::after { content: "+"; color: #9a9a9e; font-weight: 400; }
+.filter-group[open] .filter-group__head::after { content: "−"; }
 .filter-group__opts { display: flex; flex-direction: column; gap: .4rem; margin-top: .7rem; }
 .filter-option { display: flex; align-items: center; gap: .5rem; font-size: .83rem; color: #3f3f43; cursor: pointer; }
 .filter-option input { position: absolute; opacity: 0; pointer-events: none; }
