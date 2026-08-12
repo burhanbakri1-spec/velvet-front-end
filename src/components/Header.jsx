@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import CategoriesMegaMenu from './CategoriesMegaMenu';
 import { Link, localizePath, useRouter } from '../routing/Router';
 import { useCart } from '../context/CartContext';
 import AboutSubnav from './AboutSubnav';
 import { useI18n } from '../i18n/I18nContext';
+import { getBrand } from '../data/velvetCatalog';
 
 export default function Header({ introActive, solid = false }) {
   const [brandsOpen, setBrandsOpen] = useState(false);
@@ -11,16 +12,54 @@ export default function Header({ introActive, solid = false }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
+  const closeTimer = useRef(null);
   const { itemCount } = useCart();
   const { copy, locale, switchLanguage } = useI18n();
-  const { navigate } = useRouter();
+  const { location, navigate, routePath } = useRouter();
   const [search, setSearch] = useState('');
+
+  const contextBrand = useMemo(() => {
+    if (routePath !== '/products') return null;
+    const slug = new URLSearchParams(location.search).get('brand');
+    return slug ? getBrand(slug) : null;
+  }, [location.search, routePath]);
 
   const submitSearch = (event) => {
     event.preventDefault();
     const query = search.trim();
     if (query) navigate(localizePath(`/products?search=${encodeURIComponent(query)}`, locale));
   };
+
+  const hoverCapable = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  const openBrandsOnHover = () => {
+    if (!hoverCapable() || window.innerWidth <= 900) return;
+    window.clearTimeout(closeTimer.current);
+    setBrandsOpen(true);
+    setAboutOpen(false);
+  };
+
+  const scheduleBrandsClose = () => {
+    if (!hoverCapable() || window.innerWidth <= 900) return;
+    window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setBrandsOpen(false), 220);
+  };
+
+  const cancelBrandsClose = () => window.clearTimeout(closeTimer.current);
+
+  const toggleBrands = () => {
+    window.clearTimeout(closeTimer.current);
+    if (hoverCapable() && window.innerWidth > 900) {
+      setBrandsOpen(true);
+      setAboutOpen(false);
+      return;
+    }
+    setBrandsOpen((value) => !value);
+    setAboutOpen(false);
+    if (mobileOpen) setMobileOpen(false);
+  };
+
+  useEffect(() => () => window.clearTimeout(closeTimer.current), []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -44,15 +83,26 @@ export default function Header({ introActive, solid = false }) {
         <button type="button" onClick={() => switchLanguage()} aria-label={copy.header.languageLabel}>{copy.header.language}</button>
       </div>
       <div className="nav-bar">
-        <Link className="logo" to="/" aria-label="PLAY"><span>PLAY</span></Link>
+        <Link className="logo" to={contextBrand ? localizePath(`/brands/${contextBrand.slug}`, locale) : '/'} aria-label={contextBrand ? contextBrand.name[locale] : 'VELVET'}>
+          <span>{contextBrand ? contextBrand.name[locale] : 'VELVET'}</span>
+        </Link>
         <nav className={`main-nav ${mobileOpen ? 'is-open' : ''}`} aria-label={copy.header.nav}>
-          <button className="nav-link" type="button" aria-expanded={brandsOpen} onClick={() => { setBrandsOpen((value) => !value); setAboutOpen(false); if (mobileOpen) setMobileOpen(false); }}>
+          <button
+            className="nav-link"
+            type="button"
+            aria-expanded={brandsOpen}
+            onMouseEnter={openBrandsOnHover}
+            onMouseLeave={scheduleBrandsClose}
+            onFocus={() => { if (hoverCapable()) openBrandsOnHover(); }}
+            onBlur={scheduleBrandsClose}
+            onClick={toggleBrands}
+          >
             {copy.header.categories} <i className="chevron" />
           </button>
           <button className="nav-link" type="button" aria-expanded={aboutOpen} onClick={() => { setAboutOpen((value) => !value); setBrandsOpen(false); if (mobileOpen) setMobileOpen(false); }}>
             {copy.header.about} <i className="chevron" />
           </button>
-          <Link className="nav-link" to="/products" onClick={() => setMobileOpen(false)}>{copy.header.products}</Link>
+          <Link className="nav-link" to={contextBrand ? `/products?brand=${contextBrand.slug}` : '/products'} onClick={() => setMobileOpen(false)}>{copy.header.products}</Link>
         </nav>
         <div className="header-actions">
           <form className="search-pill" onSubmit={submitSearch}>
@@ -79,7 +129,9 @@ export default function Header({ introActive, solid = false }) {
           <span /><span />
         </button>
       </div>
-      <CategoriesMegaMenu open={brandsOpen} onClose={() => setBrandsOpen(false)} />
+      <div className="mega-menu-zone" onMouseEnter={cancelBrandsClose} onMouseLeave={scheduleBrandsClose}>
+        <CategoriesMegaMenu open={brandsOpen} onClose={() => setBrandsOpen(false)} brand={contextBrand} />
+      </div>
       <AboutSubnav open={aboutOpen} onClose={() => setAboutOpen(false)} />
     </header>
   );

@@ -7,7 +7,8 @@ export default function BrandShowcase({ brand }) {
   const { copy, locale } = useI18n();
   const arrow = locale === 'ar' ? '←' : '→';
   const name = brand.name[locale];
-  const categoryPath = `/categories/${brand.slug}`;
+  const brandPath = `/brands/${brand.slug}`;
+  const logo = brand.home.logo[locale];
 
   const moveViewCursor = (event) => {
     if (event.pointerType !== 'mouse' || window.innerWidth <= 760 || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -29,13 +30,14 @@ export default function BrandShowcase({ brand }) {
     >
       <img className="brand-showcase__image" src={brand.image} alt="" />
       <div className="brand-showcase__tint" aria-hidden="true" />
-      <Link className="brand-showcase__link" to={categoryPath} aria-label={`${copy.home.view} ${name}`} />
+      <Link className="brand-showcase__link" to={brandPath} aria-label={`${copy.home.view} ${name}`} />
       <div className="brand-showcase__content">
+        <span className="brand-showcase__logo" aria-hidden="true">{logo}</span>
         <p>{locale === 'ar' ? brand.home.kickerAr : brand.home.kickerEn}</p>
         <h2>{name}</h2>
       </div>
       <span className="showcase-view-cursor" ref={viewCursorRef} aria-hidden="true">{copy.home.view}</span>
-      <Link className="showcase-more" to={categoryPath}>
+      <Link className="showcase-more" to={brandPath}>
         <span className="showcase-more__arrow showcase-more__arrow--left" aria-hidden="true">{arrow}</span>
         <span className="showcase-more__label">{copy.home.seeMore}</span>
         <span className="showcase-more__arrow showcase-more__arrow--right" aria-hidden="true">{arrow}</span>

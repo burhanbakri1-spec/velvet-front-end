@@ -545,10 +545,31 @@ const RAW_BRANDS = [
 ];
 
 // ---------------------------------------------------------------------------
+// Brand showcase metadata: homepage banner, logo slot and media per sub-brand.
+// Each VELVET sub-brand owns a landing /{locale}/brands/{slug} page.
+// ---------------------------------------------------------------------------
+const BRAND_SHOWCASE = {
+  baby: { order: 1, kickerEn: 'Soft beginnings', kickerAr: 'بدايات ناعمة', palette: ['#2f7d5e', '#7ec8a3', '#d9f1e3'], scene: 'nursery', logo: { en: 'BABY', ar: 'بيبي' } },
+  kids: { order: 2, kickerEn: 'Everyday adventures', kickerAr: 'مغامرات يومية', palette: ['#a5601f', '#f0b27a', '#fdecd6'], scene: 'toybox', logo: { en: 'KIDS', ar: 'كيدز' } },
+  play: { order: 3, kickerEn: 'Pretend & imagine', kickerAr: 'تخيّل والعب', palette: ['#9c3f68', '#e8a0bf', '#fce4ee'], scene: 'stage', logo: { en: 'PLAY', ar: 'بلاي' } },
+  build: { order: 4, kickerEn: 'Construct & create', kickerAr: 'ابنِ واصنع', palette: ['#2f6ca0', '#7eb6d9', '#e3f0fa'], scene: 'blueprint', logo: { en: 'BUILD', ar: 'بيلد' } },
+  learn: { order: 5, kickerEn: 'Discover & grow', kickerAr: 'اكتشف وتعلّم', palette: ['#4c7d34', '#a8d08d', '#e9f5df'], scene: 'classroom', logo: { en: 'LEARN', ar: 'ليرن' } },
+  create: { order: 6, kickerEn: 'Make it yours', kickerAr: 'اصنعها بنفسك', palette: ['#b07f13', '#f2c14e', '#fdf2cf'], scene: 'studio', logo: { en: 'CREATE', ar: 'كريت' } },
+  games: { order: 7, kickerEn: 'Play together', kickerAr: 'العب معاً', palette: ['#8a4fa8', '#c9a0dc', '#f0e2f8'], scene: 'gamenight', logo: { en: 'GAMES', ar: 'جيمز' } },
+  move: { order: 8, kickerEn: 'Get moving', kickerAr: 'تحرّك والعب', palette: ['#2f8a84', '#6ec6c0', '#ddf4f1'], scene: 'sports', logo: { en: 'MOVE', ar: 'موف' } },
+  collect: { order: 9, kickerEn: 'Find your favorites', kickerAr: 'اجمع ما تحب', palette: ['#9c5f2e', '#d4a574', '#f6ead8'], scene: 'collection', logo: { en: 'COLLECT', ar: 'كولكت' } },
+  plush: { order: 10, kickerEn: 'Soft & cuddly', kickerAr: 'ناعم ورقيق', palette: ['#b34a6f', '#f5b5c8', '#fde3eb'], scene: 'cuddle', logo: { en: 'PLUSH', ar: 'بلاش' } },
+  books: { order: 11, kickerEn: 'Stories to explore', kickerAr: 'قصص لاكتشاف', palette: ['#3f6f9b', '#9bb8d4', '#e4eff9'], scene: 'library', logo: { en: 'BOOKS', ar: 'بوكس' } },
+  muslim: { order: 12, kickerEn: 'Faith & fun', kickerAr: 'إيمان ومرح', palette: ['#2f7d58', '#7dcea0', '#e2f4ea'], scene: 'muslim', logo: { en: 'MUSLIM', ar: 'مسلم' } },
+};
+
+// ---------------------------------------------------------------------------
 // Normalize: derive stable language-independent slugs, unique per brand.
 // ---------------------------------------------------------------------------
 function normalizeBrands(raw) {
-  return raw.map((brand) => {
+  return raw.map((brand, index) => {
+    const showcase = BRAND_SHOWCASE[brand.id] || {};
+    const palette = showcase.palette || [brand.color, brand.color, brand.color];
     const used = new Set();
     const categories = brand.categories.map((category) => {
       const categorySlug = uniqueSlug(slugify(category.name.en), used);
@@ -561,6 +582,18 @@ function normalizeBrands(raw) {
     return {
       id: brand.id, slug: brand.id, name: brand.name, short: brand.short,
       tagline: brand.tagline, color: brand.color, productBrands: brand.productBrands, categories,
+      home: {
+        order: showcase.order || index + 1,
+        kickerEn: showcase.kickerEn || brand.short.en,
+        kickerAr: showcase.kickerAr || brand.short.ar,
+        palette,
+        scene: showcase.scene || 'play',
+        logo: showcase.logo || brand.short,
+      },
+      image: artwork(`${brand.name.en} world`, palette, (index % 6) + 1),
+      palette,
+      scene: showcase.scene || 'play',
+      logo: showcase.logo || brand.short,
     };
   });
 }

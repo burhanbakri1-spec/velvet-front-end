@@ -26,7 +26,7 @@ export default function CategoryPage({ slug }) {
         <CategoryProductShowcase category={category} products={categoryProducts} />
       ) : (
         <section className="category-empty" id="category-products">
-          <span className="store-eyebrow">PLAY</span>
+          <span className="store-eyebrow">VELVET</span>
           <h2>{copy.category.empty}</h2>
           <Link to="/products">{copy.category.allProducts}</Link>
         </section>
