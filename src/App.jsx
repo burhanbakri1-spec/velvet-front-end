@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
 import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
 import AboutPage from './pages/AboutPage';
 import NewsPage from './pages/NewsPage';
 import ContactPage from './pages/ContactPage';
@@ -46,6 +47,7 @@ function RouteView() {
     page = <ProductDetailsPage key={slug} slug={slug} />;
   }
   else if (routePath === '/cart') page = <CartPage />;
+  else if (routePath === '/checkout') page = <CheckoutPage />;
   else if (routePath === '/about') page = <AboutPage />;
   else if (routePath === '/news') page = <NewsPage />;
   else if (routePath === '/contact') page = <ContactPage />;

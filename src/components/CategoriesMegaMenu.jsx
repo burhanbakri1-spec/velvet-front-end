@@ -56,7 +56,6 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
         )}
         <nav className="mega-cascade__col" aria-label={copy.shop.category}>
           <span className="mega-cascade__col-title">{copy.shop.category}</span>
-          <Link to={shopPath({ brand: brand.slug })} onClick={onClose}>{copy.shop.allCategories}</Link>
           {brand.categories.map((item) => (
             <button
               type="button"
@@ -72,7 +71,6 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
         </nav>
         <nav className="mega-cascade__col" aria-label={copy.shop.subcategory}>
           <span className="mega-cascade__col-title">{copy.shop.subcategory}</span>
-          <Link to={shopPath({ brand: brand.slug, category: category.slug })} onClick={onClose}>{copy.shop.allSubcategories}</Link>
           {category.subs.map((item) => (
             <Link to={shopPath({ brand: brand.slug, category: category.slug, subcategory: item.slug })} onClick={onClose} key={item.slug}>
               {item.name[locale]}

@@ -19,7 +19,7 @@ const absoluteUrl = (value, apiUrl) => {
 
 const localized = (value, locale, fallback = '') => String(value?.[locale] ?? value?.en ?? fallback);
 
-export function mapPlatformCategory(category, apiUrl) {
+export function mapPlatformCategory(category, apiUrl, heroVideos = {}) {
   return {
     id: category.id,
     slug: category.slug,
@@ -29,6 +29,7 @@ export function mapPlatformCategory(category, apiUrl) {
     descriptionEn: localized(category.description, 'en'),
     descriptionAr: localized(category.description, 'ar'),
     heroImage: absoluteUrl(category.image, apiUrl),
+    heroVideo: absoluteUrl(category.heroVideo || heroVideos[category.slug], apiUrl),
     sortOrder: Number(category.sortOrder || 0),
   };
 }
@@ -57,6 +58,8 @@ export function mapPlatformProduct(product, categories, apiUrl) {
     image: absoluteUrl(product.image, apiUrl),
     hoverImage: absoluteUrl(product.hoverImage || product.image, apiUrl),
     gallery: (product.gallery || []).map((url) => absoluteUrl(url, apiUrl)).filter(Boolean),
+    usageVideo: absoluteUrl(product.usageVideo, apiUrl),
+    usageVideoPoster: absoluteUrl(product.usageVideoPoster, apiUrl),
     options: (product.options || []).map((option) => ({
       name: localized(option.name, 'en'),
       nameAr: localized(option.name, 'ar'),
@@ -107,19 +110,29 @@ function applyStructuredContent(payload, apiUrl) {
     }
   }
   for (const item of payload.media || []) {
-    const url = absoluteUrl(item.image || item.fallbackImage, apiUrl);
-    if (url) websiteMedia.set(item.sectionKey, url);
-    const aboutMatch = item.sectionKey.match(/^about\.(\d+)\.image$/);
-    const newsMatch = item.sectionKey.match(/^news\.(\d+)\.image$/);
-    if (aboutMatch && aboutSections[Number(aboutMatch[1])] && url) aboutSections[Number(aboutMatch[1])].image = url;
-    if (newsMatch && newsItems[Number(newsMatch[1])] && url) newsItems[Number(newsMatch[1])].image = url;
+    const key = String(item.sectionKey || '');
+    const imageUrl = absoluteUrl(item.image || item.fallbackImage, apiUrl);
+    const videoUrl = absoluteUrl(item.video, apiUrl);
+    if (imageUrl) websiteMedia.set(key, imageUrl);
+    if (videoUrl) websiteMedia.set(key.endsWith('.video') ? key : `${key}.video`, videoUrl);
+    const productUsageVideo = key.match(/^product\.([^.]+)\.usageVideo$/);
+    if (productUsageVideo && videoUrl) websiteMedia.set(`product.${productUsageVideo[1]}.usageVideo`, videoUrl);
+    const aboutMatch = key.match(/^about\.(\d+)\.image$/);
+    const newsMatch = key.match(/^news\.(\d+)\.image$/);
+    if (aboutMatch && aboutSections[Number(aboutMatch[1])] && imageUrl) aboutSections[Number(aboutMatch[1])].image = imageUrl;
+    if (newsMatch && newsItems[Number(newsMatch[1])] && imageUrl) newsItems[Number(newsMatch[1])].image = imageUrl;
   }
 }
 
 export function applyPlatformContent(payload, apiUrl) {
   if (!payload?.site || !Array.isArray(payload.categories) || !Array.isArray(payload.products)) throw new Error('The platform content response is invalid.');
   websiteMedia.clear();
-  const categories = payload.categories.map((item) => mapPlatformCategory(item, apiUrl)).sort((a, b) => a.sortOrder - b.sortOrder);
+  const heroVideos = {};
+  for (const item of payload.media || []) {
+    const match = String(item.sectionKey || '').match(/^category\.([^.]+)\.heroVideo$/);
+    if (match && item.video) heroVideos[match[1]] = item.video;
+  }
+  const categories = payload.categories.map((item) => mapPlatformCategory(item, apiUrl, heroVideos)).sort((a, b) => a.sortOrder - b.sortOrder);
   const all = { id: 'all', slug: 'all', nameEn: 'All Products', nameAr: 'كل المنتجات', name: { en: 'All Products', ar: 'كل المنتجات' } };
   const mappedProducts = payload.products.map((item) => mapPlatformProduct(item, categories, apiUrl)).sort((a, b) => a.sortOrder - b.sortOrder);
   productCategories.splice(0, productCategories.length, all, ...categories);

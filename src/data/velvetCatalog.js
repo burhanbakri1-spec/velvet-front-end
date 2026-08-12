@@ -27,6 +27,7 @@
 // ===========================================================================
 
 import { artwork, products } from './products.js';
+import { getPlatformMedia } from './platformContent.js';
 
 const slugify = (value) => String(value || '')
   .trim()
@@ -582,6 +583,9 @@ function normalizeBrands(raw) {
     return {
       id: brand.id, slug: brand.id, name: brand.name, short: brand.short,
       tagline: brand.tagline, color: brand.color, productBrands: brand.productBrands, categories,
+      accent: palette[0],
+      heroVideo: '',
+      heroPoster: '',
       home: {
         order: showcase.order || index + 1,
         kickerEn: showcase.kickerEn || brand.short.en,
@@ -589,6 +593,9 @@ function normalizeBrands(raw) {
         palette,
         scene: showcase.scene || 'play',
         logo: showcase.logo || brand.short,
+        accent: palette[0],
+        heroVideo: '',
+        heroPoster: '',
       },
       image: artwork(`${brand.name.en} world`, palette, (index % 6) + 1),
       palette,
@@ -767,6 +774,8 @@ function makeSyntheticProduct(brand, category, sub, manufacturer, k) {
     skill: skill.id,
     occasion: occasion.id,
     shopping: buildShopping(shopping, price, hasOffer),
+    usageVideo: '',
+    usageVideoPoster: '',
     velvetPath: { brandId: brand.slug, categoryId: category.slug, subcategoryId: sub.slug },
   };
 }
@@ -824,6 +833,17 @@ export function getBrand(brandSlug) {
   return velvetBrands.find((brand) => brand.slug === brandSlug) || null;
 }
 
+// Resolve a brand's hero media, which is managed via the platform content
+// integration (keys `brand.{slug}.video` / `brand.{slug}.poster`) when
+// available, and otherwise falls back to the static brand config.
+export function getBrandMedia(brandSlug) {
+  const brand = getBrand(brandSlug);
+  if (!brand) return { video: '', poster: '' };
+  const video = getPlatformMedia(`brand.${brandSlug}.video`, brand.home.heroVideo || '');
+  const poster = getPlatformMedia(`brand.${brandSlug}.poster`, brand.home.heroPoster || brand.image || '');
+  return { video, poster };
+}
+
 export function getCategory(brandSlug, categorySlug) {
   return getBrand(brandSlug)?.categories.find((category) => category.slug === categorySlug) || null;
 }
@@ -855,6 +875,17 @@ export function getVelvetPathLabel(product, locale = 'en') {
 
 export function getProductBySlug(slug) {
   return velvetProducts.find((product) => product.slug === slug) || products.find((product) => product.slug === slug) || null;
+}
+
+// Resolve a product's "how to use" media, which is managed via the platform
+// content integration (keys `product.{slug}.usageVideo` /
+// `product.{slug}.usageVideoPoster`) when available, and otherwise falls back
+// to the product's own usageVideo fields (empty → section hidden).
+export function getProductMedia(product) {
+  const slug = product?.slug || '';
+  const usageVideo = getPlatformMedia(`product.${slug}.usageVideo`, product?.usageVideo || '');
+  const usageVideoPoster = getPlatformMedia(`product.${slug}.usageVideoPoster`, product?.usageVideoPoster || product?.gallery?.[0] || product?.image || '');
+  return { usageVideo, usageVideoPoster };
 }
 
 // ---------------------------------------------------------------------------

@@ -79,7 +79,7 @@ export default function CartPage() {
             <div><dt>{copy.cart.shipping}</dt><dd>{copy.cart.free}</dd></div>
             <div className="cart-summary__total"><dt>{copy.cart.total}</dt><dd>{formatPrice(subtotal)}</dd></div>
           </dl>
-          <button className="store-primary-button cart-checkout" type="button">{copy.cart.checkout}</button>
+          <Link className="store-primary-button cart-checkout" to="/checkout">{copy.cart.checkout}</Link>
           <p>{copy.cart.taxes}</p>
         </aside>
       </div>
