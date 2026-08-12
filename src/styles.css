@@ -1194,6 +1194,7 @@ html[dir="rtl"] .shop-drawer { transform: translateX(110%); }
 
 /* Mega menu cascade */
 .mega-cascade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 46px; }
+.mega-menu--scoped .mega-cascade { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mega-cascade__col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .mega-cascade__col-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .13em; color: #9a9a9e; margin-bottom: 6px; }
 .mega-cascade__col a, .mega-cascade__col button { padding: 0; border: 0; background: none; cursor: pointer; text-align: start; font-size: 15px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: transform .25s ease, opacity .25s ease, color .25s ease; }

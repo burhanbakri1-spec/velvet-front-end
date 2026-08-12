@@ -65,7 +65,7 @@ function CascadeSelect({ hint, placeholder, value, disabled, options, allLabel, 
   );
 }
 
-export default function CategoryCascade({ state, onSelect }) {
+export default function CategoryCascade({ state, onSelect, hideBrand = false }) {
   const { copy, locale } = useI18n();
   const s = copy.shop;
 
@@ -95,16 +95,18 @@ export default function CategoryCascade({ state, onSelect }) {
 
   return (
     <div className="cascade-row" role="group" aria-label={s.browseBy}>
-      <CascadeSelect
-        hint={s.brand}
-        placeholder={s.selectBrand}
-        value={state.brand}
-        disabled={false}
-        options={brandOptions}
-        allLabel={s.allBrands}
-        locale={locale}
-        onSelect={(value) => onSelect('brand', value)}
-      />
+      {!hideBrand && (
+        <CascadeSelect
+          hint={s.brand}
+          placeholder={s.selectBrand}
+          value={state.brand}
+          disabled={false}
+          options={brandOptions}
+          allLabel={s.allBrands}
+          locale={locale}
+          onSelect={(value) => onSelect('brand', value)}
+        />
+      )}
       <CascadeSelect
         hint={s.category}
         placeholder={brand ? s.selectCategory : s.selectBrandFirst}

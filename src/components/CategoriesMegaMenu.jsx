@@ -9,11 +9,12 @@ const shopPath = (state) => {
   return `/products${query ? `?${query}` : ''}`;
 };
 
-export default function CategoriesMegaMenu({ open, onClose }) {
+export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand }) {
   const { copy, locale } = useI18n();
   const { navigate } = useRouter();
+  const scoped = Boolean(contextBrand);
   const [activeBrand, setActiveBrand] = useState(velvetBrands[0].slug);
-  const brand = velvetBrands.find((item) => item.slug === activeBrand) || velvetBrands[0];
+  const brand = scoped ? contextBrand : (velvetBrands.find((item) => item.slug === activeBrand) || velvetBrands[0]);
   const [activeCategory, setActiveCategory] = useState(brand.categories[0].slug);
   const category = brand.categories.find((item) => item.slug === activeCategory) || brand.categories[0];
 
@@ -34,23 +35,25 @@ export default function CategoriesMegaMenu({ open, onClose }) {
   };
 
   return (
-    <div className={`mega-menu ${open ? 'is-open' : ''}`} aria-hidden={!open}>
+    <div className={`mega-menu ${scoped ? 'mega-menu--scoped' : ''} ${open ? 'is-open' : ''}`} aria-hidden={!open}>
       <div className="mega-menu__links mega-cascade">
-        <nav className="mega-cascade__col mega-cascade__col--brands" aria-label={copy.shop.brand}>
-          <span className="mega-cascade__col-title">{copy.shop.brand}</span>
-          {velvetBrands.map((item) => (
-            <button
-              type="button"
-              className={item.slug === brand.slug ? 'is-active' : ''}
-              key={item.slug}
-              onMouseEnter={() => selectBrand(item.slug)}
-              onFocus={() => selectBrand(item.slug)}
-              onClick={() => goBrand(item.slug)}
-            >
-              {item.name[locale]}
-            </button>
-          ))}
-        </nav>
+        {!scoped && (
+          <nav className="mega-cascade__col mega-cascade__col--brands" aria-label={copy.shop.brand}>
+            <span className="mega-cascade__col-title">{copy.shop.brand}</span>
+            {velvetBrands.map((item) => (
+              <button
+                type="button"
+                className={item.slug === brand.slug ? 'is-active' : ''}
+                key={item.slug}
+                onMouseEnter={() => selectBrand(item.slug)}
+                onFocus={() => selectBrand(item.slug)}
+                onClick={() => goBrand(item.slug)}
+              >
+                {item.name[locale]}
+              </button>
+            ))}
+          </nav>
+        )}
         <nav className="mega-cascade__col" aria-label={copy.shop.category}>
           <span className="mega-cascade__col-title">{copy.shop.category}</span>
           <Link to={shopPath({ brand: brand.slug })} onClick={onClose}>{copy.shop.allCategories}</Link>
@@ -77,7 +80,7 @@ export default function CategoriesMegaMenu({ open, onClose }) {
           ))}
         </nav>
       </div>
-      <Link className="mega-menu__feature" to="/products" onClick={onClose}>
+      <Link className="mega-menu__feature" to={scoped ? shopPath({ brand: brand.slug }) : '/products'} onClick={onClose}>
         <span className="mega-menu__eyebrow">{copy.categoryMenu.eyebrow}</span>
         <strong>{copy.categoryMenu.all}</strong>
         <span className="mega-menu__product" aria-hidden="true"><i /><i /><i /></span>

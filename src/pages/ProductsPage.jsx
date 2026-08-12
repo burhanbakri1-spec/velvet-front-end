@@ -4,7 +4,6 @@ import CategoryCascade from '../components/CategoryCascade';
 import ProductFilters from '../components/ProductFilters';
 import ActiveFilters from '../components/ActiveFilters';
 import MobileFilterDrawer from '../components/MobileFilterDrawer';
-import TreeMap from '../components/TreeMap';
 import { filterProducts, getManufacturerName, resolvePath } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { useShopState } from '../hooks/useShopState';
@@ -42,7 +41,7 @@ export default function ProductsPage() {
   return (
     <div className="shop-page">
       <div className="shop-page__top">
-        <CategoryCascade state={state} onSelect={select} />
+        <CategoryCascade state={state} onSelect={select} hideBrand={Boolean(state.brand)} />
         <div className="shop-page__tools">
           <button type="button" className="tool-btn shop-mobile-filters" onClick={() => setDrawerOpen(true)}>
             {copy.shop.filters}
@@ -89,8 +88,6 @@ export default function ProductsPage() {
               <span className="shop-meta">{results.length} {results.length === 1 ? copy.products.countOne : copy.products.count}</span>
             </div>
           </div>
-
-          <TreeMap state={state} onSelect={select} />
 
           {results.length > 0 ? (
             <>

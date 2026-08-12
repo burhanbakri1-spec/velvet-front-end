@@ -17,7 +17,7 @@ export default function Footer() {
         <a href="#top">{copy.footer.opportunities} <span>{locale === 'ar' ? '←' : '→'}</span></a>
       </div>
       <div className="footer__body">
-        <div className="footer__brand"><span>PLAY</span><p>{copy.footer.tagline}</p></div>
+        <div className="footer__brand"><span>VELVET</span><p>{copy.footer.tagline}</p></div>
         <div className="footer__groups">
           {groups.map((group) => (
             <div key={group.title}>

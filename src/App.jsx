@@ -10,6 +10,7 @@ import AboutPage from './pages/AboutPage';
 import NewsPage from './pages/NewsPage';
 import ContactPage from './pages/ContactPage';
 import CategoryPage from './pages/CategoryPage';
+import BrandPage from './pages/BrandPage';
 import StoreLayout from './components/StoreLayout';
 
 function RouteView() {
@@ -18,13 +19,17 @@ function RouteView() {
 
   useEffect(() => {
     const key = routePath === '/' ? 'home' : routePath.split('/')[1];
-    document.title = `${copy.meta[key] || copy.meta.site} | PLAY`;
+    document.title = `${copy.meta[key] || copy.meta.site} | VELVET`;
   }, [copy, routePath]);
 
   if (routePath === '/') return <HomePage />;
 
   let page;
-  if (routePath.startsWith('/categories/')) {
+  if (routePath.startsWith('/brands/')) {
+    const slug = decodeURIComponent(routePath.split('/').pop());
+    page = <BrandPage key={slug} slug={slug} />;
+  }
+  else if (routePath.startsWith('/categories/')) {
     const slug = decodeURIComponent(routePath.split('/').pop());
     page = <CategoryPage key={slug} slug={slug} />;
   }
