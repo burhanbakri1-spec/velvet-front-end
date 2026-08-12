@@ -2,12 +2,12 @@ import { useRef } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 
-export default function BrandShowcase({ brand }) {
+export default function BrandShowcase({ brand, to }) {
   const viewCursorRef = useRef(null);
   const { copy, locale } = useI18n();
   const arrow = locale === 'ar' ? '←' : '→';
   const name = brand.name[locale];
-  const brandPath = `/brands/${brand.slug}`;
+  const brandPath = to || `/brands/${brand.slug}`;
   const logo = brand.home.logo[locale];
 
   const moveViewCursor = (event) => {

@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import CategoriesMegaMenu from './CategoriesMegaMenu';
+import CartDrawer from './CartDrawer';
 import { Link, localizePath, useRouter } from '../routing/Router';
 import { useCart } from '../context/CartContext';
 import AboutSubnav from './AboutSubnav';
 import { useI18n } from '../i18n/I18nContext';
-import { getBrand } from '../data/velvetCatalog';
+import { getBrand, getProductBySlug } from '../data/velvetCatalog';
 
 export default function Header({ introActive, solid = false }) {
   const [brandsOpen, setBrandsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const lastY = useRef(0);
   const closeTimer = useRef(null);
@@ -19,7 +21,15 @@ export default function Header({ introActive, solid = false }) {
   const [search, setSearch] = useState('');
 
   const contextBrand = useMemo(() => {
-    if (routePath !== '/products') return null;
+    const brandRoute = routePath.match(/^\/brands\/([^/]+)/);
+    if (brandRoute) return getBrand(decodeURIComponent(brandRoute[1]));
+    if (routePath !== '/products') {
+      if (routePath.startsWith('/products/')) {
+        const product = getProductBySlug(decodeURIComponent(routePath.split('/').pop()));
+        return product?.brandId ? getBrand(product.brandId) : null;
+      }
+      return null;
+    }
     const slug = new URLSearchParams(location.search).get('brand');
     return slug ? getBrand(slug) : null;
   }, [location.search, routePath]);
@@ -83,7 +93,12 @@ export default function Header({ introActive, solid = false }) {
         <button type="button" onClick={() => switchLanguage()} aria-label={copy.header.languageLabel}>{copy.header.language}</button>
       </div>
       <div className="nav-bar">
-        <Link className="logo" to={contextBrand ? localizePath(`/brands/${contextBrand.slug}`, locale) : '/'} aria-label={contextBrand ? contextBrand.name[locale] : 'VELVET'}>
+        <Link
+          className={`logo ${contextBrand ? 'logo--brand' : ''}`}
+          to={contextBrand ? localizePath(`/brands/${contextBrand.slug}`, locale) : '/'}
+          style={contextBrand ? { '--brand-accent': contextBrand.accent } : undefined}
+          aria-label={contextBrand ? contextBrand.name[locale] : 'VELVET'}
+        >
           <span>{contextBrand ? contextBrand.name[locale] : 'VELVET'}</span>
         </Link>
         <nav className={`main-nav ${mobileOpen ? 'is-open' : ''}`} aria-label={copy.header.nav}>
@@ -110,14 +125,19 @@ export default function Header({ introActive, solid = false }) {
             <input value={search} onChange={(event) => setSearch(event.target.value)} aria-label={copy.header.searchLabel} />
             <button className="search-pill__submit" type="submit" aria-label={copy.header.searchLabel}><i /></button>
           </form>
-          <Link className="header-icon-button header-cart-link" to="/cart" aria-label={`${copy.header.cart}: ${itemCount}`}>
+          <button
+            className="header-icon-button header-cart-link"
+            type="button"
+            aria-label={`${copy.header.cart}: ${itemCount}`}
+            onClick={() => setCartOpen(true)}
+          >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M3.5 4.5h2l1.8 10.1a2 2 0 0 0 2 1.7h7.9a2 2 0 0 0 1.9-1.5l1.2-6.3H6.2" />
               <circle cx="9.4" cy="19.2" r="1.1" />
               <circle cx="17.4" cy="19.2" r="1.1" />
             </svg>
             {itemCount > 0 && <span className="header-cart-count">{itemCount > 99 ? '99+' : itemCount}</span>}
-          </Link>
+          </button>
           <button className="header-icon-button" type="button" aria-label={copy.header.account}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="12" cy="8" r="3.6" />
@@ -133,6 +153,7 @@ export default function Header({ introActive, solid = false }) {
         <CategoriesMegaMenu open={brandsOpen} onClose={() => setBrandsOpen(false)} brand={contextBrand} />
       </div>
       <AboutSubnav open={aboutOpen} onClose={() => setAboutOpen(false)} />
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
     </header>
   );
 }
