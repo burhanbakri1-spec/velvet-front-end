@@ -4,7 +4,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 import ProductShowcaseNavigation from './ProductShowcaseNavigation';
 
-export default function CategoryProductShowcase({ category, products }) {
+export default function CategoryProductShowcase({ category, products, onAddToCart, addToCartLabel }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState('next');
   const cursorRef = useRef(null);
@@ -61,9 +61,16 @@ export default function CategoryProductShowcase({ category, products }) {
             <span className={`category-product-showcase__availability ${product.availability === 'Out of stock' ? 'is-unavailable' : ''}`}>{getAvailability(product, locale)}</span>
             {optionSummary && <span className="category-product-showcase__variants">{copy.category.variants}: {optionSummary}</span>}
           </div>
-          <Link className="category-product-showcase__cta" to={`/products/${product.slug}`}>
-            <span>{copy.category.viewProduct}</span><b aria-hidden="true">{locale === 'ar' ? '←' : '→'}</b>
-          </Link>
+          <div className="category-product-showcase__actions">
+            <Link className="category-product-showcase__cta" to={`/products/${product.slug}`}>
+              <span>{copy.category.viewProduct}</span><b aria-hidden="true">{locale === 'ar' ? '←' : '→'}</b>
+            </Link>
+            {onAddToCart && (
+              <button type="button" className="category-product-showcase__cta category-product-showcase__cta--secondary" onClick={() => onAddToCart(product)}>
+                <span>{addToCartLabel}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
       <span className="category-product-showcase__count">{String(activeIndex + 1).padStart(2, '0')} / {String(products.length).padStart(2, '0')}</span>
