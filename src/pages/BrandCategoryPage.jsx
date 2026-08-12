@@ -1,10 +1,11 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { artwork } from '../data/products';
 import { filterProducts, getBrand, getCategory } from '../data/velvetCatalog';
 import CategoryProductShowcase from '../components/CategoryProductShowcase';
 import { useI18n } from '../i18n/I18nContext';
 import { Link, localizePath } from '../routing/Router';
 import { EMPTY_SHOP_STATE } from '../hooks/useShopState';
+import { useCart } from '../context/CartContext';
 
 // VELVET brand + category landing: reuses the old CategoryPage visual
 // language — a category hero (brand eyebrow + category title + subcategory
@@ -16,6 +17,20 @@ export default function BrandCategoryPage({ slug, categorySlug }) {
   const category = brand ? getCategory(brand.slug, categorySlug) : null;
   const cursorRef = useRef(null);
   const { copy, locale } = useI18n();
+  const { addItem } = useCart();
+  const [justAdded, setJustAdded] = useState(false);
+  const addTimer = useRef(null);
+
+  useEffect(() => () => window.clearTimeout(addTimer.current), []);
+
+  const handleAddToCart = (product) => {
+    addItem(product);
+    setJustAdded(true);
+    window.clearTimeout(addTimer.current);
+    addTimer.current = window.setTimeout(() => setJustAdded(false), 1500);
+  };
+
+  const addToCartLabel = justAdded ? (locale === 'ar' ? 'تمت الإضافة ✓' : 'Added ✓') : copy.detail.add;
 
   const moveCursor = (event) => {
     if (event.pointerType !== 'mouse' || window.innerWidth <= 760 || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -56,7 +71,12 @@ export default function BrandCategoryPage({ slug, categorySlug }) {
       </section>
 
       {products.length > 0 ? (
-        <CategoryProductShowcase category={category} products={products} />
+        <CategoryProductShowcase
+          category={category}
+          products={products}
+          onAddToCart={handleAddToCart}
+          addToCartLabel={addToCartLabel}
+        />
       ) : (
         <section className="category-empty" id="category-products">
           <span className="store-eyebrow">{brand.name[locale]}</span>
