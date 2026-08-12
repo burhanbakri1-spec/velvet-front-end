@@ -11,6 +11,7 @@ import NewsPage from './pages/NewsPage';
 import ContactPage from './pages/ContactPage';
 import CategoryPage from './pages/CategoryPage';
 import BrandPage from './pages/BrandPage';
+import BrandCategoryPage from './pages/BrandCategoryPage';
 import StoreLayout from './components/StoreLayout';
 
 function RouteView() {
@@ -25,7 +26,13 @@ function RouteView() {
   if (routePath === '/') return <HomePage />;
 
   let page;
-  if (routePath.startsWith('/brands/')) {
+  const brandCategoryRoute = routePath.match(/^\/brands\/([^/]+)\/category\/([^/]+)$/);
+  if (brandCategoryRoute) {
+    const brandSlug = decodeURIComponent(brandCategoryRoute[1]);
+    const categorySlug = decodeURIComponent(brandCategoryRoute[2]);
+    page = <BrandCategoryPage key={routePath} slug={brandSlug} categorySlug={categorySlug} />;
+  }
+  else if (routePath.startsWith('/brands/')) {
     const slug = decodeURIComponent(routePath.split('/').pop());
     page = <BrandPage key={slug} slug={slug} />;
   }
