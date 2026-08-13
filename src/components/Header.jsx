@@ -5,6 +5,7 @@ import { Link, localizePath, useRouter } from '../routing/Router';
 import { useCart } from '../context/CartContext';
 import AboutSubnav from './AboutSubnav';
 import { useI18n } from '../i18n/I18nContext';
+import { getPlatformMedia } from '../data/platformContent';
 import { getBrand, getProductBySlug } from '../data/velvetCatalog';
 
 export default function Header({ introActive, solid = false }) {
@@ -33,6 +34,8 @@ export default function Header({ introActive, solid = false }) {
     const slug = new URLSearchParams(location.search).get('brand');
     return slug ? getBrand(slug) : null;
   }, [location.search, routePath]);
+
+  const siteLogo = getPlatformMedia('site.logo');
 
   const submitSearch = (event) => {
     event.preventDefault();
@@ -99,7 +102,13 @@ export default function Header({ introActive, solid = false }) {
           style={contextBrand ? { '--brand-accent': contextBrand.accent } : undefined}
           aria-label={contextBrand ? contextBrand.name[locale] : 'VELVET'}
         >
-          <span>{contextBrand ? contextBrand.name[locale] : 'VELVET'}</span>
+          {contextBrand ? (
+            <span>{contextBrand.name[locale]}</span>
+          ) : siteLogo ? (
+            <img className="logo__img" src={siteLogo} alt="VELVET" />
+          ) : (
+            <span>VELVET</span>
+          )}
         </Link>
         <nav className={`main-nav ${mobileOpen ? 'is-open' : ''}`} aria-label={copy.header.nav}>
           <button
