@@ -844,6 +844,14 @@ export function getBrandMedia(brandSlug) {
   return { video, poster };
 }
 
+// Resolve a brand's managed logo image (`brand.{slug}.logo`) when the platform
+// provides one. When absent the storefront keeps its local/static branch logo
+// (the brand wordmark), so this returns '' to signal the caller to fall back.
+export function getBrandLogo(brandSlug) {
+  if (!brandSlug) return '';
+  return getPlatformMedia(`brand.${brandSlug}.logo`, '');
+}
+
 export function getCategory(brandSlug, categorySlug) {
   return getBrand(brandSlug)?.categories.find((category) => category.slug === categorySlug) || null;
 }

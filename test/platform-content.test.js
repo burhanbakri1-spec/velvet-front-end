@@ -80,3 +80,13 @@ test('header renders the managed site logo and falls back to the text logo when 
   assert.match(headerSource, /<span>VELVET<\/span>/);
   assert.match(headerSource, /siteLogo \? /);
 });
+
+test('brand pages consume brand.{slug}.logo with the local static logo as fallback', () => {
+  const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
+  assert.match(brandPage, /getBrandLogo\(slug\)/);
+  assert.match(brandPage, /category-hero__logo-img/);
+  assert.match(brandPage, /brand\.home\.logo\[locale\]/);
+  const headerSource = fs.readFileSync(new URL('../src/components/Header.jsx', import.meta.url), 'utf8');
+  assert.match(headerSource, /getBrandLogo\(contextBrand\.slug\)/);
+  assert.match(headerSource, /logo__img--brand/);
+});

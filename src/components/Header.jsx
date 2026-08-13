@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import AboutSubnav from './AboutSubnav';
 import { useI18n } from '../i18n/I18nContext';
 import { getPlatformMedia } from '../data/platformContent';
-import { getBrand, getProductBySlug } from '../data/velvetCatalog';
+import { getBrand, getBrandLogo, getProductBySlug } from '../data/velvetCatalog';
 
 export default function Header({ introActive, solid = false }) {
   const [brandsOpen, setBrandsOpen] = useState(false);
@@ -36,6 +36,7 @@ export default function Header({ introActive, solid = false }) {
   }, [location.search, routePath]);
 
   const siteLogo = getPlatformMedia('site.logo');
+  const contextBrandLogo = contextBrand ? getBrandLogo(contextBrand.slug) : '';
 
   const submitSearch = (event) => {
     event.preventDefault();
@@ -103,7 +104,11 @@ export default function Header({ introActive, solid = false }) {
           aria-label={contextBrand ? contextBrand.name[locale] : 'VELVET'}
         >
           {contextBrand ? (
-            <span>{contextBrand.name[locale]}</span>
+            contextBrandLogo ? (
+              <img className="logo__img logo__img--brand" src={contextBrandLogo} alt={contextBrand.name[locale]} />
+            ) : (
+              <span>{contextBrand.name[locale]}</span>
+            )
           ) : siteLogo ? (
             <img className="logo__img" src={siteLogo} alt="VELVET" />
           ) : (
