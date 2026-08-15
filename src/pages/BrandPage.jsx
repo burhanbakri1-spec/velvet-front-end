@@ -72,7 +72,7 @@ export default function BrandPage({ slug }) {
               ...brand,
               slug: category.slug,
               name: category.name,
-              image: artwork(category.name.en, brand.home.palette, (index % 6) + 1),
+              image: category.heroImage || artwork(category.name.en, brand.home.palette, (index % 6) + 1),
               palette: brand.home.palette,
               scene: brand.home.scene,
               home: {

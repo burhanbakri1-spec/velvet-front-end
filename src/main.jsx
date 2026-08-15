@@ -11,6 +11,7 @@ root.render(<main className="platform-content-loading" role="status"><span aria-
 bootstrapPlatformContent().then(() => {
   root.render(<React.StrictMode><App /></React.StrictMode>);
 }).catch((error) => {
-  console.error('iGroup platform content failed to load', error);
-  root.render(<main className="platform-content-error" role="alert"><strong>i-play content is temporarily unavailable.</strong><p>{error.message}</p><button onClick={() => window.location.reload()} type="button">Try again</button></main>);
+  // Platform content unavailable → keep the static VELVET catalog as fallback.
+  console.warn('iGroup platform content unavailable; falling back to the static VELVET catalog.', error);
+  root.render(<React.StrictMode><App /></React.StrictMode>);
 });
