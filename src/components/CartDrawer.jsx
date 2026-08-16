@@ -70,7 +70,7 @@ export default function CartDrawer({ open, onClose }) {
                         <div className="quantity-control quantity-control--cart" aria-label={`${copy.cart.quantityFor} ${name(item)}`}>
                           <button type="button" aria-label={`${copy.cart.decrease} ${name(item)}`} onClick={() => updateQuantity(item.key, item.quantity - 1)}>−</button>
                           <span>{item.quantity}</span>
-                          <button type="button" aria-label={`${copy.cart.increase} ${name(item)}`} onClick={() => updateQuantity(item.key, item.quantity + 1)}>+</button>
+                          <button type="button" disabled={item.maxStock != null && item.quantity >= item.maxStock} aria-label={`${copy.cart.increase} ${name(item)}`} onClick={() => updateQuantity(item.key, item.quantity + 1)}>+</button>
                         </div>
                         <strong className="cart-drawer__line-total">{formatPrice(item.price * item.quantity)}</strong>
                         <button className="cart-drawer__remove" type="button" aria-label={`${copy.cart.remove} ${name(item)}`} onClick={() => removeItem(item.key)}>{copy.cart.remove}</button>

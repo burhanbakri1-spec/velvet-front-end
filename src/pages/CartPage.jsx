@@ -59,7 +59,7 @@ export default function CartPage() {
                     <div className="quantity-control quantity-control--cart" aria-label={`${copy.cart.quantityFor} ${item.name}`}>
                       <button type="button" aria-label={`${copy.cart.decrease} ${item.name}`} onClick={() => updateQuantity(item.key, item.quantity - 1)}>−</button>
                       <span>{item.quantity}</span>
-                      <button type="button" aria-label={`${copy.cart.increase} ${item.name}`} onClick={() => updateQuantity(item.key, item.quantity + 1)}>+</button>
+                      <button type="button" disabled={item.maxStock != null && item.quantity >= item.maxStock} aria-label={`${copy.cart.increase} ${item.name}`} onClick={() => updateQuantity(item.key, item.quantity + 1)}>+</button>
                     </div>
                     <span className="cart-item__unit">{formatPrice(item.price)} {copy.cart.each}</span>
                     <button className="cart-remove" type="button" aria-label={`${copy.cart.remove} ${item.name}`} onClick={() => removeItem(item.key)}>{copy.cart.remove}</button>

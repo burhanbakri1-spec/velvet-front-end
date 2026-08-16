@@ -74,6 +74,20 @@ function buildOptions(rawOptions, apiUrl) {
   }));
 }
 
+function buildVariants(rawVariants, apiUrl) {
+  return (Array.isArray(rawVariants) ? rawVariants : []).map((variant) => ({
+    id: String(variant.id || ''),
+    colorName: localized(variant.colorName, 'en', ''),
+    colorNameAr: localized(variant.colorName, 'ar', ''),
+    colorValue: String(variant.colorValue || ''),
+    size: localized(variant.size, 'en', ''),
+    sizeAr: localized(variant.size, 'ar', ''),
+    price: finiteNumber(variant.price, 0),
+    stock: Math.max(0, finiteNumber(variant.stock, 0)),
+    image: absoluteUrl(variant.image, apiUrl),
+  }));
+}
+
 // `shopping` tags are not an entity field; derive them deterministically from
 // the badge and price so the existing filter groups keep working.
 function deriveShopping(badge, price, hasOffer) {
@@ -164,8 +178,10 @@ function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
   const hoverImage = absoluteUrl(raw.hoverImage || raw.secondaryImage, apiUrl) || gallery[1] || image;
   const badge = localized(raw.badge, 'en', '');
   const badgeAr = localized(raw.badge, 'ar', badge);
-  const availability = localized(raw.availability, 'en', 'In stock');
-  const availabilityAr = localized(raw.availability, 'ar', availability);
+  const variants = buildVariants(raw.variants, apiUrl);
+  const stock = variants.length ? variants.reduce((sum, variant) => sum + variant.stock, 0) : Math.max(0, finiteNumber(raw.stock, 0));
+  const availability = stock <= 0 ? 'Out of stock' : stock <= 5 ? 'Low stock' : 'In stock';
+  const availabilityAr = stock <= 0 ? 'غير متوفر' : stock <= 5 ? 'كمية محدودة' : 'متوفر';
   const price = finiteNumber(raw.price ?? raw.basePrice, 0);
   const originalPrice = raw.originalPrice == null ? null : finiteNumber(raw.originalPrice, 0);
   const hasOffer = badge.toLowerCase().includes('offer') || Boolean(originalPrice);
@@ -194,6 +210,9 @@ function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
     gallery,
     colors: palette,
     options: buildOptions(raw.options, apiUrl),
+    variants,
+    stock,
+    inventoryManaged: true,
     availability,
     availabilityAr,
     age: String(raw.age || ''),

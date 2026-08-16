@@ -6,6 +6,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { Link, localizePath } from '../routing/Router';
 import { EMPTY_SHOP_STATE } from '../hooks/useShopState';
 import { useCart } from '../context/CartContext';
+import { productStock } from '../data/inventory';
 
 // VELVET brand + category landing: reuses the old CategoryPage visual
 // language — a category hero (brand eyebrow + category title + subcategory
@@ -24,6 +25,7 @@ export default function BrandCategoryPage({ slug, categorySlug }) {
   useEffect(() => () => window.clearTimeout(addTimer.current), []);
 
   const handleAddToCart = (product) => {
+    if (product.inventoryManaged && productStock(product) <= 0) return;
     addItem(product);
     setJustAdded(true);
     window.clearTimeout(addTimer.current);

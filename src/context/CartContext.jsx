@@ -24,11 +24,13 @@ export function CartProvider({ children }) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
-  const addItem = (product, selections = {}, quantity = 1, selectedImage) => {
+  const addItem = (product, selections = {}, quantity = 1, selectedImage, variant = null) => {
     const key = makeItemKey(product.id, selections);
+    const maxStock = product.inventoryManaged ? Math.max(0, Number(variant?.stock ?? product.stock ?? 0)) : null;
+    if (maxStock === 0) return;
     setItems((current) => {
       const existing = current.find((item) => item.key === key);
-      if (existing) return current.map((item) => item.key === key ? { ...item, quantity: item.quantity + quantity } : item);
+      if (existing) return current.map((item) => item.key === key ? { ...item, quantity: maxStock == null ? item.quantity + quantity : Math.min(maxStock, item.quantity + quantity) } : item);
       const optionDelta = (product.options || []).reduce((sum, option) => {
         const selected = option.values.find((value) => value.label === selections[option.name]);
         return sum + Number(selected?.priceDelta || 0);
@@ -41,12 +43,14 @@ export function CartProvider({ children }) {
         image: selectedImage || product.image,
         price: product.price + optionDelta,
         selections,
-        quantity,
+        quantity: maxStock == null ? quantity : Math.min(maxStock, quantity),
+        variantId: variant?.id || '',
+        maxStock,
       }];
     });
   };
 
-  const updateQuantity = (key, quantity) => setItems((current) => quantity < 1 ? current.filter((item) => item.key !== key) : current.map((item) => item.key === key ? { ...item, quantity } : item));
+  const updateQuantity = (key, quantity) => setItems((current) => quantity < 1 ? current.filter((item) => item.key !== key) : current.map((item) => item.key === key ? { ...item, quantity: item.maxStock == null ? quantity : Math.min(item.maxStock, quantity) } : item));
   const removeItem = (key) => setItems((current) => current.filter((item) => item.key !== key));
   const clearCart = () => setItems([]);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
