@@ -586,6 +586,7 @@ function normalizeBrands(raw) {
       accent: palette[0],
       heroVideo: '',
       heroPoster: '',
+      logoUrl: '',
       home: {
         order: showcase.order || index + 1,
         kickerEn: showcase.kickerEn || brand.short.en,
@@ -613,7 +614,23 @@ function uniqueSlug(base, used) {
   return candidate;
 }
 
-export const velvetBrands = normalizeBrands(RAW_BRANDS);
+const STATIC_BRANDS = normalizeBrands(RAW_BRANDS);
+export let velvetBrands = STATIC_BRANDS;
+let dynamicCatalogMode = false;
+
+// Swap the runtime catalog to the platform-driven tree (or back to the static
+// fallback when `brands`/`products` are null or empty).
+export function applyDynamicCatalog(brands = null, products = null) {
+  if (!Array.isArray(brands) || brands.length === 0) {
+    dynamicCatalogMode = false;
+    velvetBrands = STATIC_BRANDS;
+    velvetProducts = STATIC_PRODUCTS;
+    return;
+  }
+  dynamicCatalogMode = true;
+  velvetBrands = brands;
+  velvetProducts = Array.isArray(products) ? products : [];
+}
 
 // ---------------------------------------------------------------------------
 // Filter dictionary (independent of the category tree).
@@ -824,7 +841,8 @@ function buildCatalog() {
   return list;
 }
 
-export const velvetProducts = buildCatalog();
+export let velvetProducts = buildCatalog();
+const STATIC_PRODUCTS = velvetProducts;
 
 // ---------------------------------------------------------------------------
 // Lookup helpers.
@@ -833,15 +851,26 @@ export function getBrand(brandSlug) {
   return velvetBrands.find((brand) => brand.slug === brandSlug) || null;
 }
 
-// Resolve a brand's hero media, which is managed via the platform content
-// integration (keys `brand.{slug}.video` / `brand.{slug}.poster`) when
-// available, and otherwise falls back to the static brand config.
+// Resolve a brand's hero media. Entity-owned fields (brand.heroVideo /
+// brand.heroPoster) are canonical; the legacy `brand.{slug}.video` /
+// `brand.{slug}.poster` platform slots and the static config are fallbacks
+// only, so the storefront consumes the brand's own media directly.
 export function getBrandMedia(brandSlug) {
   const brand = getBrand(brandSlug);
   if (!brand) return { video: '', poster: '' };
-  const video = getPlatformMedia(`brand.${brandSlug}.video`, brand.home.heroVideo || '');
-  const poster = getPlatformMedia(`brand.${brandSlug}.poster`, brand.home.heroPoster || brand.image || '');
+  const video = brand.heroVideo || getPlatformMedia(`brand.${brandSlug}.video`, brand.home.heroVideo || '');
+  const poster = brand.heroPoster || getPlatformMedia(`brand.${brandSlug}.poster`, brand.home.heroPoster || brand.image || '');
   return { video, poster };
+}
+
+// Resolve a brand's managed logo image. Entity-owned brand.logoUrl is
+// canonical; the legacy `brand.{slug}.logo` platform slot is the fallback.
+// When absent the storefront keeps its local/static branch logo (the brand
+// wordmark), so this returns '' to signal the caller to fall back.
+export function getBrandLogo(brandSlug) {
+  if (!brandSlug) return '';
+  const brand = getBrand(brandSlug);
+  return brand?.logoUrl || getPlatformMedia(`brand.${brandSlug}.logo`, '');
 }
 
 export function getCategory(brandSlug, categorySlug) {
@@ -874,17 +903,19 @@ export function getVelvetPathLabel(product, locale = 'en') {
 }
 
 export function getProductBySlug(slug) {
-  return velvetProducts.find((product) => product.slug === slug) || products.find((product) => product.slug === slug) || null;
+  const catalogProduct = velvetProducts.find((product) => product.slug === slug) || null;
+  if (dynamicCatalogMode) return catalogProduct;
+  return catalogProduct || products.find((product) => product.slug === slug) || null;
 }
 
-// Resolve a product's "how to use" media, which is managed via the platform
-// content integration (keys `product.{slug}.usageVideo` /
-// `product.{slug}.usageVideoPoster`) when available, and otherwise falls back
-// to the product's own usageVideo fields (empty → section hidden).
+// Resolve a product's "how to use" media. The product's entity-owned
+// usageVideo / usageVideoPoster fields are canonical; the legacy
+// `product.{slug}.usageVideo(/Poster)` platform slots are a fallback only
+// (empty → section hidden).
 export function getProductMedia(product) {
   const slug = product?.slug || '';
-  const usageVideo = getPlatformMedia(`product.${slug}.usageVideo`, product?.usageVideo || '');
-  const usageVideoPoster = getPlatformMedia(`product.${slug}.usageVideoPoster`, product?.usageVideoPoster || product?.gallery?.[0] || product?.image || '');
+  const usageVideo = product?.usageVideo || getPlatformMedia(`product.${slug}.usageVideo`, '');
+  const usageVideoPoster = product?.usageVideoPoster || getPlatformMedia(`product.${slug}.usageVideoPoster`, product?.gallery?.[0] || product?.image || '');
   return { usageVideo, usageVideoPoster };
 }
 

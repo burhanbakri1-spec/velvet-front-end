@@ -2,6 +2,7 @@ import { Link } from '../routing/Router';
 import { getCategoryLabel, getProductBadge, getProductDescription } from '../data/products';
 import { getVelvetPathLabel } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
+import { productStock } from '../data/inventory';
 
 const formatPrice = (value) => `$${Number(value).toFixed(2)}`;
 
@@ -10,6 +11,7 @@ export default function ProductCard({ product, onAddToCart }) {
   const badge = getProductBadge(product, locale);
   const pathLabel = getVelvetPathLabel(product, locale) || getCategoryLabel(product.categoryId, locale);
   const quickAdd = onAddToCart ? (event) => onAddToCart(product, event) : undefined;
+  const unavailable = product.inventoryManaged && productStock(product) <= 0;
   return (
     <article className="product-card">
       <Link className="product-card__media" to={`/products/${product.slug}`} aria-label={`${copy.products.view} ${product.name}`}>
@@ -27,7 +29,7 @@ export default function ProductCard({ product, onAddToCart }) {
             {product.originalPrice && <del>{formatPrice(product.originalPrice)}</del>}
           </div>
           {onAddToCart ? (
-            <button type="button" className="product-card__add" onClick={quickAdd} aria-label={`${copy.products.open} ${product.name}`}>+</button>
+            <button type="button" disabled={unavailable} className="product-card__add" onClick={quickAdd} aria-label={`${copy.products.open} ${product.name}`}>+</button>
           ) : (
             <Link className="product-card__arrow" to={`/products/${product.slug}`} aria-label={`${copy.products.open} ${product.name}`}>{locale === 'ar' ? '←' : '→'}</Link>
           )}

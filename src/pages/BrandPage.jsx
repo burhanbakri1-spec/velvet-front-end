@@ -1,7 +1,9 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { artwork } from '../data/products';
-import { getBrand, getBrandMedia } from '../data/velvetCatalog';
+import { getBrand, getBrandLogo, getBrandMedia } from '../data/velvetCatalog';
 import BrandShowcase from '../components/BrandShowcase';
+import { PlayButton } from '../components/Hero';
+import PageNavigation from '../components/PageNavigation';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 
@@ -35,28 +37,66 @@ export default function BrandPage({ slug }) {
   }
 
   const media = getBrandMedia(slug);
+  const brandLogo = getBrandLogo(slug);
+
+  const videoRef = useRef(null);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    const mediaElement = videoRef.current;
+    if (!mediaElement) return undefined;
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    const onEnded = () => setPlaying(false);
+    mediaElement.addEventListener('play', onPlay);
+    mediaElement.addEventListener('pause', onPause);
+    mediaElement.addEventListener('ended', onEnded);
+    return () => {
+      mediaElement.removeEventListener('play', onPlay);
+      mediaElement.removeEventListener('pause', onPause);
+      mediaElement.removeEventListener('ended', onEnded);
+    };
+  }, []);
+
+  const togglePlayback = async () => {
+    const mediaElement = videoRef.current;
+    if (!mediaElement) return;
+    if (mediaElement.paused) {
+      try { await mediaElement.play(); } catch { setPlaying(false); }
+    } else mediaElement.pause();
+  };
 
   return (
     <div className="category-page">
+      <PageNavigation
+        fallbackPath="/"
+        breadcrumbs={[
+          { label: copy.meta.home, to: '/' },
+          { label: brand.name[locale] },
+        ]}
+      />
       <section
-        className="category-hero brand-hero"
+        className={`category-hero brand-hero ${playing ? 'is-playing' : 'is-paused'}`}
         style={{ '--c1': brand.accent, '--c2': brand.palette[1], '--c3': brand.palette[2] }}
         onPointerEnter={moveCursor}
         onPointerMove={moveCursor}
         onPointerLeave={hideCursor}
       >
         {media.video ? (
-          <video className="category-hero__media" src={media.video} poster={media.poster || brand.image} autoPlay muted loop playsInline />
+          <video ref={videoRef} className="category-hero__media" src={media.video} poster={media.poster || brand.image} autoPlay muted loop playsInline onClick={togglePlayback} />
         ) : (
           <img className="category-hero__media" src={media.poster || brand.image} alt="" />
         )}
         <div className="category-hero__shade" aria-hidden="true" />
         <a className="category-hero__link" href="#category-products" aria-label={`${copy.home.view} ${brand.name[locale]}`} />
         <div className="category-hero__title">
-          <span className="category-hero__logo">{brand.home.logo[locale]}</span>
+          <span className="category-hero__logo">
+            {brandLogo ? <img className="category-hero__logo-img" src={brandLogo} alt={brand.name[locale]} /> : brand.home.logo[locale]}
+          </span>
           <h1>{brand.name[locale]}</h1>
         </div>
         <p className="category-hero__description">{brand.tagline[locale]}</p>
+        {media.video && <PlayButton label={playing ? copy.home.pause : copy.home.play} playing={playing} onClick={togglePlayback} />}
         <span className="showcase-view-cursor" ref={cursorRef} aria-hidden="true">{copy.home.view}</span>
       </section>
 
@@ -69,7 +109,7 @@ export default function BrandPage({ slug }) {
               ...brand,
               slug: category.slug,
               name: category.name,
-              image: artwork(category.name.en, brand.home.palette, (index % 6) + 1),
+              image: category.heroImage || artwork(category.name.en, brand.home.palette, (index % 6) + 1),
               palette: brand.home.palette,
               scene: brand.home.scene,
               home: {

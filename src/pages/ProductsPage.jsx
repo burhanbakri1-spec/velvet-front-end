@@ -4,6 +4,7 @@ import CategoryCascade from '../components/CategoryCascade';
 import ProductFilters from '../components/ProductFilters';
 import ActiveFilters from '../components/ActiveFilters';
 import MobileFilterDrawer from '../components/MobileFilterDrawer';
+import PageNavigation from '../components/PageNavigation';
 import { filterProducts, getManufacturerName, resolvePath } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { useShopState } from '../hooks/useShopState';
@@ -38,8 +39,15 @@ export default function ProductsPage() {
 
   const showAllNote = results.length > shown.length;
 
+  const breadcrumbs = [{ label: copy.meta.home, to: '/' }];
+  if (path.brand) breadcrumbs.push({ label: path.brand.name[locale], to: `/brands/${state.brand}` });
+  if (path.category) breadcrumbs.push({ label: path.category.name[locale] });
+
+  const fallback = state.brand ? `/brands/${state.brand}` : '/';
+
   return (
     <div className="shop-page">
+      <PageNavigation fallbackPath={fallback} breadcrumbs={breadcrumbs} />
       <div className="shop-page__top">
         <CategoryCascade state={state} onSelect={select} hideBrand={Boolean(state.brand)} />
         <div className="shop-page__tools">

@@ -1,5 +1,7 @@
 import { aboutSections, newsCategories, newsItems } from './company.js';
 import { homeCategories, productCategories, products } from './products.js';
+import { buildDynamicCatalog } from './dynamicCatalog.js';
+import { applyDynamicCatalog } from './velvetCatalog.js';
 import { translations } from '../i18n/translations.js';
 
 const websiteMedia = new Map();
@@ -141,6 +143,11 @@ export function applyPlatformContent(payload, apiUrl) {
     ...category,
     home: { order: index + 1, kickerEn: category.descriptionEn, kickerAr: category.descriptionAr, palette: ['#ff7c28', '#ffcf45', '#8f281d'], scene: 'mini' },
   })));
+  // The dynamic VELVET hierarchy (Brand → Main Category → Subcategory →
+  // Products) is the canonical catalog when the payload carries brand entities.
+  // Without brands the storefront keeps its static VELVET catalog as fallback.
+  const dynamic = buildDynamicCatalog(payload, apiUrl);
+  applyDynamicCatalog(dynamic?.brands || null, dynamic?.products || null);
   applyStructuredContent(payload, apiUrl);
   newsCategories.splice(0, newsCategories.length, { id: 'all', en: 'All', ar: 'الكل' }, ...[...new Set(newsItems.map((item) => item.category))].map((category) => {
     const item = newsItems.find((entry) => entry.category === category);

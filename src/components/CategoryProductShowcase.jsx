@@ -3,6 +3,7 @@ import { getAvailability, getOptionName, getProductDescription } from '../data/p
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 import ProductShowcaseNavigation from './ProductShowcaseNavigation';
+import { productStock } from '../data/inventory';
 
 export default function CategoryProductShowcase({ category, products, onAddToCart, addToCartLabel }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -28,6 +29,7 @@ export default function CategoryProductShowcase({ category, products, onAddToCar
 
   if (!product) return null;
   const optionSummary = product.options.map((option) => getOptionName(option, locale)).join(' · ');
+  const unavailable = product.inventoryManaged ? productStock(product) <= 0 : product.availability === 'Out of stock';
 
   return (
     <section className="category-product-showcase" id="category-products" aria-live="polite">
@@ -58,7 +60,7 @@ export default function CategoryProductShowcase({ category, products, onAddToCar
               <strong>${product.price.toFixed(2)}</strong>
               {product.originalPrice && <del>${product.originalPrice.toFixed(2)}</del>}
             </div>
-            <span className={`category-product-showcase__availability ${product.availability === 'Out of stock' ? 'is-unavailable' : ''}`}>{getAvailability(product, locale)}</span>
+            <span className={`category-product-showcase__availability ${unavailable ? 'is-unavailable' : ''}`}>{getAvailability(product, locale)}</span>
             {optionSummary && <span className="category-product-showcase__variants">{copy.category.variants}: {optionSummary}</span>}
           </div>
           <div className="category-product-showcase__actions">
@@ -66,7 +68,7 @@ export default function CategoryProductShowcase({ category, products, onAddToCar
               <span>{copy.category.viewProduct}</span><b aria-hidden="true">{locale === 'ar' ? '←' : '→'}</b>
             </Link>
             {onAddToCart && (
-              <button type="button" className="category-product-showcase__cta category-product-showcase__cta--secondary" onClick={() => onAddToCart(product)}>
+              <button type="button" disabled={unavailable} className="category-product-showcase__cta category-product-showcase__cta--secondary" onClick={() => onAddToCart(product)}>
                 <span>{addToCartLabel}</span>
               </button>
             )}

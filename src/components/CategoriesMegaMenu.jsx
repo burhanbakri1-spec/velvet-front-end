@@ -13,15 +13,15 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
   const { copy, locale } = useI18n();
   const { navigate } = useRouter();
   const scoped = Boolean(contextBrand);
-  const [activeBrand, setActiveBrand] = useState(velvetBrands[0].slug);
+  const [activeBrand, setActiveBrand] = useState(velvetBrands[0]?.slug || '');
   const brand = scoped ? contextBrand : (velvetBrands.find((item) => item.slug === activeBrand) || velvetBrands[0]);
-  const [activeCategory, setActiveCategory] = useState(brand.categories[0].slug);
-  const category = brand.categories.find((item) => item.slug === activeCategory) || brand.categories[0];
+  const [activeCategory, setActiveCategory] = useState(brand?.categories[0]?.slug || '');
+  const category = brand?.categories.find((item) => item.slug === activeCategory) || brand?.categories[0] || null;
 
   const selectBrand = (slug) => {
     const next = velvetBrands.find((item) => item.slug === slug) || velvetBrands[0];
-    setActiveBrand(next.slug);
-    setActiveCategory(next.categories[0].slug);
+    setActiveBrand(next?.slug || '');
+    setActiveCategory(next?.categories[0]?.slug || '');
   };
   const goBrand = (slug) => {
     selectBrand(slug);
@@ -71,7 +71,7 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
         </nav>
         <nav className="mega-cascade__col" aria-label={copy.shop.subcategory}>
           <span className="mega-cascade__col-title">{copy.shop.subcategory}</span>
-          {category.subs.map((item) => (
+          {(category?.subs || []).map((item) => (
             <Link to={shopPath({ brand: brand.slug, category: category.slug, subcategory: item.slug })} onClick={onClose} key={item.slug}>
               {item.name[locale]}
             </Link>

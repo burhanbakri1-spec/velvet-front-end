@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import ProductShowcaseNavigation from '../components/ProductShowcaseNavigation';
+import PageNavigation from '../components/PageNavigation';
 import { useCart } from '../context/CartContext';
 import { getAvailability, getCategoryLabel, getOptionName, getOptionValue, getProductBadge, getProductDescription } from '../data/products';
 import { filterGroups, getBrand, getCategory, getProductBySlug, getProductMedia, getVelvetPathLabel, velvetProducts } from '../data/velvetCatalog';
 import { Link, localizePath, useRouter } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
+import { availableStock, optionValueUnavailable, selectedVariant } from '../data/inventory';
 
 const formatPrice = (value) => `$${Number(value).toFixed(2)}`;
 
@@ -35,6 +37,12 @@ export default function ProductDetailsPage({ slug }) {
   const nextProduct = sameCategory[(currentIndex + 1) % sameCategory.length];
 
   useEffect(() => () => window.clearTimeout(addedTimer.current), []);
+  const activeVariant = selectedVariant(product, selections);
+  const stockLimit = availableStock(product, selections);
+  const unavailable = product?.inventoryManaged ? stockLimit <= 0 : product?.availability === 'Out of stock';
+  useEffect(() => {
+    if (Number.isFinite(stockLimit)) setQuantity((value) => Math.max(1, Math.min(stockLimit || 1, value)));
+  }, [stockLimit]);
 
   const go = (step) => {
     if (sameCategory.length < 2) return;
@@ -52,7 +60,6 @@ export default function ProductDetailsPage({ slug }) {
   if (!gallery.includes(activeImage)) setActiveImage(gallery[0]);
 
   const productMedia = getProductMedia(product);
-  const unavailable = product.availability === 'Out of stock';
   const optionDelta = product.options.reduce((sum, option) => sum + Number(option.values.find((value) => value.label === selections[option.name])?.priceDelta || 0), 0);
   const currentPrice = product.price + optionDelta;
   const optionSummary = product.options.map((option) => getOptionName(option, locale)).join(' · ');
@@ -74,7 +81,7 @@ export default function ProductDetailsPage({ slug }) {
   const handleAdd = (event) => {
     event.preventDefault();
     if (unavailable) return;
-    addItem(product, selections, quantity, activeImage);
+    addItem(product, selections, Math.min(quantity, stockLimit), activeImage, activeVariant);
     setAdded(true);
     window.clearTimeout(addedTimer.current);
     addedTimer.current = window.setTimeout(() => setAdded(false), 1800);
@@ -83,7 +90,7 @@ export default function ProductDetailsPage({ slug }) {
   const handleBuyNow = (event) => {
     event.preventDefault();
     if (unavailable) return;
-    addItem(product, selections, quantity, activeImage);
+    addItem(product, selections, Math.min(quantity, stockLimit), activeImage, activeVariant);
     navigate(localizePath('/checkout', locale));
   };
 
@@ -96,8 +103,18 @@ export default function ProductDetailsPage({ slug }) {
   if (product.options.length > 0) specs.push({ label: copy.category.variants, value: optionSummary });
   specs.push({ label: copy.detail.stock, value: getAvailability(product, locale) });
 
+  const detailBreadcrumbs = [{ label: copy.meta.home, to: '/' }];
+  if (brand) detailBreadcrumbs.push({ label: brand.name[locale], to: `/brands/${product.velvetPath.brandId}` });
+  if (category) detailBreadcrumbs.push({ label: category.name[locale], to: `/products?brand=${product.velvetPath.brandId}&category=${product.velvetPath.categoryId}` });
+  detailBreadcrumbs.push({ label: product.name });
+
+  const detailFallback = product.velvetPath
+    ? `/products?brand=${product.velvetPath.brandId}&category=${product.velvetPath.categoryId}`
+    : '/products';
+
   return (
     <div className="product-detail-page">
+      <PageNavigation fallbackPath={detailFallback} breadcrumbs={detailBreadcrumbs} />
       <section className="category-product-showcase category-product-showcase--detail" aria-label={product.name}>
         <ProductShowcaseNavigation
           onPrevious={() => go(-1)}
@@ -134,11 +151,13 @@ export default function ProductDetailsPage({ slug }) {
                     <fieldset className="product-option product-detail-option" key={option.name}>
                       <legend>{getOptionName(option, locale)} <span>{selectedValue ? getOptionValue(selectedValue, locale) : ''}</span></legend>
                       <div className="product-option__values">
-                        {option.values.map((value) => (
-                          <button className={selections[option.name] === value.label ? 'is-active' : ''} onClick={() => setSelections((current) => ({ ...current, [option.name]: value.label }))} type="button" key={value.label}>
+                        {option.values.map((value) => {
+                          const disabled = optionValueUnavailable(product, selections, option.name, value.label);
+                          return (
+                          <button disabled={disabled} aria-disabled={disabled} className={selections[option.name] === value.label ? 'is-active' : ''} onClick={() => setSelections((current) => ({ ...current, [option.name]: value.label }))} type="button" key={value.label}>
                             {value.color && <i style={{ background: value.color }} />}{getOptionValue(value, locale)}
                           </button>
-                        ))}
+                        ); })}
                       </div>
                     </fieldset>
                   );
@@ -150,7 +169,7 @@ export default function ProductDetailsPage({ slug }) {
               <div className="quantity-control product-detail-qty" aria-label={copy.detail.quantity}>
                 <button type="button" aria-label={copy.detail.decrease} onClick={() => setQuantity((value) => Math.max(1, value - 1))}>−</button>
                 <span>{quantity}</span>
-                <button type="button" aria-label={copy.detail.increase} onClick={() => setQuantity((value) => value + 1)}>+</button>
+                <button type="button" disabled={Number.isFinite(stockLimit) && quantity >= stockLimit} aria-label={copy.detail.increase} onClick={() => setQuantity((value) => Number.isFinite(stockLimit) ? Math.min(stockLimit, value + 1) : value + 1)}>+</button>
               </div>
               <button className="store-primary-button product-detail-buy__primary" type="button" disabled={unavailable} onClick={handleAdd}>{added ? copy.detail.added : unavailable ? copy.detail.unavailable : copy.detail.add}</button>
               <button className="store-primary-button product-detail-buy__secondary" type="button" disabled={unavailable} onClick={handleBuyNow}>{copy.detail.buyNow}</button>
