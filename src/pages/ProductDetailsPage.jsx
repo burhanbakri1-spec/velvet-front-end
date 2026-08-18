@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import ProductShowcaseNavigation from '../components/ProductShowcaseNavigation';
+import PageNavigation from '../components/PageNavigation';
 import { useCart } from '../context/CartContext';
 import { getAvailability, getCategoryLabel, getOptionName, getOptionValue, getProductBadge, getProductDescription } from '../data/products';
 import { filterGroups, getBrand, getCategory, getProductBySlug, getProductMedia, getVelvetPathLabel, velvetProducts } from '../data/velvetCatalog';
@@ -102,8 +103,18 @@ export default function ProductDetailsPage({ slug }) {
   if (product.options.length > 0) specs.push({ label: copy.category.variants, value: optionSummary });
   specs.push({ label: copy.detail.stock, value: getAvailability(product, locale) });
 
+  const detailBreadcrumbs = [{ label: copy.meta.home, to: '/' }];
+  if (brand) detailBreadcrumbs.push({ label: brand.name[locale], to: `/brands/${product.velvetPath.brandId}` });
+  if (category) detailBreadcrumbs.push({ label: category.name[locale], to: `/products?brand=${product.velvetPath.brandId}&category=${product.velvetPath.categoryId}` });
+  detailBreadcrumbs.push({ label: product.name });
+
+  const detailFallback = product.velvetPath
+    ? `/products?brand=${product.velvetPath.brandId}&category=${product.velvetPath.categoryId}`
+    : '/products';
+
   return (
     <div className="product-detail-page">
+      <PageNavigation fallbackPath={detailFallback} breadcrumbs={detailBreadcrumbs} />
       <section className="category-product-showcase category-product-showcase--detail" aria-label={product.name}>
         <ProductShowcaseNavigation
           onPrevious={() => go(-1)}
