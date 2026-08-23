@@ -90,3 +90,21 @@ test('brand pages consume brand.{slug}.logo with the local static logo as fallba
   assert.match(headerSource, /getBrandLogo\(contextBrand\.slug\)/);
   assert.match(headerSource, /logo__img--brand/);
 });
+
+test('home and about heroes consume managed video slots with local mp4 fallback', () => {
+  const heroSource = fs.readFileSync(new URL('../src/components/Hero.jsx', import.meta.url), 'utf8');
+  const aboutSource = fs.readFileSync(new URL('../src/pages/AboutPage.jsx', import.meta.url), 'utf8');
+  assert.match(heroSource, /getPlatformMedia\('home\.hero\.video', '\/media\/play-feature\.mp4'\)/);
+  assert.match(aboutSource, /getPlatformMedia\('about\.hero\.video', '\/media\/play-feature\.mp4'\)/);
+});
+
+test('product cards and detail pages render locale-aware product titles', async () => {
+  const { getProductName } = await import('../src/data/products.js');
+  const product = { name: 'Toy EN', nameAr: 'لعبة' };
+  assert.equal(getProductName(product, 'en'), 'Toy EN');
+  assert.equal(getProductName(product, 'ar'), 'لعبة');
+  const cardSource = fs.readFileSync(new URL('../src/components/ProductCard.jsx', import.meta.url), 'utf8');
+  const detailSource = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
+  assert.match(cardSource, /getProductName\(product, locale\)/);
+  assert.match(detailSource, /getProductName\(product, locale\)/);
+});

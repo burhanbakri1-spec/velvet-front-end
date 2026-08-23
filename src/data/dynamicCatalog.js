@@ -127,7 +127,7 @@ function buildBrand(raw, index, apiUrl) {
     heroVideo,
     heroPoster,
     logoUrl,
-    image: heroPoster || artwork(nameEn || raw.slug || 'Brand', palette, index % 6),
+    image: heroPoster || logoUrl || artwork(nameEn || raw.slug || 'Brand', palette, index % 6),
     palette,
     scene,
     logo: short,
@@ -163,6 +163,8 @@ function buildCategory(raw, subs, apiUrl) {
         id: String(sub.id || ''),
         slug: String(sub.slug || slugify(subNameEn || sub.id || 'sub')),
         name: { en: subNameEn, ar: subNameAr },
+        image: absoluteUrl(sub.image || sub.imageUrl, apiUrl),
+        heroVideo: absoluteUrl(sub.heroVideo, apiUrl),
       };
     }),
   };

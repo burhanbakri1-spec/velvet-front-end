@@ -40,6 +40,7 @@ export function CartProvider({ children }) {
         productId: product.id,
         slug: product.slug,
         name: product.name,
+        nameAr: product.nameAr || product.name,
         image: selectedImage || product.image,
         price: product.price + optionDelta,
         selections,

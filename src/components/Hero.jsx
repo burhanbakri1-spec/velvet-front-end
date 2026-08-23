@@ -41,7 +41,7 @@ export default function Hero({ introActive }) {
   return (
     <section id="top" className={`hero ${introActive ? 'hero--intro' : ''} ${playing ? 'is-playing' : 'is-paused'}`} aria-label={copy.home.feature}>
       <video ref={videoRef} className="hero-media" poster={getPlatformMedia('home.hero.poster', '/media/poster-about.jpg')} preload="metadata" playsInline onClick={togglePlayback} aria-label={copy.home.feature}>
-        <source src="/media/play-feature.mp4" type="video/mp4" />
+        <source src={getPlatformMedia('home.hero.video', '/media/play-feature.mp4')} type="video/mp4" />
       </video>
       <div className="hero-shade" />
       <h1 className="sr-only">{copy.header.tagline}</h1>

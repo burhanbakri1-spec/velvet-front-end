@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { getAvailability, getOptionName, getProductDescription } from '../data/products';
+import { getAvailability, getOptionName, getProductDescription, getProductName } from '../data/products';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 import ProductShowcaseNavigation from './ProductShowcaseNavigation';
@@ -11,6 +11,7 @@ export default function CategoryProductShowcase({ category, products, onAddToCar
   const cursorRef = useRef(null);
   const { copy, locale } = useI18n();
   const product = products[activeIndex];
+  const productName = product ? getProductName(product, locale) : '';
 
   const move = (step) => {
     if (products.length < 2) return;
@@ -47,13 +48,13 @@ export default function CategoryProductShowcase({ category, products, onAddToCar
           onPointerEnter={moveCursor}
           onPointerMove={moveCursor}
           onPointerLeave={hideCursor}
-          aria-label={`${copy.category.viewProduct}: ${product.name}`}
+          aria-label={`${copy.category.viewProduct}: ${productName}`}
         >
-          <img src={product.image} alt={product.name} />
+          <img src={product.image} alt={productName} />
         </Link>
         <div className="category-product-showcase__copy">
           <span className="category-product-showcase__category">{category.name[locale]}</span>
-          <h2>{product.name}</h2>
+          <h2>{productName}</h2>
           <p>{getProductDescription(product, locale)}</p>
           <div className="category-product-showcase__commerce">
             <div className="category-product-showcase__price">
