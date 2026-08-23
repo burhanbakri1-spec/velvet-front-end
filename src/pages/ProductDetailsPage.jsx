@@ -3,7 +3,7 @@ import ProductCard from '../components/ProductCard';
 import ProductShowcaseNavigation from '../components/ProductShowcaseNavigation';
 import PageNavigation from '../components/PageNavigation';
 import { useCart } from '../context/CartContext';
-import { getAvailability, getCategoryLabel, getOptionName, getOptionValue, getProductBadge, getProductDescription } from '../data/products';
+import { getAvailability, getCategoryLabel, getOptionName, getOptionValue, getProductBadge, getProductDescription, getProductName } from '../data/products';
 import { filterGroups, getBrand, getCategory, getProductBySlug, getProductMedia, getVelvetPathLabel, velvetProducts } from '../data/velvetCatalog';
 import { Link, localizePath, useRouter } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
@@ -106,7 +106,8 @@ export default function ProductDetailsPage({ slug }) {
   const detailBreadcrumbs = [{ label: copy.meta.home, to: '/' }];
   if (brand) detailBreadcrumbs.push({ label: brand.name[locale], to: `/brands/${product.velvetPath.brandId}` });
   if (category) detailBreadcrumbs.push({ label: category.name[locale], to: `/products?brand=${product.velvetPath.brandId}&category=${product.velvetPath.categoryId}` });
-  detailBreadcrumbs.push({ label: product.name });
+  const productName = getProductName(product, locale);
+  detailBreadcrumbs.push({ label: productName });
 
   const detailFallback = product.velvetPath
     ? `/products?brand=${product.velvetPath.brandId}&category=${product.velvetPath.categoryId}`
@@ -115,7 +116,7 @@ export default function ProductDetailsPage({ slug }) {
   return (
     <div className="product-detail-page">
       <PageNavigation fallbackPath={detailFallback} breadcrumbs={detailBreadcrumbs} />
-      <section className="category-product-showcase category-product-showcase--detail" aria-label={product.name}>
+      <section className="category-product-showcase category-product-showcase--detail" aria-label={productName}>
         <ProductShowcaseNavigation
           onPrevious={() => go(-1)}
           onNext={() => go(1)}
@@ -125,14 +126,14 @@ export default function ProductDetailsPage({ slug }) {
         />
         <div className={`category-product-showcase__slide is-${direction}`} key={product.id}>
           <figure className="category-product-showcase__media product-detail-hero__media">
-            <img src={activeImage} alt={product.name} />
+            <img src={activeImage} alt={productName} />
           </figure>
           <div className="category-product-showcase__copy">
             <span className="category-product-showcase__category">
               {eyebrow}
               {product.badge && <span className="product-detail-badge">{getProductBadge(product, locale)}</span>}
             </span>
-            <h1>{product.name}</h1>
+            <h1>{productName}</h1>
             <p>{getProductDescription(product, locale, true)}</p>
             <div className="category-product-showcase__commerce">
               <div className="category-product-showcase__price">
@@ -188,18 +189,18 @@ export default function ProductDetailsPage({ slug }) {
               <h2>{copy.detail.galleryTitle}</h2>
             </div>
             <figure className="product-detail-gallery__preview">
-              <img src={activeImage} alt={product.name} />
+              <img src={activeImage} alt={productName} />
               {product.badge && <span className="product-detail-badge">{getProductBadge(product, locale)}</span>}
             </figure>
             {gallery.length > 1 && (
-              <div className="product-detail-gallery__thumbs" role="tablist" aria-label={`${copy.detail.gallery} ${product.name}`}>
+              <div className="product-detail-gallery__thumbs" role="tablist" aria-label={`${copy.detail.gallery} ${productName}`}>
                 {gallery.map((image, index) => (
                   <button
                     type="button"
                     className={image === activeImage ? 'is-active' : ''}
                     role="tab"
                     aria-selected={image === activeImage}
-                    aria-label={`${product.name} ${copy.detail.imageView} ${index + 1}`}
+                    aria-label={`${productName} ${copy.detail.imageView} ${index + 1}`}
                     onClick={() => setActiveImage(image)}
                     key={image}
                   >
@@ -242,7 +243,7 @@ export default function ProductDetailsPage({ slug }) {
               controls
               playsInline
               preload="metadata"
-              aria-label={`${copy.detail.howToUse} — ${product.name}`}
+              aria-label={`${copy.detail.howToUse} — ${productName}`}
             />
           </section>
         )}

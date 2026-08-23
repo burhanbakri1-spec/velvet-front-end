@@ -109,6 +109,22 @@ function applyStructuredContent(payload, apiUrl) {
         section[field] = item.values?.en || '';
         section[`${field}Ar`] = item.values?.ar || item.values?.en || '';
       }
+      continue;
+    }
+    const newsMatch = item.key.match(/^news\.(\d+)\.(title|category|date)$/);
+    if (newsMatch && newsItems[Number(newsMatch[1])]) {
+      const itemIndex = Number(newsMatch[1]);
+      const field = newsMatch[2];
+      const entry = newsItems[itemIndex];
+      if (field === 'title') {
+        entry.title = item.values?.en || entry.title;
+        entry.titleAr = item.values?.ar || item.values?.en || entry.titleAr;
+      } else if (field === 'category') {
+        entry.category = item.values?.en || entry.category;
+        entry.categoryAr = item.values?.ar || item.values?.en || entry.categoryAr;
+      } else if (field === 'date' && (item.values?.en || item.values?.ar)) {
+        entry.date = item.values?.en || item.values?.ar;
+      }
     }
   }
   for (const item of payload.media || []) {

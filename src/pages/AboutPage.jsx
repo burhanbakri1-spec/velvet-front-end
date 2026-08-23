@@ -9,7 +9,7 @@ export default function AboutPage() {
   const { copy } = useI18n();
   return (
     <div className="about-page">
-      <PageVideoHero title={copy.about.title} eyebrow={copy.about.eyebrow} video="/media/play-feature.mp4" poster={getPlatformMedia('about.hero.poster', '/media/poster-about.jpg')} theme="about" overlay={0.38} />
+      <PageVideoHero title={copy.about.title} eyebrow={copy.about.eyebrow} video={getPlatformMedia('about.hero.video', '/media/play-feature.mp4')} poster={getPlatformMedia('about.hero.poster', '/media/poster-about.jpg')} theme="about" overlay={0.38} />
       <div className="editorial-sections">
         {aboutSections.map((section) => <EditorialSplit section={section} key={section.title} />)}
       </div>
