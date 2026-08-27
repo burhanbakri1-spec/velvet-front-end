@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
-import CategoryCascade from '../components/CategoryCascade';
 import ProductFilters from '../components/ProductFilters';
 import ActiveFilters from '../components/ActiveFilters';
 import MobileFilterDrawer from '../components/MobileFilterDrawer';
 import PageNavigation from '../components/PageNavigation';
-import { filterProducts, getManufacturerName, resolvePath } from '../data/velvetCatalog';
+import { filterProducts, resolvePath } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { useShopState } from '../hooks/useShopState';
 
@@ -13,7 +12,7 @@ const MAX_VISIBLE = 48;
 
 export default function ProductsPage() {
   const { copy, locale } = useI18n();
-  const { state, select, toggle, removeFilter, clearFilters, resetAll, setSearch, activeFilterCount } = useShopState();
+  const { state, toggle, removeFilter, clearFilters, resetAll, setSearch, activeFilterCount } = useShopState();
   const [limit, setLimit] = useState(MAX_VISIBLE);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [queryInput, setQueryInput] = useState(state.search);
@@ -24,11 +23,6 @@ export default function ProductsPage() {
   const results = useMemo(() => filterProducts(state), [state]);
   const path = useMemo(() => resolvePath(state), [state]);
   const shown = results.slice(0, limit);
-
-  const heroTitle = path.sub ? path.sub.name[locale] : path.category ? path.category.name[locale] : path.brand ? path.brand.name[locale] : null;
-  const heroDescription = heroTitle
-    ? (path.sub ? `${path.category.name[locale]} · ${path.brand.name[locale]}` : path.category ? path.brand.name[locale] : path.brand ? path.brand.tagline[locale] : '')
-    : copy.products.intro;
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -41,22 +35,24 @@ export default function ProductsPage() {
 
   const breadcrumbs = [{ label: copy.meta.home, to: '/' }];
   if (path.brand) breadcrumbs.push({ label: path.brand.name[locale], to: `/brands/${state.brand}` });
-  if (path.category) breadcrumbs.push({ label: path.category.name[locale] });
+  if (path.category) {
+    breadcrumbs.push({
+      label: path.category.name[locale],
+      to: path.brand ? `/brands/${state.brand}/category/${state.category}` : undefined,
+    });
+  }
+  if (path.sub) breadcrumbs.push({ label: path.sub.name[locale] });
 
   const fallback = state.brand ? `/brands/${state.brand}` : '/';
 
   return (
     <div className="shop-page">
       <PageNavigation fallbackPath={fallback} breadcrumbs={breadcrumbs} />
-      <div className="shop-page__top">
-        <CategoryCascade state={state} onSelect={select} hideBrand={Boolean(state.brand)} />
-        <div className="shop-page__tools">
-          <button type="button" className="tool-btn shop-mobile-filters" onClick={() => setDrawerOpen(true)}>
-            {copy.shop.filters}
-            {activeFilterCount > 0 && <span className="shop-mobile-filters__count">{activeFilterCount}</span>}
-          </button>
-          <button type="button" className="tool-btn" onClick={resetAll}>{copy.shop.resetAll}</button>
-        </div>
+      <div className="shop-page__tools shop-page__tools--solo">
+        <button type="button" className="tool-btn shop-mobile-filters" onClick={() => setDrawerOpen(true)}>
+          {copy.shop.filters}
+          {activeFilterCount > 0 && <span className="shop-mobile-filters__count">{activeFilterCount}</span>}
+        </button>
       </div>
 
       <div className="shop-page__grid">
@@ -65,20 +61,6 @@ export default function ProductsPage() {
         </aside>
 
         <main className="shop-content">
-          <section className="shop-hero">
-            <div className="shop-hero__text">
-              <h1>{heroTitle || 'VELVET'}</h1>
-              <p>{heroDescription}</p>
-            </div>
-            <div className="path-pills" aria-label={copy.shop.browseBy}>
-              <span className="path-pill path-pill--root">VELVET</span>
-              {path.brand && <span className="path-pill">{path.brand.name[locale]}</span>}
-              {path.category && <span className="path-pill">{path.category.name[locale]}</span>}
-              {path.sub && <span className="path-pill">{path.sub.name[locale]}</span>}
-              {state.manufacturer && <span className="path-pill">{getManufacturerName(state.manufacturer)}</span>}
-            </div>
-          </section>
-
           <div className="shop-toolbar">
             <ActiveFilters state={state} onRemove={removeFilter} onClear={clearFilters} />
             <div className="shop-toolbar__right">

@@ -15,7 +15,7 @@ test('manifest exposes the verified i-play tenant identity and concrete routes',
   assert.equal(manifest.baseUrl, 'https://i-play.vercel.app');
   assert.equal(manifest.defaultLocale, 'ar');
   assert.deepEqual(manifest.supportedLocales, ['ar', 'en']);
-  assert.deepEqual(manifest.pages.map((page) => page.route), ['/', '/products', '/about', '/news', '/contact', '/cart']);
+  assert.deepEqual(manifest.pages.map((page) => page.route), ['/', '/products', '/about', '/news', '/vlogs', '/contact', '/cart']);
   assert.ok(manifest.pages.every((page) => !page.route.includes(':')));
   assert.equal('sectionLibrary' in manifest, false);
   assert.equal('siteDesign' in manifest, false);
@@ -45,7 +45,7 @@ test('product, category, news, contact-form and cart runtime data remain read-on
   assert.equal(collections.length, 3);
   assert.ok(manifest.pages.find((page) => page.id === 'cart').editable === false);
   const catalogSources = sourceBound.filter((element) => element.source.kind === 'platform-catalog');
-  assert.equal(catalogSources.length, 3);
+  assert.equal(catalogSources.length, 5);
   assert.ok(catalogSources.every((element) => element.source.managementPath.startsWith('/admin/')));
   const staticElements = walkElements(manifest).filter((element) => !element.source);
   assert.ok(staticElements.every((element) => element.editable === false), 'Site Editor must not claim direct persistence that the storefront does not consume');

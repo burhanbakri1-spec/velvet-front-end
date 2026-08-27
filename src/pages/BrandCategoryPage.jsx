@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { artwork } from '../data/products';
-import { filterProducts, getBrand, getCategory } from '../data/velvetCatalog';
+import { filterProducts, getBrand, getCategory, getSubcategory } from '../data/velvetCatalog';
 import CategoryProductShowcase from '../components/CategoryProductShowcase';
 import { useI18n } from '../i18n/I18nContext';
 import { Link, localizePath } from '../routing/Router';
@@ -8,14 +8,16 @@ import { EMPTY_SHOP_STATE } from '../hooks/useShopState';
 import { useCart } from '../context/CartContext';
 import { productStock } from '../data/inventory';
 
-// VELVET brand + category landing: reuses the old CategoryPage visual
-// language — a category hero (brand eyebrow + category title + subcategory
-// summary) on top, then the existing CategoryProductShowcase fed exclusively
-// with products from this exact brand + category. No shop bar, no filters,
-// no TreeMap, no cascade dropdowns.
-export default function BrandCategoryPage({ slug, categorySlug }) {
+// Shared Brand + Category landing for both Main Category and Subcategory modes.
+// Same visual page (category-hero + showcase). Subcategory mode replaces
+// Main Category content in place — never stacks both.
+export default function BrandCategoryPage({ slug, categorySlug, subcategorySlug }) {
   const brand = getBrand(slug);
   const category = brand ? getCategory(brand.slug, categorySlug) : null;
+  const subcategory = category && subcategorySlug
+    ? getSubcategory(brand.slug, category.slug, subcategorySlug)
+    : null;
+  const isSubMode = Boolean(subcategorySlug);
   const cursorRef = useRef(null);
   const { copy, locale } = useI18n();
   const { addItem } = useCart();
@@ -44,7 +46,7 @@ export default function BrandCategoryPage({ slug, categorySlug }) {
 
   const hideCursor = () => cursorRef.current?.classList.remove('is-visible');
 
-  if (!brand || !category) {
+  if (!brand || !category || (isSubMode && !subcategory)) {
     return (
       <section className="category-empty">
         <span className="store-eyebrow">VELVET</span>
@@ -54,34 +56,66 @@ export default function BrandCategoryPage({ slug, categorySlug }) {
     );
   }
 
+  const active = isSubMode ? subcategory : category;
   const categoryIndex = brand.categories.findIndex((item) => item.slug === category.slug);
-  const heroImage = category.heroImage || artwork(category.name.en, brand.home.palette, (categoryIndex % 6) + 1);
-  const heroDescription = category.subs.length
-    ? category.subs.map((sub) => sub.name[locale]).join(' · ')
-    : (category.description?.[locale] || '');
-  const products = filterProducts({ ...EMPTY_SHOP_STATE, brand: slug, category: categorySlug });
+  const mainHeroImage = category.heroImage || artwork(category.name.en, brand.home.palette, (categoryIndex % 6) + 1);
+  const heroVideo = isSubMode ? (subcategory.heroVideo || '') : (category.heroVideo || '');
+  const heroImage = isSubMode
+    ? (subcategory.image || '')
+    : mainHeroImage;
+  const hasHeroMedia = Boolean(heroVideo || heroImage);
+  const heroDescription = isSubMode
+    ? (subcategory.description?.[locale] || '')
+    : (category.subs.length
+      ? category.subs.map((sub) => sub.name[locale]).join(' · ')
+      : (category.description?.[locale] || ''));
+  const products = filterProducts({
+    ...EMPTY_SHOP_STATE,
+    brand: slug,
+    category: categorySlug,
+    ...(isSubMode ? { subcategory: subcategorySlug } : {}),
+  });
+  const shopHref = isSubMode
+    ? `/products?brand=${encodeURIComponent(slug)}&category=${encodeURIComponent(categorySlug)}&subcategory=${encodeURIComponent(subcategorySlug)}`
+    : `/products?brand=${encodeURIComponent(slug)}&category=${encodeURIComponent(categorySlug)}`;
 
   return (
     <div className="category-page">
       <section className="category-hero" onPointerEnter={moveCursor} onPointerMove={moveCursor} onPointerLeave={hideCursor}>
-        {category.heroVideo ? (
-          <video className="category-hero__media" src={category.heroVideo} poster={heroImage} autoPlay muted loop playsInline />
-        ) : (
-          <img className="category-hero__media" src={heroImage} alt="" />
+        {hasHeroMedia && (
+          heroVideo ? (
+            <video className="category-hero__media" src={heroVideo} poster={heroImage || undefined} autoPlay muted loop playsInline />
+          ) : (
+            <img className="category-hero__media" src={heroImage} alt="" />
+          )
         )}
         <div className="category-hero__shade" aria-hidden="true" />
-        <a className="category-hero__link" href="#category-products" aria-label={`${copy.home.view} ${category.name[locale]}`} />
+        <a className="category-hero__link" href="#category-products" aria-label={`${copy.home.view} ${active.name[locale]}`} />
         <div className="category-hero__title">
           <span>{brand.name[locale]}</span>
-          <h1>{category.name[locale]}</h1>
+          <h1>{active.name[locale]}</h1>
         </div>
-        <p className="category-hero__description">{heroDescription}</p>
+        {heroDescription ? <p className="category-hero__description">{heroDescription}</p> : null}
         <span className="showcase-view-cursor" ref={cursorRef} aria-hidden="true">{copy.home.view}</span>
       </section>
 
+      {!isSubMode && category.subs.length > 0 && (
+        <nav className="category-subnav" aria-label={copy.shop.subcategory}>
+          {category.subs.map((sub) => (
+            <Link
+              key={sub.slug}
+              to={localizePath(`/brands/${slug}/category/${categorySlug}/subcategory/${sub.slug}`, locale)}
+            >
+              {sub.name[locale]}
+            </Link>
+          ))}
+        </nav>
+      )}
+
       {products.length > 0 ? (
         <CategoryProductShowcase
-          category={category}
+          key={isSubMode ? subcategory.slug : category.slug}
+          category={active}
           products={products}
           onAddToCart={handleAddToCart}
           addToCartLabel={addToCartLabel}
@@ -90,7 +124,7 @@ export default function BrandCategoryPage({ slug, categorySlug }) {
         <section className="category-empty" id="category-products">
           <span className="store-eyebrow">{brand.name[locale]}</span>
           <h2>{copy.category.empty}</h2>
-          <Link to={localizePath(`/products?brand=${slug}&category=${categorySlug}`, locale)}>{copy.category.allProducts}</Link>
+          <Link to={localizePath(shopHref, locale)}>{copy.category.allProducts}</Link>
         </section>
       )}
     </div>

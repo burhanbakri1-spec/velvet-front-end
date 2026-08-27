@@ -2,6 +2,7 @@ import { aboutSections, newsCategories, newsItems } from './company.js';
 import { homeCategories, productCategories, products } from './products.js';
 import { buildDynamicCatalog } from './dynamicCatalog.js';
 import { applyDynamicCatalog } from './velvetCatalog.js';
+import { applyVlogContent } from './vlogs.js';
 import { translations } from '../i18n/translations.js';
 
 const websiteMedia = new Map();
@@ -140,6 +141,44 @@ function applyStructuredContent(payload, apiUrl) {
     if (aboutMatch && aboutSections[Number(aboutMatch[1])] && imageUrl) aboutSections[Number(aboutMatch[1])].image = imageUrl;
     if (newsMatch && newsItems[Number(newsMatch[1])] && imageUrl) newsItems[Number(newsMatch[1])].image = imageUrl;
   }
+
+  const videos = [];
+  const posts = [];
+  for (const item of payload.media || []) {
+    const key = String(item.sectionKey || '');
+    const imageUrl = absoluteUrl(item.image || item.fallbackImage, apiUrl);
+    const videoUrl = absoluteUrl(item.video, apiUrl);
+    const videoMatch = key.match(/^vlog\.video\.(.+)$/);
+    const postMatch = key.match(/^vlog\.post\.(.+)$/);
+    if (videoMatch && (videoUrl || imageUrl)) {
+      videos.push({
+        id: videoMatch[1],
+        slug: videoMatch[1],
+        title: item.title?.en || item.label || '',
+        titleAr: item.title?.ar || item.title?.en || item.label || '',
+        body: item.description?.en || '',
+        bodyAr: item.description?.ar || item.description?.en || '',
+        category: item.groupKey || '',
+        categoryAr: item.groupKey || '',
+        video: videoUrl,
+        poster: imageUrl,
+      });
+    }
+    if (postMatch && (imageUrl || item.title)) {
+      posts.push({
+        id: postMatch[1],
+        slug: postMatch[1],
+        title: item.title?.en || item.label || '',
+        titleAr: item.title?.ar || item.title?.en || item.label || '',
+        body: item.description?.en || '',
+        bodyAr: item.description?.ar || item.description?.en || '',
+        category: item.groupKey || '',
+        categoryAr: item.groupKey || '',
+        image: imageUrl,
+      });
+    }
+  }
+  applyVlogContent({ videos, posts });
 }
 
 export function applyPlatformContent(payload, apiUrl) {

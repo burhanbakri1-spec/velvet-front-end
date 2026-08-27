@@ -109,3 +109,17 @@ export const getAvailability = (product, locale) => locale === 'ar' ? product.av
 export const getOptionName = (option, locale) => locale === 'ar' ? option.nameAr : option.name;
 export const getOptionValue = (value, locale) => locale === 'ar' ? value.labelAr : value.label;
 export const getProductBySlug = (slug) => products.find((product) => product.slug === slug);
+
+/** Deduplicated product media list from real product fields only (no invented URLs). */
+export function collectProductImages(product) {
+  if (!product) return [];
+  const images = [];
+  const push = (url) => {
+    const value = typeof url === 'string' ? url.trim() : '';
+    if (value && !images.includes(value)) images.push(value);
+  };
+  push(product.image);
+  if (Array.isArray(product.gallery)) product.gallery.forEach(push);
+  push(product.hoverImage);
+  return images;
+}

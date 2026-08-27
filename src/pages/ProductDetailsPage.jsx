@@ -1,10 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import ProductCard from '../components/ProductCard';
 import ProductShowcaseNavigation from '../components/ProductShowcaseNavigation';
 import PageNavigation from '../components/PageNavigation';
 import { useCart } from '../context/CartContext';
-import { getAvailability, getCategoryLabel, getOptionName, getOptionValue, getProductBadge, getProductDescription, getProductName } from '../data/products';
-import { filterGroups, getBrand, getCategory, getProductBySlug, getProductMedia, getVelvetPathLabel, velvetProducts } from '../data/velvetCatalog';
+import {
+  collectProductImages,
+  getAvailability,
+  getCategoryLabel,
+  getOptionName,
+  getOptionValue,
+  getProductBadge,
+  getProductDescription,
+  getProductName,
+} from '../data/products';
+import {
+  filterGroups,
+  getBrand,
+  getCategory,
+  getPathHeroMedia,
+  getProductBySlug,
+  getProductMedia,
+  getSubcategory,
+  getVelvetPathLabel,
+  velvetProducts,
+} from '../data/velvetCatalog';
 import { Link, localizePath, useRouter } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
 import { availableStock, optionValueUnavailable, selectedVariant } from '../data/inventory';
@@ -16,67 +34,155 @@ export default function ProductDetailsPage({ slug }) {
   const { copy, locale } = useI18n();
   const { navigate } = useRouter();
   const { addItem } = useCart();
+  const touchStartX = useRef(null);
+  const addedTimer = useRef(null);
+  const sliderViewportRef = useRef(null);
+  const siblingDrag = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false });
 
-  const initialSelections = useMemo(() => Object.fromEntries((product?.options || []).map((option) => [option.name, option.values[0]?.label || ''])), [product]);
+  const images = useMemo(() => collectProductImages(product), [product]);
+  const initialSelections = useMemo(
+    () => Object.fromEntries((product?.options || []).map((option) => [option.name, option.values[0]?.label || ''])),
+    [product],
+  );
+
   const [selections, setSelections] = useState(initialSelections);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [direction, setDirection] = useState('next');
-  const [activeImage, setActiveImage] = useState(product?.image || '');
-  const addedTimer = useRef(null);
+  const [imageIndex, setImageIndex] = useState(0);
 
-  // Products of the same VELVET category give the previous / next loop. Without a
-  // velvet path the product is the only item in its "category".
-  const sameCategory = useMemo(() => {
-    if (!product?.velvetPath) return product ? [product] : [];
-    return velvetProducts.filter((item) => item.velvetPath?.brandId === product.velvetPath.brandId && item.velvetPath?.categoryId === product.velvetPath.categoryId);
+  const sameSubcategory = useMemo(() => {
+    if (!product?.velvetPath?.subcategoryId) {
+      if (!product?.velvetPath) return product ? [product] : [];
+      return velvetProducts.filter(
+        (item) => item.velvetPath?.brandId === product.velvetPath.brandId
+          && item.velvetPath?.categoryId === product.velvetPath.categoryId
+          && !item.velvetPath?.subcategoryId,
+      );
+    }
+    return velvetProducts.filter(
+      (item) => item.velvetPath?.brandId === product.velvetPath.brandId
+        && item.velvetPath?.categoryId === product.velvetPath.categoryId
+        && item.velvetPath?.subcategoryId === product.velvetPath.subcategoryId,
+    );
   }, [product]);
 
-  const currentIndex = Math.max(0, sameCategory.findIndex((item) => item.id === product?.id));
-  const previousProduct = sameCategory[(currentIndex - 1 + sameCategory.length) % sameCategory.length];
-  const nextProduct = sameCategory[(currentIndex + 1) % sameCategory.length];
-
   useEffect(() => () => window.clearTimeout(addedTimer.current), []);
+
+  useEffect(() => {
+    setSelections(initialSelections);
+    setQuantity(1);
+    setAdded(false);
+    setImageIndex(0);
+    setDirection('next');
+  }, [product?.id, product?.slug, initialSelections]);
+
   const activeVariant = selectedVariant(product, selections);
   const stockLimit = availableStock(product, selections);
   const unavailable = product?.inventoryManaged ? stockLimit <= 0 : product?.availability === 'Out of stock';
+
   useEffect(() => {
     if (Number.isFinite(stockLimit)) setQuantity((value) => Math.max(1, Math.min(stockLimit || 1, value)));
   }, [stockLimit]);
 
-  const go = (step) => {
-    if (sameCategory.length < 2) return;
-    const target = step > 0 ? nextProduct : previousProduct;
-    if (!target) return;
-    setDirection(step > 0 ? 'next' : 'previous');
-    navigate(localizePath(`/products/${target.slug}`, locale));
-  };
+  useEffect(() => {
+    if (!product?.slug || sameSubcategory.length < 2) return undefined;
+    let cancelled = false;
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (cancelled || siblingDrag.current.active) return;
+        const viewport = sliderViewportRef.current;
+        if (!viewport) return;
+        const activeSlide = viewport.querySelector('.same-subcategory-products__slide.is-active');
+        if (!activeSlide) return;
+        const paddingLeft = Number.parseFloat(window.getComputedStyle(viewport).paddingLeft) || 0;
+        const delta = activeSlide.getBoundingClientRect().left
+          - (viewport.getBoundingClientRect().left + paddingLeft);
+        const maxScroll = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+        const target = Math.min(Math.max(0, viewport.scrollLeft + delta), maxScroll);
+        viewport.scrollTo({ left: target, behavior: 'smooth' });
+      });
+    });
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+    };
+  }, [product?.slug, sameSubcategory.length]);
 
   if (!product) {
-    return <section className="store-not-found"><span className="store-eyebrow">{copy.detail.missingEyebrow}</span><h1>{copy.detail.missing}</h1><Link className="store-primary-button" to="/products">{copy.detail.back}</Link></section>;
+    return (
+      <section className="store-not-found">
+        <span className="store-eyebrow">{copy.detail.missingEyebrow}</span>
+        <h1>{copy.detail.missing}</h1>
+        <Link className="store-primary-button" to="/products">{copy.detail.back}</Link>
+      </section>
+    );
   }
 
-  const gallery = [...new Set([product.image, ...(product.gallery || [])])];
-  if (!gallery.includes(activeImage)) setActiveImage(gallery[0]);
-
+  const hasGallery = images.length > 1;
+  const activeImage = images[imageIndex] || product.image || '';
   const productMedia = getProductMedia(product);
+  const pathHero = getPathHeroMedia(product);
   const optionDelta = product.options.reduce((sum, option) => sum + Number(option.values.find((value) => value.label === selections[option.name])?.priceDelta || 0), 0);
   const currentPrice = product.price + optionDelta;
   const optionSummary = product.options.map((option) => getOptionName(option, locale)).join(' · ');
   const brand = product.velvetPath?.brandId ? getBrand(product.velvetPath.brandId) : null;
   const category = product.velvetPath ? getCategory(product.velvetPath.brandId, product.velvetPath.categoryId) : null;
-  const eyebrow = category?.name[locale] || getVelvetPathLabel(product, locale) || getCategoryLabel(product.categoryId, locale);
+  const subcategory = product.velvetPath?.subcategoryId
+    ? getSubcategory(product.velvetPath.brandId, product.velvetPath.categoryId, product.velvetPath.subcategoryId)
+    : null;
+  const eyebrow = subcategory?.name[locale] || category?.name[locale] || getVelvetPathLabel(product, locale) || getCategoryLabel(product.categoryId, locale);
+  const heroTitle = pathHero.name?.[locale] || eyebrow || '';
+  const productName = getProductName(product, locale);
 
   const metres = {
     age: filterGroups.age.find((item) => item.id === product.age),
     skill: filterGroups.skill.find((item) => item.id === product.skill),
   };
 
-  const related = [
-    ...velvetProducts.filter((item) => item.id !== product.id && item.velvetPath?.brandId === product.velvetPath?.brandId && item.velvetPath?.categoryId === product.velvetPath?.categoryId),
-    ...velvetProducts.filter((item) => item.id !== product.id && item.velvetPath?.brandId === product.velvetPath?.brandId && item.velvetPath?.categoryId !== product.velvetPath?.categoryId),
-    ...velvetProducts.filter((item) => item.id !== product.id && (!product.velvetPath?.brandId || item.velvetPath?.brandId !== product.velvetPath.brandId)),
-  ].slice(0, 4);
+  const stepImage = (step) => {
+    if (!hasGallery) return;
+    setDirection(step > 0 ? 'next' : 'previous');
+    setImageIndex((current) => (current + step + images.length) % images.length);
+  };
+
+  const selectSibling = (target) => {
+    if (!target || target.slug === product.slug) return;
+    if (siblingDrag.current.moved) return;
+    setDirection('next');
+    navigate(localizePath(`/products/${target.slug}`, locale), { scroll: false });
+  };
+
+  const onSiblingPointerDown = (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const viewport = sliderViewportRef.current;
+    if (!viewport) return;
+    siblingDrag.current = {
+      active: true,
+      startX: event.clientX,
+      scrollLeft: viewport.scrollLeft,
+      moved: false,
+    };
+    viewport.classList.add('is-dragging');
+    try { viewport.setPointerCapture(event.pointerId); } catch { /* ignore */ }
+  };
+
+  const onSiblingPointerMove = (event) => {
+    if (!siblingDrag.current.active) return;
+    const viewport = sliderViewportRef.current;
+    if (!viewport) return;
+    const delta = event.clientX - siblingDrag.current.startX;
+    if (Math.abs(delta) > 6) siblingDrag.current.moved = true;
+    viewport.scrollLeft = siblingDrag.current.scrollLeft - delta;
+  };
+
+  const onSiblingPointerUp = (event) => {
+    const viewport = sliderViewportRef.current;
+    siblingDrag.current.active = false;
+    viewport?.classList.remove('is-dragging');
+    try { viewport?.releasePointerCapture(event.pointerId); } catch { /* ignore */ }
+    window.setTimeout(() => { siblingDrag.current.moved = false; }, 0);
+  };
 
   const handleAdd = (event) => {
     event.preventDefault();
@@ -94,6 +200,19 @@ export default function ProductDetailsPage({ slug }) {
     navigate(localizePath('/checkout', locale));
   };
 
+  const onTouchStart = (event) => {
+    touchStartX.current = event.changedTouches?.[0]?.clientX ?? null;
+  };
+
+  const onTouchEnd = (event) => {
+    if (touchStartX.current == null || !hasGallery) return;
+    const endX = event.changedTouches?.[0]?.clientX ?? touchStartX.current;
+    const delta = endX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(delta) < 40) return;
+    stepImage(delta < 0 ? 1 : -1);
+  };
+
   const specs = [];
   if (brand) specs.push({ label: copy.shop.brand, value: brand.name[locale] });
   if (eyebrow) specs.push({ label: copy.shop.category, value: eyebrow });
@@ -105,29 +224,75 @@ export default function ProductDetailsPage({ slug }) {
 
   const detailBreadcrumbs = [{ label: copy.meta.home, to: '/' }];
   if (brand) detailBreadcrumbs.push({ label: brand.name[locale], to: `/brands/${product.velvetPath.brandId}` });
-  if (category) detailBreadcrumbs.push({ label: category.name[locale], to: `/products?brand=${product.velvetPath.brandId}&category=${product.velvetPath.categoryId}` });
-  const productName = getProductName(product, locale);
+  if (category) {
+    detailBreadcrumbs.push({
+      label: category.name[locale],
+      to: `/brands/${product.velvetPath.brandId}/category/${product.velvetPath.categoryId}`,
+    });
+  }
+  if (subcategory) detailBreadcrumbs.push({ label: subcategory.name[locale] });
   detailBreadcrumbs.push({ label: productName });
 
   const detailFallback = product.velvetPath
-    ? `/products?brand=${product.velvetPath.brandId}&category=${product.velvetPath.categoryId}`
+    ? `/products?brand=${product.velvetPath.brandId}&category=${product.velvetPath.categoryId}${product.velvetPath.subcategoryId ? `&subcategory=${product.velvetPath.subcategoryId}` : ''}`
     : '/products';
 
   return (
     <div className="product-detail-page">
       <PageNavigation fallbackPath={detailFallback} breadcrumbs={detailBreadcrumbs} />
+
+      {pathHero.source === 'subcategory' ? (
+        <section className="category-hero" aria-label={copy.detail.pathHero}>
+          {pathHero.video ? (
+            <video className="category-hero__media" src={pathHero.video} poster={pathHero.image || undefined} autoPlay muted loop playsInline />
+          ) : pathHero.image ? (
+            <img className="category-hero__media" src={pathHero.image} alt="" />
+          ) : (
+            <div className="category-hero__media product-path-hero__fallback" aria-hidden="true" />
+          )}
+          <div className="category-hero__shade" aria-hidden="true" />
+          <div className="category-hero__title">
+            {brand && <span>{brand.name[locale]}</span>}
+            {heroTitle && <h1>{heroTitle}</h1>}
+          </div>
+        </section>
+      ) : (
+        <section className={`product-path-hero ${pathHero.image || pathHero.video ? 'has-media' : 'is-fallback'}`} aria-label={copy.detail.pathHero}>
+          {pathHero.video ? (
+            <video className="product-path-hero__media" src={pathHero.video} poster={pathHero.image || undefined} autoPlay muted loop playsInline />
+          ) : pathHero.image ? (
+            <img className="product-path-hero__media" src={pathHero.image} alt="" />
+          ) : (
+            <div className="product-path-hero__fallback" aria-hidden="true" />
+          )}
+          <div className="product-path-hero__shade" aria-hidden="true" />
+          <div className="product-path-hero__copy">
+            {brand && <span>{brand.name[locale]}</span>}
+            {heroTitle && <h1>{heroTitle}</h1>}
+          </div>
+        </section>
+      )}
+
       <section className="category-product-showcase category-product-showcase--detail" aria-label={productName}>
-        <ProductShowcaseNavigation
-          onPrevious={() => go(-1)}
-          onNext={() => go(1)}
-          previousLabel={copy.category.previous}
-          nextLabel={copy.category.next}
-          disabled={sameCategory.length < 2}
-        />
-        <div className={`category-product-showcase__slide is-${direction}`} key={product.id}>
-          <figure className="category-product-showcase__media product-detail-hero__media">
-            <img src={activeImage} alt={productName} />
-          </figure>
+        {hasGallery && (
+          <ProductShowcaseNavigation
+            onPrevious={() => stepImage(-1)}
+            onNext={() => stepImage(1)}
+            previousLabel={copy.detail.previousImage}
+            nextLabel={copy.detail.nextImage}
+          />
+        )}
+        <div
+          className={`category-product-showcase__slide is-${direction}`}
+          key={product.id}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+        >
+          <div className="product-detail-focal">
+            <figure className="category-product-showcase__media product-detail-hero__media">
+              <img key={activeImage} className="product-detail-focal__image" src={activeImage} alt={productName} />
+            </figure>
+          </div>
           <div className="category-product-showcase__copy">
             <span className="category-product-showcase__category">
               {eyebrow}
@@ -155,10 +320,19 @@ export default function ProductDetailsPage({ slug }) {
                         {option.values.map((value) => {
                           const disabled = optionValueUnavailable(product, selections, option.name, value.label);
                           return (
-                          <button disabled={disabled} aria-disabled={disabled} className={selections[option.name] === value.label ? 'is-active' : ''} onClick={() => setSelections((current) => ({ ...current, [option.name]: value.label }))} type="button" key={value.label}>
-                            {value.color && <i style={{ background: value.color }} />}{getOptionValue(value, locale)}
-                          </button>
-                        ); })}
+                            <button
+                              disabled={disabled}
+                              aria-disabled={disabled}
+                              className={selections[option.name] === value.label ? 'is-active' : ''}
+                              onClick={() => setSelections((current) => ({ ...current, [option.name]: value.label }))}
+                              type="button"
+                              key={value.label}
+                            >
+                              {value.color && <i style={{ background: value.color }} />}
+                              {getOptionValue(value, locale)}
+                            </button>
+                          );
+                        })}
                       </div>
                     </fieldset>
                   );
@@ -170,7 +344,7 @@ export default function ProductDetailsPage({ slug }) {
               <div className="quantity-control product-detail-qty" aria-label={copy.detail.quantity}>
                 <button type="button" aria-label={copy.detail.decrease} onClick={() => setQuantity((value) => Math.max(1, value - 1))}>−</button>
                 <span>{quantity}</span>
-                <button type="button" disabled={Number.isFinite(stockLimit) && quantity >= stockLimit} aria-label={copy.detail.increase} onClick={() => setQuantity((value) => Number.isFinite(stockLimit) ? Math.min(stockLimit, value + 1) : value + 1)}>+</button>
+                <button type="button" disabled={Number.isFinite(stockLimit) && quantity >= stockLimit} aria-label={copy.detail.increase} onClick={() => setQuantity((value) => (Number.isFinite(stockLimit) ? Math.min(stockLimit, value + 1) : value + 1))}>+</button>
               </div>
               <button className="store-primary-button product-detail-buy__primary" type="button" disabled={unavailable} onClick={handleAdd}>{added ? copy.detail.added : unavailable ? copy.detail.unavailable : copy.detail.add}</button>
               <button className="store-primary-button product-detail-buy__secondary" type="button" disabled={unavailable} onClick={handleBuyNow}>{copy.detail.buyNow}</button>
@@ -178,39 +352,42 @@ export default function ProductDetailsPage({ slug }) {
             {added && <Link className="view-cart-link product-detail-cart-link" to="/cart">{copy.detail.viewCart} {locale === 'ar' ? '←' : '→'}</Link>}
           </div>
         </div>
-        <span className="category-product-showcase__count">{String(currentIndex + 1).padStart(2, '0')} / {String(sameCategory.length).padStart(2, '0')}</span>
       </section>
 
-      <div className="product-detail-content">
-        <section className="product-detail-extras">
-          <div className="product-detail-gallery">
-            <div className="product-detail-section-head">
-              <span className="store-eyebrow">{copy.detail.gallery}</span>
-              <h2>{copy.detail.galleryTitle}</h2>
-            </div>
-            <figure className="product-detail-gallery__preview">
-              <img src={activeImage} alt={productName} />
-              {product.badge && <span className="product-detail-badge">{getProductBadge(product, locale)}</span>}
-            </figure>
-            {gallery.length > 1 && (
-              <div className="product-detail-gallery__thumbs" role="tablist" aria-label={`${copy.detail.gallery} ${productName}`}>
-                {gallery.map((image, index) => (
+      {sameSubcategory.length > 1 && (
+        <section className="same-subcategory-products" aria-label={copy.detail.sameSubcategory}>
+          <div
+            className="same-subcategory-products__viewport"
+            ref={sliderViewportRef}
+            onPointerDown={onSiblingPointerDown}
+            onPointerMove={onSiblingPointerMove}
+            onPointerUp={onSiblingPointerUp}
+            onPointerCancel={onSiblingPointerUp}
+          >
+            <div className="same-subcategory-products__track">
+              {sameSubcategory.map((item) => {
+                const isActive = item.slug === product.slug;
+                return (
                   <button
                     type="button"
-                    className={image === activeImage ? 'is-active' : ''}
-                    role="tab"
-                    aria-selected={image === activeImage}
-                    aria-label={`${productName} ${copy.detail.imageView} ${index + 1}`}
-                    onClick={() => setActiveImage(image)}
-                    key={image}
+                    className={`same-subcategory-products__slide ${isActive ? 'is-active' : ''}`}
+                    key={item.id || item.slug}
+                    data-sibling-slug={item.slug}
+                    aria-current={isActive ? 'true' : undefined}
+                    aria-label={getProductName(item, locale)}
+                    onClick={() => selectSibling(item)}
                   >
-                    <img src={image} alt="" />
+                    <img src={item.image} alt="" draggable={false} />
                   </button>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
+        </section>
+      )}
 
+      <div className="product-detail-content">
+        <section className="product-detail-extras product-detail-extras--specs-only">
           <div className="product-detail-specs">
             <div className="product-detail-section-head">
               <span className="store-eyebrow">{eyebrow}</span>
@@ -231,7 +408,7 @@ export default function ProductDetailsPage({ slug }) {
         </section>
 
         {productMedia.usageVideo && (
-          <section className="product-usage-video" aria-label={copy.detail.howToUse}>
+          <section className="product-usage-video" aria-label={copy.detail.howToUse} key={`usage-${product.slug}`}>
             <div className="product-detail-section-head">
               <span className="store-eyebrow">{copy.detail.howToUse}</span>
               <h2>{copy.detail.howToUse}</h2>
@@ -248,13 +425,6 @@ export default function ProductDetailsPage({ slug }) {
           </section>
         )}
       </div>
-
-      <section className="related-products product-detail-related">
-        <div className="product-detail-content">
-          <div className="related-products__head"><span className="store-eyebrow">{copy.detail.keep}</span><h2>{copy.detail.related}</h2></div>
-          <div className="related-products__track">{related.map((item) => <ProductCard product={item} key={item.id} />)}</div>
-        </div>
-      </section>
     </div>
   );
 }
