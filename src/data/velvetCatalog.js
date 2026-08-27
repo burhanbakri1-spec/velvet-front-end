@@ -919,6 +919,39 @@ export function getProductMedia(product) {
   return { usageVideo, usageVideoPoster };
 }
 
+/**
+ * Resolve ProductDetails hero media from the product's browsing context.
+ * Priority: Subcategory media → Main Category media → clean empty fallback.
+ * Title follows whichever media source is used.
+ */
+export function getPathHeroMedia(product) {
+  const path = product?.velvetPath;
+  if (!path?.brandId || !path?.categoryId) {
+    return { image: '', video: '', name: null, source: null };
+  }
+  const category = getCategory(path.brandId, path.categoryId);
+  const subcategory = path.subcategoryId ? getSubcategory(path.brandId, path.categoryId, path.subcategoryId) : null;
+
+  const subImage = subcategory?.image || '';
+  const subVideo = subcategory?.heroVideo || '';
+  if (subImage || subVideo) {
+    return { image: subImage, video: subVideo, name: subcategory.name, source: 'subcategory' };
+  }
+
+  const categoryImage = category?.heroImage || '';
+  const categoryVideo = category?.heroVideo || '';
+  if (categoryImage || categoryVideo) {
+    return { image: categoryImage, video: categoryVideo, name: category.name, source: 'category' };
+  }
+
+  return {
+    image: '',
+    video: '',
+    name: subcategory?.name || category?.name || null,
+    source: null,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Filtering (deterministic).
 // Path (brand + category + subcategory) is ANDed with every filter group.

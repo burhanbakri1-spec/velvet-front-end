@@ -192,6 +192,35 @@ export function buildSiteManifest({ generatedAt = new Date().toISOString(), base
         ],
       }),
       page({
+        id: 'vlogs',
+        route: '/vlogs',
+        title: en.meta.vlogs,
+        titleAr: ar.meta.vlogs,
+        sections: [
+          section('vlogs-hero', 'hero', 0, false, [
+            textElement('vlogs-hero-title', 'heading', en.vlogs.title, ar.vlogs.title),
+          ]),
+          section('vlogs-listing', 'content', 1, false, [
+            sourceElement('vlog-videos', 'list', {
+              label: en.vlogs.videos,
+              labelAr: ar.vlogs.videos,
+              module: 'src/data/vlogs.js',
+              export: 'vlogVideos',
+              managementPath: '/admin/media',
+              kind: 'platform-catalog',
+            }),
+            sourceElement('vlog-posts', 'list', {
+              label: en.vlogs.posts,
+              labelAr: ar.vlogs.posts,
+              module: 'src/data/vlogs.js',
+              export: 'vlogPosts',
+              managementPath: '/admin/media',
+              kind: 'platform-catalog',
+            }),
+          ]),
+        ],
+      }),
+      page({
         id: 'contact',
         route: '/contact',
         title: en.meta.contact,

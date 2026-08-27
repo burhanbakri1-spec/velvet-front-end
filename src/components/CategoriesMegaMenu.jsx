@@ -9,6 +9,10 @@ const shopPath = (state) => {
   return `/products${query ? `?${query}` : ''}`;
 };
 
+const subcategoryPath = (brandSlug, categorySlug, subcategorySlug) => (
+  `/brands/${brandSlug}/category/${categorySlug}/subcategory/${subcategorySlug}`
+);
+
 export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand }) {
   const { copy, locale } = useI18n();
   const { navigate } = useRouter();
@@ -25,12 +29,12 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
   };
   const goBrand = (slug) => {
     selectBrand(slug);
-    navigate(localizePath(shopPath({ brand: slug }), locale));
+    navigate(localizePath(`/brands/${slug}`, locale));
     onClose();
   };
   const goCategory = (slug) => {
     setActiveCategory(slug);
-    navigate(localizePath(shopPath({ brand: brand.slug, category: slug }), locale));
+    navigate(localizePath(`/brands/${brand.slug}/category/${slug}`, locale));
     onClose();
   };
 
@@ -69,14 +73,20 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
             </button>
           ))}
         </nav>
-        <nav className="mega-cascade__col" aria-label={copy.shop.subcategory}>
-          <span className="mega-cascade__col-title">{copy.shop.subcategory}</span>
-          {(category?.subs || []).map((item) => (
-            <Link to={shopPath({ brand: brand.slug, category: category.slug, subcategory: item.slug })} onClick={onClose} key={item.slug}>
-              {item.name[locale]}
-            </Link>
-          ))}
-        </nav>
+        {scoped && (
+          <nav className="mega-cascade__col" aria-label={copy.shop.subcategory}>
+            <span className="mega-cascade__col-title">{copy.shop.subcategory}</span>
+            {(category?.subs || []).map((item) => (
+              <Link
+                to={subcategoryPath(brand.slug, category.slug, item.slug)}
+                onClick={onClose}
+                key={item.slug}
+              >
+                {item.name[locale]}
+              </Link>
+            ))}
+          </nav>
+        )}
       </div>
       <Link className="mega-menu__feature" to={scoped ? shopPath({ brand: brand.slug }) : '/products'} onClick={onClose}>
         <span className="mega-menu__eyebrow">{copy.categoryMenu.eyebrow}</span>

@@ -35,6 +35,23 @@ export default function Header({ introActive, solid = false }) {
     return slug ? getBrand(slug) : null;
   }, [location.search, routePath]);
 
+  const shopLink = useMemo(() => {
+    const brandOnly = routePath.match(/^\/brands\/([^/]+)$/);
+    if (brandOnly) {
+      const brandSlug = decodeURIComponent(brandOnly[1]);
+      return getBrand(brandSlug) ? `/products?brand=${encodeURIComponent(brandSlug)}` : null;
+    }
+    const categoryOnly = routePath.match(/^\/brands\/([^/]+)\/category\/([^/]+)$/);
+    if (categoryOnly) {
+      const brandSlug = decodeURIComponent(categoryOnly[1]);
+      const categorySlug = decodeURIComponent(categoryOnly[2]);
+      return getBrand(brandSlug)
+        ? `/products?brand=${encodeURIComponent(brandSlug)}&category=${encodeURIComponent(categorySlug)}`
+        : null;
+    }
+    return null;
+  }, [routePath]);
+
   const siteLogo = getPlatformMedia('site.logo');
   const contextBrandLogo = contextBrand ? getBrandLogo(contextBrand.slug) : '';
 
@@ -131,7 +148,10 @@ export default function Header({ introActive, solid = false }) {
           <button className="nav-link" type="button" aria-expanded={aboutOpen} onClick={() => { setAboutOpen((value) => !value); setBrandsOpen(false); if (mobileOpen) setMobileOpen(false); }}>
             {copy.header.about} <i className="chevron" />
           </button>
-          <Link className="nav-link" to={contextBrand ? `/products?brand=${contextBrand.slug}` : '/products'} onClick={() => setMobileOpen(false)}>{copy.header.products}</Link>
+          <Link className="nav-link" to="/contact" onClick={() => setMobileOpen(false)}>{copy.header.contact}</Link>
+          {shopLink && (
+            <Link className="nav-link" to={shopLink} onClick={() => setMobileOpen(false)}>{copy.header.shop}</Link>
+          )}
         </nav>
         <div className="header-actions">
           <form className="search-pill" onSubmit={submitSearch}>
