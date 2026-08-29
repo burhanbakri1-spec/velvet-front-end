@@ -1,16 +1,31 @@
 import PageTitleHero from '../components/PageTitleHero';
+import PageVideoHero from '../components/PageVideoHero';
 import { getVlogBody, getVlogCategory, getVlogTitle, vlogPosts, vlogVideos } from '../data/vlogs';
+import { getPlatformMedia } from '../data/platformContent';
 import { useI18n } from '../i18n/I18nContext';
 
 export default function VlogsPage() {
   const { copy, locale } = useI18n();
+  const heroVideo = getPlatformMedia('vlogs.hero.video');
+  const heroPoster = getPlatformMedia('vlogs.hero.poster');
   const hasVideos = vlogVideos.length > 0;
   const hasPosts = vlogPosts.length > 0;
   const isEmpty = !hasVideos && !hasPosts;
 
   return (
     <div className="vlogs-page">
-      <PageTitleHero title={copy.vlogs.title} />
+      {heroVideo || heroPoster ? (
+        <PageVideoHero
+          title={copy.vlogs.title}
+          eyebrow={copy.vlogs.eyebrow}
+          video={heroVideo}
+          poster={heroPoster}
+          theme="dark"
+          overlay={0.38}
+        />
+      ) : (
+        <PageTitleHero title={copy.vlogs.title} />
+      )}
       <section className="vlogs-intro">
         <span className="store-eyebrow">{copy.vlogs.eyebrow}</span>
         <p>{copy.vlogs.intro}</p>
