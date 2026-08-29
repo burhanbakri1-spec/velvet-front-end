@@ -91,6 +91,117 @@ function setTranslation(locale, key, value) {
   if (Object.prototype.hasOwnProperty.call(target || {}, leaf)) target[leaf] = value;
 }
 
+function mapLegacyVlogMediaItem(item, apiUrl) {
+  const key = String(item.sectionKey || '');
+  const imageUrl = absoluteUrl(item.image || item.fallbackImage, apiUrl);
+  const videoUrl = absoluteUrl(item.video, apiUrl);
+  const videoMatch = key.match(/^vlog\.video\.(.+)$/);
+  const postMatch = key.match(/^vlog\.post\.(.+)$/);
+  if (videoMatch && (videoUrl || imageUrl)) {
+    return {
+      kind: 'video',
+      entry: {
+        id: videoMatch[1],
+        slug: videoMatch[1],
+        title: item.title?.en || item.label || '',
+        titleAr: item.title?.ar || item.title?.en || item.label || '',
+        body: item.description?.en || '',
+        bodyAr: item.description?.ar || item.description?.en || '',
+        category: item.groupKey || '',
+        categoryAr: item.groupKey || '',
+        video: videoUrl,
+        poster: imageUrl,
+      },
+    };
+  }
+  if (postMatch && (imageUrl || item.title)) {
+    return {
+      kind: 'post',
+      entry: {
+        id: postMatch[1],
+        slug: postMatch[1],
+        title: item.title?.en || item.label || '',
+        titleAr: item.title?.ar || item.title?.en || item.label || '',
+        body: item.description?.en || '',
+        bodyAr: item.description?.ar || item.description?.en || '',
+        category: item.groupKey || '',
+        categoryAr: item.groupKey || '',
+        image: imageUrl,
+      },
+    };
+  }
+  return null;
+}
+
+function mapPlatformVlogItem(item, apiUrl) {
+  const titleSource = item.title || item.name || {};
+  const descSource = item.description || item.body || item.shortDescription || {};
+  const video = absoluteUrl(item.video || item.videoUrl, apiUrl);
+  const image = absoluteUrl(item.image || item.poster || item.thumbnail || item.coverImage, apiUrl);
+  return {
+    id: String(item.id || item.slug || ''),
+    slug: String(item.slug || item.id || ''),
+    title: localized(titleSource, 'en'),
+    titleAr: localized(titleSource, 'ar'),
+    body: localized(descSource, 'en'),
+    bodyAr: localized(descSource, 'ar'),
+    category: localized(item.category, 'en') || String(item.groupKey || item.categoryKey || ''),
+    categoryAr: localized(item.category, 'ar') || String(item.groupKey || item.categoryKey || ''),
+    video,
+    poster: image,
+    image,
+  };
+}
+
+function partitionPlatformVlogs(items, apiUrl) {
+  const videos = [];
+  const posts = [];
+  for (const item of items) {
+    const mapped = mapPlatformVlogItem(item, apiUrl);
+    const kind = String(item.type || item.mediaType || '').toLowerCase();
+    if (kind === 'post' || kind === 'story') posts.push(mapped);
+    else if (kind === 'video') videos.push(mapped);
+    else if (mapped.video) videos.push(mapped);
+    else if (mapped.image || mapped.title) posts.push(mapped);
+  }
+  return { videos, posts };
+}
+
+function resolveVlogPayload(payload) {
+  const nested = payload?.content && typeof payload.content === 'object' ? payload.content : null;
+  return {
+    vlogs: Array.isArray(payload?.vlogs) ? payload.vlogs : (Array.isArray(nested?.vlogs) ? nested.vlogs : null),
+    vlogHero: payload?.vlogHero || nested?.vlogHero || null,
+  };
+}
+
+function applyVlogHero(hero, apiUrl) {
+  if (!hero || typeof hero !== 'object') return;
+  const video = absoluteUrl(hero.video || hero.heroVideo, apiUrl);
+  const poster = absoluteUrl(hero.poster || hero.image || hero.heroPoster, apiUrl);
+  if (video) websiteMedia.set('vlogs.hero.video', video);
+  if (poster) websiteMedia.set('vlogs.hero.poster', poster);
+}
+
+function applyVlogData(payload, apiUrl) {
+  const { vlogs, vlogHero } = resolveVlogPayload(payload);
+  let videos = [];
+  let posts = [];
+
+  if (Array.isArray(vlogs)) {
+    ({ videos, posts } = partitionPlatformVlogs(vlogs, apiUrl));
+  } else {
+    for (const item of payload.media || []) {
+      const mapped = mapLegacyVlogMediaItem(item, apiUrl);
+      if (mapped?.kind === 'video') videos.push(mapped.entry);
+      if (mapped?.kind === 'post') posts.push(mapped.entry);
+    }
+  }
+
+  applyVlogContent({ videos, posts });
+  applyVlogHero(vlogHero, apiUrl);
+}
+
 function applyStructuredContent(payload, apiUrl) {
   for (const item of payload.texts || []) {
     if (item.key.startsWith('copy.')) {
@@ -142,43 +253,7 @@ function applyStructuredContent(payload, apiUrl) {
     if (newsMatch && newsItems[Number(newsMatch[1])] && imageUrl) newsItems[Number(newsMatch[1])].image = imageUrl;
   }
 
-  const videos = [];
-  const posts = [];
-  for (const item of payload.media || []) {
-    const key = String(item.sectionKey || '');
-    const imageUrl = absoluteUrl(item.image || item.fallbackImage, apiUrl);
-    const videoUrl = absoluteUrl(item.video, apiUrl);
-    const videoMatch = key.match(/^vlog\.video\.(.+)$/);
-    const postMatch = key.match(/^vlog\.post\.(.+)$/);
-    if (videoMatch && (videoUrl || imageUrl)) {
-      videos.push({
-        id: videoMatch[1],
-        slug: videoMatch[1],
-        title: item.title?.en || item.label || '',
-        titleAr: item.title?.ar || item.title?.en || item.label || '',
-        body: item.description?.en || '',
-        bodyAr: item.description?.ar || item.description?.en || '',
-        category: item.groupKey || '',
-        categoryAr: item.groupKey || '',
-        video: videoUrl,
-        poster: imageUrl,
-      });
-    }
-    if (postMatch && (imageUrl || item.title)) {
-      posts.push({
-        id: postMatch[1],
-        slug: postMatch[1],
-        title: item.title?.en || item.label || '',
-        titleAr: item.title?.ar || item.title?.en || item.label || '',
-        body: item.description?.en || '',
-        bodyAr: item.description?.ar || item.description?.en || '',
-        category: item.groupKey || '',
-        categoryAr: item.groupKey || '',
-        image: imageUrl,
-      });
-    }
-  }
-  applyVlogContent({ videos, posts });
+  applyVlogData(payload, apiUrl);
 }
 
 export function applyPlatformContent(payload, apiUrl) {
