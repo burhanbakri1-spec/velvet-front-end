@@ -136,11 +136,16 @@ function mapLegacyVlogMediaItem(item, apiUrl) {
 function mapPlatformVlogItem(item, apiUrl) {
   const titleSource = item.title || item.name || {};
   const descSource = item.description || item.body || item.shortDescription || {};
-  const video = absoluteUrl(item.video || item.videoUrl, apiUrl);
-  const image = absoluteUrl(item.image || item.poster || item.thumbnail || item.coverImage, apiUrl);
+  const mediaType = String(item.mediaType || item.type || '').toLowerCase();
+  const video = absoluteUrl(item.videoUrl || item.video, apiUrl);
+  const poster = absoluteUrl(item.posterUrl || item.poster, apiUrl);
+  const image = absoluteUrl(item.imageUrl || item.image || item.thumbnail || item.coverImage, apiUrl);
+  const linkRaw = item.link || item.url || '';
+  const link = linkRaw ? (absoluteUrl(linkRaw, apiUrl) || linkRaw) : '';
   return {
     id: String(item.id || item.slug || ''),
     slug: String(item.slug || item.id || ''),
+    mediaType,
     title: localized(titleSource, 'en'),
     titleAr: localized(titleSource, 'ar'),
     body: localized(descSource, 'en'),
@@ -148,8 +153,9 @@ function mapPlatformVlogItem(item, apiUrl) {
     category: localized(item.category, 'en') || String(item.groupKey || item.categoryKey || ''),
     categoryAr: localized(item.category, 'ar') || String(item.groupKey || item.categoryKey || ''),
     video,
-    poster: image,
-    image,
+    poster: poster || (video ? image : ''),
+    image: image || poster,
+    link,
   };
 }
 
@@ -157,9 +163,10 @@ function partitionPlatformVlogs(items, apiUrl) {
   const videos = [];
   const posts = [];
   for (const item of items) {
+    if (item.isActive === false) continue;
     const mapped = mapPlatformVlogItem(item, apiUrl);
-    const kind = String(item.type || item.mediaType || '').toLowerCase();
-    if (kind === 'post' || kind === 'story') posts.push(mapped);
+    const kind = mapped.mediaType || String(item.type || item.mediaType || '').toLowerCase();
+    if (kind === 'image' || kind === 'post' || kind === 'story') posts.push(mapped);
     else if (kind === 'video') videos.push(mapped);
     else if (mapped.video) videos.push(mapped);
     else if (mapped.image || mapped.title) posts.push(mapped);
@@ -177,8 +184,8 @@ function resolveVlogPayload(payload) {
 
 function applyVlogHero(hero, apiUrl) {
   if (!hero || typeof hero !== 'object') return;
-  const video = absoluteUrl(hero.video || hero.heroVideo, apiUrl);
-  const poster = absoluteUrl(hero.poster || hero.image || hero.heroPoster, apiUrl);
+  const video = absoluteUrl(hero.videoUrl || hero.video || hero.heroVideo, apiUrl);
+  const poster = absoluteUrl(hero.posterUrl || hero.poster || hero.image || hero.heroPoster, apiUrl);
   if (video) websiteMedia.set('vlogs.hero.video', video);
   if (poster) websiteMedia.set('vlogs.hero.poster', poster);
 }

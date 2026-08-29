@@ -1702,10 +1702,16 @@ html[lang="ar"] .product-path-hero__copy h1 {
   border: 1px solid #e8e8e4;
   box-shadow: 0 8px 28px rgba(18,18,20,.05);
 }
+.vlog-video-card__media,
+.vlog-post-card__media {
+  overflow: hidden;
+  background: #1a1a1e;
+}
 .vlog-video-card__player,
 .vlog-video-card__poster,
-.vlog-post-card img {
+.vlog-post-card__image {
   width: 100%;
+  max-width: 100%;
   aspect-ratio: 16 / 10;
   object-fit: cover;
   display: block;
@@ -1719,7 +1725,17 @@ html[lang="ar"] .product-path-hero__copy h1 {
 .vlog-post-card__body h3 { margin: 8px 0 10px; font-size: 20px; line-height: 1.15; }
 .vlog-video-card__body p,
 .vlog-post-card__body p { margin: 0; color: #5f5f63; font-size: 14px; line-height: 1.45; }
-.vlog-post-card__link { display: inline-flex; gap: 8px; margin-top: 14px; font-weight: 800; }
+.vlog-post-card__link {
+  display: inline-flex;
+  gap: 8px;
+  margin-top: 14px;
+  font-weight: 800;
+  color: inherit;
+  text-decoration: none;
+}
+.vlog-post-card__link[href]:hover { color: var(--red); }
+.vlog-post-card__link--static { color: #5f5f63; }
+html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
 
 @media (max-width: 768px) {
   .product-path-hero { height: 200px; max-height: 220px; }
