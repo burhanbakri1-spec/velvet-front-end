@@ -47,19 +47,21 @@ export default function VlogsPage() {
               <div className="vlogs-video-grid">
                 {vlogVideos.map((item) => (
                   <article className="vlog-video-card" key={item.id || item.slug || item.video}>
-                    {item.video ? (
-                      <video
-                        className="vlog-video-card__player"
-                        src={item.video}
-                        poster={item.poster || ''}
-                        controls
-                        playsInline
-                        preload="metadata"
-                        aria-label={getVlogTitle(item, locale)}
-                      />
-                    ) : item.poster ? (
-                      <img className="vlog-video-card__poster" src={item.poster} alt="" />
-                    ) : null}
+                    <div className="vlog-video-card__media">
+                      {item.video ? (
+                        <video
+                          className="vlog-video-card__player"
+                          src={item.video}
+                          poster={item.poster || undefined}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          aria-label={getVlogTitle(item, locale)}
+                        />
+                      ) : item.poster ? (
+                        <img className="vlog-video-card__poster" src={item.poster} alt="" />
+                      ) : null}
+                    </div>
                     <div className="vlog-video-card__body">
                       {getVlogCategory(item, locale) && <span>{getVlogCategory(item, locale)}</span>}
                       <h3>{getVlogTitle(item, locale)}</h3>
@@ -80,12 +82,24 @@ export default function VlogsPage() {
               <div className="vlogs-post-grid">
                 {vlogPosts.map((item) => (
                   <article className="vlog-post-card" key={item.id || item.slug || getVlogTitle(item, locale)}>
-                    {item.image && <img src={item.image} alt="" />}
+                    {item.image && (
+                      <div className="vlog-post-card__media">
+                        <img className="vlog-post-card__image" src={item.image} alt="" />
+                      </div>
+                    )}
                     <div className="vlog-post-card__body">
                       {getVlogCategory(item, locale) && <span>{getVlogCategory(item, locale)}</span>}
                       <h3>{getVlogTitle(item, locale)}</h3>
                       {getVlogBody(item, locale) && <p>{getVlogBody(item, locale)}</p>}
-                      <span className="vlog-post-card__link">{copy.vlogs.read} <i>{locale === 'ar' ? '←' : '→'}</i></span>
+                      {item.link ? (
+                        <a className="vlog-post-card__link" href={item.link} target="_blank" rel="noopener noreferrer">
+                          {copy.vlogs.read} <i aria-hidden="true">{locale === 'ar' ? '←' : '→'}</i>
+                        </a>
+                      ) : (
+                        <span className="vlog-post-card__link vlog-post-card__link--static">
+                          {copy.vlogs.read} <i aria-hidden="true">{locale === 'ar' ? '←' : '→'}</i>
+                        </span>
+                      )}
                     </div>
                   </article>
                 ))}
