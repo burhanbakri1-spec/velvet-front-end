@@ -1,0 +1,195 @@
+import { useMemo, useState } from 'react';
+import { filterGroups, getFilterCounts, getActiveFilterTags, getShopHierarchyOptions } from '../data/velvetCatalog';
+import { useI18n } from '../i18n/I18nContext';
+
+const HIERARCHY_COLUMNS = [
+  { key: 'brand', optionsKey: 'brands', labelKey: 'brand' },
+  { key: 'category', optionsKey: 'categories', labelKey: 'mainCategory' },
+  { key: 'subcategory', optionsKey: 'subcategories', labelKey: 'subcategory' },
+];
+
+const FILTER_COLUMNS = [
+  { key: 'age', group: 'age', labelKey: 'age', variant: 'check' },
+  { key: 'gender', group: 'gender', labelKey: 'gender', variant: 'check' },
+  { key: 'skill', group: 'skill', labelKey: 'skill', variant: 'check' },
+  { key: 'occasion', group: 'occasion', labelKey: 'occasion', variant: 'check' },
+  { key: 'shopping', group: 'shopping', labelKey: 'quickShop', variant: 'chip' },
+];
+
+function FilterColumn({ column, selected, options, emptyHint, onReset, onToggle, resetLabel }) {
+  return (
+    <div className="shop-filter-column" data-filter-group={column.key}>
+      <div className="shop-filter-column__head">
+        <h3>
+          {column.label}
+          {selected.length > 0 && <span> ({selected.length})</span>}
+        </h3>
+        {selected.length > 0 && (
+          <button type="button" onClick={onReset}>{resetLabel}</button>
+        )}
+      </div>
+      {options.length === 0 && emptyHint ? (
+        <p className="shop-filter-column__hint">{emptyHint}</p>
+      ) : column.variant === 'chip' ? (
+        <div className="filter-group__chips">
+          {options.map((option) => (
+            <button
+              type="button"
+              className={`filter-chip ${selected.includes(option.id) ? 'is-active' : ''}`}
+              aria-pressed={selected.includes(option.id)}
+              key={option.id}
+              onClick={() => onToggle(option.id)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="filter-group__opts">
+          {options.map((option) => (
+            <label className={`filter-option ${selected.includes(option.id) ? 'is-active' : ''}`} key={option.id}>
+              <input
+                type="checkbox"
+                checked={selected.includes(option.id)}
+                onChange={() => onToggle(option.id)}
+              />
+              <span className="filter-option__box" aria-hidden="true" />
+              <span className="filter-option__label">{option.label}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ShopFilterBar({
+  state,
+  resultCount,
+  onToggle,
+  onSelect,
+  onRemove,
+  onClearGroup,
+  onClearAll,
+  onSortChange,
+}) {
+  const { copy, locale } = useI18n();
+  const s = copy.shop;
+  const [open, setOpen] = useState(false);
+  const counts = useMemo(() => getFilterCounts(state), [state]);
+  const tags = useMemo(() => getActiveFilterTags(state, locale), [state, locale]);
+  const hierarchy = useMemo(() => getShopHierarchyOptions(state), [state]);
+  const countLabel = resultCount === 1 ? copy.products.countOne : copy.products.count;
+  const currentSort = state.sort || 'featured';
+
+  const withLabels = (key) => filterGroups[key].map((item) => ({
+    id: item.id,
+    label: item.name[locale],
+    count: counts[key][item.id] || 0,
+  }));
+
+  const hierarchyOptions = (key) => (hierarchy[key] || []).map((item) => ({
+    id: item.id,
+    label: item.name[locale],
+  }));
+
+  return (
+    <section className={`shop-filter-bar ${open ? 'is-open' : ''}`} data-shop-filter-bar aria-label={s.filters}>
+      <div className="shop-filter-bar__row">
+        <button
+          type="button"
+          className="shop-filter-bar__toggle"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? (
+            <>
+              <span className="shop-filter-bar__icon" aria-hidden="true">×</span>
+              <span>{s.collapseFilters}</span>
+            </>
+          ) : (
+            <>
+              <span className="shop-filter-bar__icon shop-filter-bar__icon--filter" aria-hidden="true" />
+              <span>{s.filterBar}</span>
+              <span className="shop-filter-bar__count">({resultCount} {countLabel})</span>
+            </>
+          )}
+        </button>
+
+        <div className="shop-filter-bar__chips" aria-label={s.activeFilters}>
+          {tags.map((tag) => (
+            <span className="tag" key={`${tag.groupKey}:${tag.id}`}>
+              {tag.label}
+              <button type="button" aria-label={`${s.remove} ${tag.label}`} onClick={() => onRemove(tag.groupKey, tag.id)}>×</button>
+            </span>
+          ))}
+        </div>
+
+        <label className="shop-filter-bar__sort">
+          <span>{s.sort}</span>
+          <select
+            value={currentSort}
+            aria-label={s.sort}
+            onChange={(event) => onSortChange(event.target.value)}
+          >
+            <option value="featured">{s.sortFeatured}</option>
+            <option value="newest">{s.sortNewest}</option>
+            <option value="price-asc">{s.sortPriceAsc}</option>
+            <option value="price-desc">{s.sortPriceDesc}</option>
+            <option value="name">{s.sortName}</option>
+          </select>
+        </label>
+      </div>
+
+      {open && (
+        <div className="shop-filter-panel" data-shop-filter-panel>
+          <div className="shop-filter-panel__groups shop-filter-panel__groups--hierarchy">
+            {HIERARCHY_COLUMNS.map((column) => {
+              const selected = state[column.key] ? [state[column.key]] : [];
+              const options = hierarchyOptions(column.optionsKey);
+              const emptyHint = column.key === 'subcategory' && !state.category
+                ? s.selectCategoryFirst
+                : '';
+              return (
+                <FilterColumn
+                  key={column.key}
+                  column={{ ...column, label: s[column.labelKey], variant: 'check' }}
+                  selected={selected}
+                  options={options}
+                  emptyHint={emptyHint}
+                  resetLabel={s.reset}
+                  onReset={() => onClearGroup(column.key)}
+                  onToggle={(id) => onSelect(column.key, selected[0] === id ? '' : id)}
+                />
+              );
+            })}
+          </div>
+          <div className="shop-filter-panel__groups shop-filter-panel__groups--attrs">
+            {FILTER_COLUMNS.map((column) => {
+              const selected = state[column.key] || [];
+              return (
+                <FilterColumn
+                  key={column.key}
+                  column={{ ...column, label: s[column.labelKey] }}
+                  selected={selected}
+                  options={withLabels(column.group)}
+                  resetLabel={s.reset}
+                  onReset={() => onClearGroup(column.key)}
+                  onToggle={(id) => onToggle(column.key, id)}
+                />
+              );
+            })}
+          </div>
+          <div className="shop-filter-panel__foot">
+            {tags.length > 0 && (
+              <button type="button" className="shop-filter-panel__clear" onClick={onClearAll}>{s.clearAll}</button>
+            )}
+            <button type="button" className="shop-filter-panel__apply" onClick={() => setOpen(false)}>
+              {s.applyFilters}
+            </button>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
