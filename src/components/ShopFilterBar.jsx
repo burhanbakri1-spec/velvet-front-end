@@ -17,46 +17,60 @@ const FILTER_COLUMNS = [
 ];
 
 function FilterColumn({ column, selected, options, emptyHint, onReset, onToggle, resetLabel }) {
+  const hasSelection = selected.length > 0;
   return (
-    <div className="shop-filter-column" data-filter-group={column.key}>
+    <div
+      className={`shop-filter-column${hasSelection ? ' shop-filter-column--has-selection' : ''}`}
+      data-filter-group={column.key}
+      data-has-selection={hasSelection || undefined}
+    >
       <div className="shop-filter-column__head">
         <h3>
           {column.label}
-          {selected.length > 0 && <span> ({selected.length})</span>}
+          {hasSelection && <span className="shop-filter-column__count"> ({selected.length})</span>}
         </h3>
-        {selected.length > 0 && (
-          <button type="button" onClick={onReset}>{resetLabel}</button>
+        {hasSelection && (
+          <button type="button" className="shop-filter-column__reset" onClick={onReset}>{resetLabel}</button>
         )}
       </div>
       {options.length === 0 && emptyHint ? (
         <p className="shop-filter-column__hint">{emptyHint}</p>
       ) : column.variant === 'chip' ? (
         <div className="filter-group__chips">
-          {options.map((option) => (
-            <button
-              type="button"
-              className={`filter-chip ${selected.includes(option.id) ? 'is-active' : ''}`}
-              aria-pressed={selected.includes(option.id)}
-              key={option.id}
-              onClick={() => onToggle(option.id)}
-            >
-              {option.label}
-            </button>
-          ))}
+          {options.map((option) => {
+            const active = selected.includes(option.id);
+            return (
+              <button
+                type="button"
+                className={`filter-chip${active ? ' is-active' : ''}${hasSelection && !active ? ' is-inactive' : ''}`}
+                aria-pressed={active}
+                key={option.id}
+                onClick={() => onToggle(option.id)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="filter-group__opts">
-          {options.map((option) => (
-            <label className={`filter-option ${selected.includes(option.id) ? 'is-active' : ''}`} key={option.id}>
-              <input
-                type="checkbox"
-                checked={selected.includes(option.id)}
-                onChange={() => onToggle(option.id)}
-              />
-              <span className="filter-option__box" aria-hidden="true" />
-              <span className="filter-option__label">{option.label}</span>
-            </label>
-          ))}
+          {options.map((option) => {
+            const active = selected.includes(option.id);
+            return (
+              <label
+                className={`filter-option${active ? ' is-active' : ''}${hasSelection && !active ? ' is-inactive' : ''}`}
+                key={option.id}
+              >
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={() => onToggle(option.id)}
+                />
+                <span className="filter-option__box" aria-hidden="true" />
+                <span className="filter-option__label">{option.label}</span>
+              </label>
+            );
+          })}
         </div>
       )}
     </div>

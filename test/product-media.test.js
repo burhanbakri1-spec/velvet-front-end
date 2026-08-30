@@ -33,7 +33,7 @@ test('path hero prefers subcategory media then category media', () => {
     site: { id: 'kids-velvet-storefront', companyId: 'kids-velvet' },
     brands: [{ id: 'b1', slug: 'velvet-baby', name: { en: 'VELVET BABY', ar: 'VELVET BABY' }, sortOrder: 1 }],
     categories: [
-      { id: 'c1', slug: 'baby-development', name: { en: 'Baby Development', ar: 'تنمية' }, brandId: 'b1', image: '/uploads/cat.jpg', sortOrder: 1 },
+      { id: 'c1', slug: 'musical-baby-toys', name: { en: 'Musical Baby Toys', ar: 'ألعاب موسيقية' }, brandId: 'b1', image: '/uploads/cat.jpg', sortOrder: 1 },
       { id: 's1', slug: 'musical-toys', name: { en: 'Musical Toys', ar: 'موسيقية' }, parentId: 'c1', brandId: 'b1', image: '/uploads/sub.jpg', sortOrder: 1 },
     ],
     products: [{
@@ -45,7 +45,7 @@ test('path hero prefers subcategory media then category media', () => {
   }, 'https://api.test');
 
   const product = {
-    velvetPath: { brandId: 'velvet-baby', categoryId: 'baby-development', subcategoryId: 'musical-toys' },
+    velvetPath: { brandId: 'baby', categoryId: 'musical-baby-toys', subcategoryId: 'musical-toys' },
   };
   const hero = getPathHeroMedia(product);
   assert.equal(hero.source, 'subcategory');

@@ -53,7 +53,7 @@ export default function Header({ introActive, solid = false }) {
   }, [routePath]);
 
   const siteLogo = getPlatformMedia('site.logo');
-  const contextBrandLogo = contextBrand ? getBrandLogo(contextBrand.slug) : '';
+  const contextBrandLogo = contextBrand ? getBrandLogo(contextBrand.slug, locale) : '';
 
   const submitSearch = (event) => {
     event.preventDefault();

@@ -5,6 +5,8 @@ import {
   filterGroups,
   filterProducts,
   getActiveFilterTags,
+  getBrandLogo,
+  getBrandMedia,
   getShopHierarchyOptions,
   sortProducts,
   velvetBrands,
@@ -85,11 +87,26 @@ test('Categories mega menu is brand-first and omits the category column', () => 
   assert.match(megaMenu, /data-mega-brand-list/);
   assert.match(megaMenu, /getBrandLogo/);
   assert.match(megaMenu, /getBrandMedia/);
+  assert.match(megaMenu, /mega-menu__preview-brand/);
+  assert.match(megaMenu, /mega-menu__preview-visual/);
+  assert.match(megaMenu, /mega-menu__preview-logo/);
+  assert.doesNotMatch(megaMenu, /mega-menu__preview-wordmark/);
   assert.match(megaMenu, /localizePath\(`\/brands\/\$\{slug\}`/);
   assert.doesNotMatch(megaMenu, /copy\.shop\.category/);
   assert.doesNotMatch(megaMenu, /copy\.shop\.subcategory/);
   assert.doesNotMatch(megaMenu, /goCategory/);
   assert.ok(velvetBrands.some((brand) => brand.slug === 'baby'));
+});
+
+test('Categories mega menu logo and poster resolve for each brand', () => {
+  for (const slug of ['baby', 'kids', 'play']) {
+    const logo = getBrandLogo(slug, 'en');
+    const poster = getBrandMedia(slug).poster;
+    assert.ok(logo, `expected logo for ${slug}`);
+    assert.ok(poster, `expected poster for ${slug}`);
+    assert.notEqual(logo, poster, `logo and poster must differ for ${slug}`);
+  }
+  assert.notEqual(getBrandLogo('baby', 'en'), getBrandLogo('play', 'en'));
 });
 
 test('selecting Brand updates URL and scopes Main Category options', () => {
@@ -204,28 +221,61 @@ test('changing Category clears incompatible Subcategory and keeps unrelated filt
 });
 
 test('product count respects combined hierarchy and attribute filters', () => {
-  const baby = filterProducts({ ...baseState, brand: 'baby' });
-  const babyDev = filterProducts({ ...baseState, brand: 'baby', category: 'baby-development' });
-  const sensory = filterProducts({
+  const collect = filterProducts({ ...baseState, brand: 'collect' });
+  const blindBoxes = filterProducts({ ...baseState, brand: 'collect', category: 'blind-boxes' });
+  const miniFigures = filterProducts({
+    ...baseState, brand: 'collect', category: 'blind-boxes', subcategory: 'mini-figures',
+  });
+  const miniAge = filterProducts({
+    ...baseState, brand: 'collect', category: 'blind-boxes', subcategory: 'mini-figures', age: ['5-6y'],
+  });
+  assert.ok(collect.length > 0);
+  assert.ok(blindBoxes.length > 0 && blindBoxes.length <= collect.length);
+  assert.ok(miniFigures.length > 0 && miniFigures.length <= blindBoxes.length);
+  assert.ok(miniAge.length <= miniFigures.length);
+  assert.ok(miniFigures.every((product) => product.velvetPath.brandId === 'collect'));
+  assert.ok(miniFigures.every((product) => product.velvetPath.categoryId === 'blind-boxes'));
+  assert.ok(miniFigures.every((product) => product.velvetPath.subcategoryId === 'mini-figures'));
+
+  // Empty taxonomy nodes remain available and simply return no products.
+  assert.equal(filterProducts({
     ...baseState, brand: 'baby', category: 'baby-development', subcategory: 'sensory-toys',
-  });
-  const sensoryAge = filterProducts({
-    ...baseState, brand: 'baby', category: 'baby-development', subcategory: 'sensory-toys', age: ['3-4y'],
-  });
-  assert.ok(baby.length > 0);
-  assert.ok(babyDev.length > 0 && babyDev.length <= baby.length);
-  assert.ok(sensory.length > 0 && sensory.length <= babyDev.length);
-  assert.ok(sensoryAge.length <= sensory.length);
-  assert.ok(sensory.every((product) => product.velvetPath.brandId === 'baby'));
-  assert.ok(sensory.every((product) => product.velvetPath.categoryId === 'baby-development'));
-  assert.ok(sensory.every((product) => product.velvetPath.subcategoryId === 'sensory-toys'));
+  }).length, 0);
 });
 
 test('expanded filter option lists do not stretch sibling columns to full catalog height', () => {
   const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
   assert.match(styles, /shop-filter-panel__groups \{[\s\S]*?align-items:\s*start/);
-  assert.match(styles, /\.shop-filter-column \.filter-group__opts \{[\s\S]*?max-height:\s*min\(280px, 42vh\)/);
+  assert.match(styles, /\.shop-filter-column \.filter-group__opts \{[\s\S]*?max-height:\s*min\(260px, 40vh\)/);
   assert.match(styles, /\.shop-filter-column \.filter-group__opts \{[\s\S]*?overflow-y:\s*auto/);
+});
+
+test('active filter groups de-emphasize unselected siblings without disabling them', () => {
+  assert.match(filterBar, /shop-filter-column--has-selection/);
+  assert.match(filterBar, /data-has-selection=\{hasSelection \|\| undefined\}/);
+  assert.match(filterBar, /is-inactive/);
+  assert.match(filterBar, /hasSelection && !active/);
+  const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  assert.match(styles, /\.shop-filter-column--has-selection \.filter-option\.is-inactive/);
+  assert.match(styles, /\.shop-filter-column--has-selection \.filter-chip\.is-inactive/);
+  assert.match(styles, /\.filter-option\.is-inactive:hover/);
+  assert.match(styles, /\.shop-filter-column--has-selection \.filter-option\.is-inactive[\s\S]*?cursor:\s*pointer/);
+  assert.doesNotMatch(filterBar, /disabled=\{true\}|aria-disabled/);
+});
+
+test('hierarchy cascading and URL behavior remain unchanged after filter visual states', () => {
+  const next = selectPathKey({
+    ...baseState,
+    brand: 'baby',
+    category: 'baby-development',
+    subcategory: 'sensory-toys',
+    age: ['3-4y'],
+  }, 'brand', 'kids');
+  assert.equal(next.brand, 'kids');
+  assert.equal(next.category, '');
+  assert.equal(next.subcategory, '');
+  assert.deepEqual(next.age, ['3-4y']);
+  assert.equal(buildShopQuery(next), 'brand=kids&age=3-4y');
 });
 
 test('shop filter hierarchy labels are localized in EN and AR', () => {

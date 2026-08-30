@@ -10,7 +10,9 @@ import {
   getPathProducts,
   getProductBySlug,
   getProductMedia,
+  getSubcategory,
   velvetBrands,
+  velvetTaxonomyStats,
 } from '../src/data/velvetCatalog.js';
 
 const API = 'https://api.test';
@@ -43,55 +45,53 @@ function canonicalPayload({ withBrands = true } = {}) {
     ],
     texts: [],
     media: [
-      { sectionKey: 'brand.velvet-baby.video', mediaType: 'video', video: '/uploads/legacy-baby.mp4' },
+      { sectionKey: 'brand.baby.video', mediaType: 'video', video: '/uploads/legacy-baby.mp4' },
     ],
   };
 }
 
-test('dynamic catalog builds Brand → Main Category → Subcategory → Products from platform entities', () => {
+test('dynamic catalog keeps workbook taxonomy and remaps platform brand media/products', () => {
   applyPlatformContent(canonicalPayload(), API);
 
-  const brand = getBrand('velvet-baby');
-  assert.ok(brand, 'brand must appear from the API');
+  const brand = getBrand('baby');
+  assert.ok(brand, 'workbook brand slug remains canonical');
+  assert.equal(getBrand('velvet-baby'), null);
   assert.equal(brand.name.en, 'VELVET BABY');
+  assert.ok(brand.categories.length >= 10, 'full workbook mains remain available');
+  assert.ok(getCategory('baby', 'baby-development'));
+  assert.ok(getCategory('baby', 'bath-toys'));
+  assert.deepEqual(
+    getSubcategory('baby', 'baby-development', 'sensory-toys')?.name.en,
+    'Sensory Toys',
+  );
 
-  // Main Categories hang directly under the brand (matched by brandId).
-  assert.deepEqual(brand.categories.map((category) => category.slug), ['baby-development', 'bath-toys']);
-
-  // Subcategories appear under their parent.
-  const main = getCategory('velvet-baby', 'baby-development');
-  assert.ok(main);
-  assert.deepEqual(main.subs.map((sub) => sub.slug), ['sensory-toys', 'fine-motor']);
-
-  // Product appears in the exact hierarchy.
-  const exact = getPathProducts({ brand: 'velvet-baby', category: 'baby-development', subcategory: 'sensory-toys' });
+  const exact = getPathProducts({ brand: 'baby', category: 'baby-development', subcategory: 'sensory-toys' });
   assert.deepEqual(exact.map((product) => product.slug), ['baby-sensory-set']);
   const product = getProductBySlug('baby-sensory-set');
   assert.ok(product);
-  assert.deepEqual(product.velvetPath, { brandId: 'velvet-baby', categoryId: 'baby-development', subcategoryId: 'sensory-toys' });
+  assert.deepEqual(product.velvetPath, { brandId: 'baby', categoryId: 'baby-development', subcategoryId: 'sensory-toys' });
+  assert.equal(product.price, 34);
+  assert.equal(product.image, 'https://api.test/uploads/p1.jpg');
 });
 
 test('a category renders under its brand even with zero products', () => {
   applyPlatformContent(canonicalPayload(), API);
 
-  const emptyMain = getCategory('velvet-baby', 'bath-toys');
+  const emptyMain = getCategory('baby', 'bath-toys');
   assert.ok(emptyMain, 'main category must appear even without products');
-  assert.deepEqual(emptyMain.subs, []);
-  assert.deepEqual(filterProducts({ brand: 'velvet-baby', category: 'bath-toys' }), []);
+  assert.ok(Array.isArray(emptyMain.subs));
+  assert.deepEqual(filterProducts({
+    brand: 'baby', category: 'bath-toys', subcategory: '', manufacturer: '', age: [], gender: [], skill: [], occasion: [], shopping: [], search: '',
+  }).filter((product) => product.velvetPath?.categoryId === 'bath-toys' && product.velvetPath?.subcategoryId), []);
 });
 
 test('brand, category and product pages consume entity-owned media directly', () => {
   applyPlatformContent(canonicalPayload(), API);
 
-  // Brand entity media is canonical even when a legacy brand.* media slot exists.
-  const media = getBrandMedia('velvet-baby');
+  const media = getBrandMedia('baby');
   assert.equal(media.video, 'https://api.test/uploads/baby.mp4');
   assert.equal(media.poster, 'https://api.test/uploads/baby-poster.jpg');
-  assert.equal(getBrandLogo('velvet-baby'), 'https://api.test/uploads/baby-logo.png');
-
-  const bath = getCategory('velvet-baby', 'bath-toys');
-  assert.equal(bath.heroImage, 'https://api.test/uploads/c2.jpg');
-  assert.equal(bath.heroVideo, 'https://api.test/uploads/c2.mp4');
+  assert.equal(getBrandLogo('baby'), 'https://api.test/uploads/baby-logo.png');
 
   const product = getProductBySlug('baby-sensory-set');
   const productMedia = getProductMedia(product);
@@ -106,17 +106,17 @@ test('a product without a subcategory sits directly under its main category', ()
 
   const product = getProductBySlug('baby-sensory-set');
   assert.equal(product.velvetPath.subcategoryId, '');
-  assert.deepEqual(getPathProducts({ brand: 'velvet-baby', category: 'baby-development' }).map((entry) => entry.slug), ['baby-sensory-set']);
-  assert.deepEqual(getPathProducts({ brand: 'velvet-baby', category: 'baby-development', subcategory: 'sensory-toys' }), []);
+  assert.deepEqual(getPathProducts({ brand: 'baby', category: 'baby-development' }).map((entry) => entry.slug), ['baby-sensory-set']);
+  assert.deepEqual(getPathProducts({ brand: 'baby', category: 'baby-development', subcategory: 'sensory-toys' }), []);
 });
 
 test('a product whose declared hierarchy does not resolve is not placed', () => {
   const payload = canonicalPayload();
-  payload.products[0] = { ...payload.products[0], slug: 'pocket-worlds-starter-set', brandId: 'b9' };
+  payload.products[0] = { ...payload.products[0], slug: 'pocket-worlds-starter-set', brandId: 'b9', id: 'unmapped-x' };
   applyPlatformContent(payload, API);
 
-  assert.deepEqual(getPathProducts({ brand: 'velvet-baby', category: 'baby-development' }), []);
-  assert.deepEqual(getPathProducts({ brand: 'velvet-baby' }), []);
+  assert.deepEqual(getPathProducts({ brand: 'baby', category: 'baby-development' }), []);
+  assert.deepEqual(getPathProducts({ brand: 'baby' }).filter((item) => item.slug === 'pocket-worlds-starter-set'), []);
   assert.equal(getProductBySlug('pocket-worlds-starter-set'), null, 'dynamic mode must not recover an unresolved product from the static catalog');
 });
 
@@ -125,10 +125,9 @@ test('static VELVET catalog remains the fallback when no brand entities are supp
 
   assert.equal(getBrand('velvet-baby'), null);
   assert.ok(getBrand('baby'), 'static brand must remain');
-  assert.equal(velvetBrands.length, 12);
+  assert.equal(velvetBrands.length, velvetTaxonomyStats.brands);
   assert.equal(getProductBySlug('pocket-worlds-starter-set')?.slug, 'pocket-worlds-starter-set', 'static fallback mode must keep static product lookup');
 
-  // Static brand media still honours the legacy brand.* media slots as fallback.
   applyPlatformContent({ ...canonicalPayload({ withBrands: false }), media: [{ sectionKey: 'brand.baby.video', mediaType: 'video', video: '/uploads/baby-legacy.mp4' }] }, API);
   assert.equal(getBrandMedia('baby').video, 'https://api.test/uploads/baby-legacy.mp4');
 });

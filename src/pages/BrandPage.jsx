@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { artwork } from '../data/products';
-import { getBrand, getBrandLogo, getBrandMedia } from '../data/velvetCatalog';
+import { getBrand, getBrandAbout, getBrandLogo, getBrandMedia } from '../data/velvetCatalog';
 import BrandShowcase from '../components/BrandShowcase';
 import { PlayButton } from '../components/Hero';
 import PageNavigation from '../components/PageNavigation';
@@ -37,7 +37,8 @@ export default function BrandPage({ slug }) {
   }
 
   const media = getBrandMedia(slug);
-  const brandLogo = getBrandLogo(slug);
+  const brandLogo = getBrandLogo(slug, locale);
+  const brandAbout = getBrandAbout(slug, locale);
 
   const videoRef = useRef(null);
   const [playing, setPlaying] = useState(false);
@@ -99,6 +100,16 @@ export default function BrandPage({ slug }) {
         {media.video && <PlayButton label={playing ? copy.home.pause : copy.home.play} playing={playing} onClick={togglePlayback} />}
         <span className="showcase-view-cursor" ref={cursorRef} aria-hidden="true">{copy.home.view}</span>
       </section>
+
+      {brandAbout?.description ? (
+        <section className="brand-about" aria-labelledby="brand-about-heading">
+          <div className="brand-about__intro">
+            {brandAbout.eyebrow ? <span className="store-eyebrow">{brandAbout.eyebrow}</span> : null}
+            <h2 id="brand-about-heading">{brandAbout.title}</h2>
+          </div>
+          <p className="brand-about__description">{brandAbout.description}</p>
+        </section>
+      ) : null}
 
       <section className="category-showcases" id="category-products" aria-label={`${brand.name[locale]} ${copy.shop.category}`}>
         {brand.categories.map((category, index) => (

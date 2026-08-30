@@ -16,7 +16,7 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
 
   const brand = velvetBrands.find((item) => item.slug === activeBrand) || velvetBrands[0];
   const preview = brand ? getBrandMedia(brand.slug) : { poster: '', video: '' };
-  const logo = brand ? getBrandLogo(brand.slug) : '';
+  const logo = brand ? getBrandLogo(brand.slug, locale) : '';
 
   const selectBrand = (slug) => setActiveBrand(slug);
   const goBrand = (slug) => {
@@ -53,17 +53,19 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
           aria-label={brand.name[locale]}
           data-mega-brand-preview={brand.slug}
         >
-          {preview.poster ? (
-            <img className="mega-menu__preview-media" src={preview.poster} alt="" />
-          ) : (
-            <span className="mega-menu__preview-fallback" aria-hidden="true" />
-          )}
-          <span className="mega-menu__preview-shade" aria-hidden="true" />
-          {logo ? (
-            <img className="mega-menu__preview-logo" src={logo} alt={brand.name[locale]} />
-          ) : (
-            <strong className="mega-menu__preview-wordmark">{brand.home?.logo?.[locale] || brand.name[locale]}</strong>
-          )}
+          <div className="mega-menu__preview-brand">
+            {logo ? (
+              <img className="mega-menu__preview-logo" src={logo} alt={brand.name[locale]} />
+            ) : null}
+          </div>
+          <div className="mega-menu__preview-visual">
+            {preview.poster ? (
+              <img className="mega-menu__preview-media" src={preview.poster} alt="" />
+            ) : (
+              <span className="mega-menu__preview-fallback" aria-hidden="true" />
+            )}
+            <span className="mega-menu__preview-shade" aria-hidden="true" />
+          </div>
         </button>
       )}
     </div>

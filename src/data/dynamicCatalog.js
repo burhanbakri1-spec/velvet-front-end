@@ -19,6 +19,7 @@
 // ===========================================================================
 
 import { artwork } from './products.js';
+import { productTaxonomyById } from './velvetTaxonomy.js';
 
 const slugify = (value) => String(value || '')
   .trim()
@@ -272,10 +273,23 @@ export function buildDynamicCatalog(payload, apiUrl) {
     mainByRawId.set(String(rawMain.id || ''), main);
   }
 
-  // Products land in the exact brand → main category → subcategory path. Only
-  // products whose declared hierarchy resolves are placed in the catalog.
+  // Products land under the workbook taxonomy when product_id is classified.
+  // Platform hierarchy remains a placement fallback for unclassified products.
+  // Outside-tree products keep their Velvet brand and skip Main/Sub.
   const products = [];
   for (const [index, rawProduct] of rawProducts.entries()) {
+    const productId = String(rawProduct.id || '');
+    const taxonomy = productId ? productTaxonomyById[productId] : null;
+
+    if (taxonomy?.brandSlug) {
+      const brandSlug = taxonomy.brandSlug;
+      const main = taxonomy.mainSlug
+        ? { slug: taxonomy.mainSlug, name: { en: taxonomy.mainSlug, ar: taxonomy.mainSlug } }
+        : null;
+      products.push(buildProduct(rawProduct, brandSlug, main, taxonomy.subcategorySlug || '', index, apiUrl));
+      continue;
+    }
+
     const brand = brandByRawId.get(String(rawProduct.brandId || ''));
     if (!brand) continue;
     const rawMain = rawProduct.mainCategoryId
@@ -284,8 +298,6 @@ export function buildDynamicCatalog(payload, apiUrl) {
     if (!rawMain) continue;
     const root = rootOf(rawMain);
     const main = mainByRawId.get(String(root.id || ''));
-    // Only products whose declared hierarchy resolves exactly are placed: the
-    // main category must be attached under the product's brand.
     if (!main) continue;
     if (root.brandId && String(root.brandId) !== String(rawProduct.brandId)) continue;
     let subSlug = '';
