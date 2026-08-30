@@ -6,7 +6,24 @@ import { applyVlogContent } from './vlogs.js';
 import { translations } from '../i18n/translations.js';
 
 const websiteMedia = new Map();
+const brandAboutContent = new Map();
+
 export const getPlatformMedia = (key, fallback = '') => websiteMedia.get(key) || fallback;
+
+export function getPlatformBrandAbout(brandSlug) {
+  return brandAboutContent.get(brandSlug) || null;
+}
+
+function ensureBrandAboutEntry(brandSlug) {
+  if (!brandAboutContent.has(brandSlug)) {
+    brandAboutContent.set(brandSlug, {
+      eyebrow: { en: '', ar: '' },
+      title: { en: '', ar: '' },
+      description: { en: '', ar: '' },
+    });
+  }
+  return brandAboutContent.get(brandSlug);
+}
 
 export const platformContentConfig = (env = import.meta.env || {}) => ({
   enabled: String(env.VITE_IGROUP_CONTENT_ENABLED || '').toLowerCase() === 'true',
@@ -216,6 +233,13 @@ function applyStructuredContent(payload, apiUrl) {
       setTranslation('ar', item.key, item.values?.ar || item.values?.en || '');
       continue;
     }
+    const brandAboutMatch = item.key.match(/^brand\.([^.]+)\.about\.(eyebrow|title|description)$/);
+    if (brandAboutMatch) {
+      const entry = ensureBrandAboutEntry(brandAboutMatch[1]);
+      entry[brandAboutMatch[2]].en = item.values?.en || '';
+      entry[brandAboutMatch[2]].ar = item.values?.ar || item.values?.en || '';
+      continue;
+    }
     const aboutMatch = item.key.match(/^about\.(\d+)\.(title|eyebrow|paragraph1|paragraph2)$/);
     if (aboutMatch && aboutSections[Number(aboutMatch[1])]) {
       const section = aboutSections[Number(aboutMatch[1])];
@@ -266,6 +290,7 @@ function applyStructuredContent(payload, apiUrl) {
 export function applyPlatformContent(payload, apiUrl) {
   if (!payload?.site || !Array.isArray(payload.categories) || !Array.isArray(payload.products)) throw new Error('The platform content response is invalid.');
   websiteMedia.clear();
+  brandAboutContent.clear();
   const heroVideos = {};
   for (const item of payload.media || []) {
     const match = String(item.sectionKey || '').match(/^category\.([^.]+)\.heroVideo$/);

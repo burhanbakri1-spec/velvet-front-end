@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { applyPlatformContent } from '../src/data/platformContent.js';
-import { getBrand, getBrandLogo, getBrandMedia } from '../src/data/velvetCatalog.js';
+import { getBrand, getBrandAbout, getBrandLogo, getBrandMedia } from '../src/data/velvetCatalog.js';
 
 test('each VELVET brand exposes accent, wordmark, poster and video slots', () => {
   for (const brand of ['baby', 'kids', 'play', 'build', 'learn', 'create', 'games', 'move', 'collect', 'plush', 'books', 'muslim']) {
@@ -42,9 +42,38 @@ test('brand hero media is driven by managed platform slots with image fallback',
   assert.equal(getBrandMedia('unknown').video, '');
 });
 
-test('brand.{slug}.logo falls back to the local static branch logo when absent', () => {
-  assert.equal(getBrandLogo('kids'), '');
+test('brand.{slug}.logo falls back to the static branch wordmark artwork when absent', () => {
+  const kidsLogo = getBrandLogo('kids');
+  assert.ok(kidsLogo.startsWith('data:image/svg+xml'), 'local branch logo must render as an SVG image');
   assert.equal(getBrandLogo('unknown'), '');
   const brand = getBrand('kids');
-  assert.ok(brand.home.logo.en, 'local branch wordmark must remain the fallback');
+  assert.ok(brand.home.logo.en, 'local branch wordmark metadata must remain available');
+});
+
+test('brand about content prefers platform copy and falls back to catalog tagline', () => {
+  const playEn = getBrandAbout('play', 'en');
+  assert.ok(playEn);
+  assert.equal(playEn.title, 'About VELVET PLAY');
+  assert.match(playEn.description, /Pretend Play/);
+
+  const playAr = getBrandAbout('play', 'ar');
+  assert.equal(playAr.title, 'عن VELVET PLAY');
+  assert.match(playAr.description, /التمثيل/);
+
+  applyPlatformContent({
+    site: { id: 'kids-velvet-storefront', companyId: 'kids-velvet' },
+    categories: [],
+    products: [],
+    texts: [
+      { key: 'brand.play.about.eyebrow', values: { en: 'Discover', ar: 'اكتشف' } },
+      { key: 'brand.play.about.title', values: { en: 'About VELVET PLAY', ar: 'عن VELVET PLAY' } },
+      { key: 'brand.play.about.description', values: { en: 'Managed PLAY copy.', ar: 'نص PLAY من المنصة.' } },
+    ],
+    media: [],
+  }, 'https://api.test');
+
+  const managed = getBrandAbout('play', 'en');
+  assert.equal(managed.eyebrow, 'Discover');
+  assert.equal(managed.description, 'Managed PLAY copy.');
+  assert.equal(getBrandAbout('unknown', 'en'), null);
 });

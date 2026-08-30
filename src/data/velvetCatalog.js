@@ -27,7 +27,7 @@
 // ===========================================================================
 
 import { artwork, products } from './products.js';
-import { getPlatformMedia } from './platformContent.js';
+import { getPlatformBrandAbout, getPlatformMedia } from './platformContent.js';
 
 const slugify = (value) => String(value || '')
   .trim()
@@ -899,14 +899,70 @@ export function getBrandMedia(brandSlug) {
   return { video, poster };
 }
 
+function branchLogoArtwork(brand, locale = 'en') {
+  const branch = brand.home?.logo?.[locale] || brand.short?.[locale] || '';
+  const safeVelvet = 'VELVET'.replace(/&/g, '&amp;');
+  const safeBranch = String(branch).replace(/&/g, '&amp;');
+  const rtl = locale === 'ar';
+  const anchor = rtl ? 'end' : 'start';
+  const x = rtl ? 396 : 24;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 88" role="img"><text x="${x}" y="28" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="0.12em" text-anchor="${anchor}">${safeVelvet}</text><text x="${x}" y="72" fill="#ffffff" font-family="Impact, 'Arial Narrow', sans-serif" font-size="48" font-weight="900" letter-spacing="-0.02em" text-anchor="${anchor}">${safeBranch}</text></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
 // Resolve a brand's managed logo image. Entity-owned brand.logoUrl is
-// canonical; the legacy `brand.{slug}.logo` platform slot is the fallback.
-// When absent the storefront keeps its local/static branch logo (the brand
-// wordmark), so this returns '' to signal the caller to fall back.
-export function getBrandLogo(brandSlug) {
+// canonical; the legacy `brand.{slug}.logo` platform slot is next; the static
+// branch wordmark artwork is the final fallback so logo slots always render an
+// image instead of plain text overlays.
+export function getBrandLogo(brandSlug, locale = 'en') {
   if (!brandSlug) return '';
   const brand = getBrand(brandSlug);
-  return brand?.logoUrl || getPlatformMedia(`brand.${brandSlug}.logo`, '');
+  if (!brand) return '';
+  const managed = brand.logoUrl || getPlatformMedia(`brand.${brandSlug}.logo`, '');
+  if (managed) return managed;
+  return branchLogoArtwork(brand, locale);
+}
+
+function localizedBrandField(value, locale) {
+  if (!value) return '';
+  if (typeof value === 'string') return value.trim();
+  return String(value[locale] || value.en || '').trim();
+}
+
+// Brand information for the BrandPage about section. Platform keys
+// `brand.{slug}.about.*` override catalog tagline/kicker fallbacks.
+export function getBrandAbout(brandSlug, locale = 'en') {
+  const brand = getBrand(brandSlug);
+  if (!brand) return null;
+
+  const platform = getPlatformBrandAbout(brandSlug);
+  const eyebrow = localizedBrandField(platform?.eyebrow, locale);
+  const title = localizedBrandField(platform?.title, locale);
+  const platformDescription = localizedBrandField(platform?.description, locale);
+  const catalogDescription = localizedBrandField(brand.about, locale)
+    || localizedBrandField(brand.description, locale);
+  const kicker = localizedBrandField(
+    locale === 'ar' ? brand.home?.kickerAr : brand.home?.kickerEn,
+    locale,
+  );
+  const tagline = localizedBrandField(brand.tagline, locale);
+  const description = platformDescription
+    || catalogDescription
+    || [tagline, kicker].filter(Boolean).join(' — ')
+    || tagline
+    || kicker;
+
+  if (!description && !title) return null;
+
+  const defaultTitle = locale === 'ar'
+    ? `عن ${brand.name[locale]}`
+    : `About ${brand.name[locale]}`;
+
+  return {
+    eyebrow,
+    title: title || defaultTitle,
+    description,
+  };
 }
 
 export function getCategory(brandSlug, categorySlug) {
