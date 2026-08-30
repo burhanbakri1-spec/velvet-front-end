@@ -689,6 +689,42 @@ export const filterGroups = {
 
 export const quickShopGroups = ['age', 'gender', 'skill', 'occasion', 'shopping'];
 
+export function getActiveFilterTags(state, locale = 'en') {
+  const tags = [];
+  if (state.brand) {
+    const brand = getBrand(state.brand);
+    tags.push({ groupKey: 'brand', id: state.brand, label: brand ? brand.name[locale] : state.brand });
+  }
+  if (state.category) {
+    const category = findCategoryBySlug(state.category, state.brand);
+    tags.push({ groupKey: 'category', id: state.category, label: category ? category.name[locale] : state.category });
+  }
+  if (state.subcategory) {
+    const sub = findSubcategoryBySlug(state.category, state.subcategory, state.brand);
+    tags.push({ groupKey: 'subcategory', id: state.subcategory, label: sub ? sub.name[locale] : state.subcategory });
+  }
+  [
+    { key: 'age', group: 'age' },
+    { key: 'gender', group: 'gender' },
+    { key: 'skill', group: 'skill' },
+    { key: 'occasion', group: 'occasion' },
+    { key: 'shopping', group: 'shopping' },
+  ].forEach(({ key, group }) => {
+    (state[key] || []).forEach((id) => {
+      const item = filterGroups[group].find((entry) => entry.id === id);
+      tags.push({ groupKey: key, id, label: item ? item.name[locale] : id });
+    });
+  });
+  if (state.manufacturer) {
+    tags.push({
+      groupKey: 'manufacturer',
+      id: state.manufacturer,
+      label: getManufacturerName(state.manufacturer) || state.manufacturer,
+    });
+  }
+  return tags;
+}
+
 // ---------------------------------------------------------------------------
 // Deterministic product catalog.
 // ---------------------------------------------------------------------------
@@ -881,6 +917,39 @@ export function getSubcategory(brandSlug, categorySlug, subSlug) {
   return getCategory(brandSlug, categorySlug)?.subs.find((sub) => sub.slug === subSlug) || null;
 }
 
+export function findCategoryBySlug(categorySlug, brandSlug = '') {
+  if (brandSlug) return getCategory(brandSlug, categorySlug);
+  for (const brand of velvetBrands) {
+    const category = getCategory(brand.slug, categorySlug);
+    if (category) return category;
+  }
+  return null;
+}
+
+export function findSubcategoryBySlug(categorySlug, subSlug, brandSlug = '') {
+  if (brandSlug) return getSubcategory(brandSlug, categorySlug, subSlug);
+  const category = findCategoryBySlug(categorySlug);
+  return category?.subs.find((sub) => sub.slug === subSlug) || null;
+}
+
+export function getShopHierarchyOptions(state = {}) {
+  const brands = velvetBrands.map((brand) => ({ id: brand.slug, name: brand.name }));
+  const rawCategories = state.brand
+    ? (getBrand(state.brand)?.categories || [])
+    : velvetBrands.flatMap((brand) => brand.categories || []);
+  const seen = new Set();
+  const categories = rawCategories.filter((category) => {
+    if (seen.has(category.slug)) return false;
+    seen.add(category.slug);
+    return true;
+  }).map((category) => ({ id: category.slug, name: category.name }));
+  const parent = state.category
+    ? (state.brand ? getCategory(state.brand, state.category) : findCategoryBySlug(state.category))
+    : null;
+  const subcategories = (parent?.subs || []).map((sub) => ({ id: sub.slug, name: sub.name }));
+  return { brands, categories, subcategories };
+}
+
 export function resolvePath(state) {
   const brand = state.brand ? getBrand(state.brand) : null;
   const category = brand && state.category ? getCategory(brand.slug, state.category) : null;
@@ -964,6 +1033,21 @@ export function getPathProducts(state) {
     if (state.subcategory && product.velvetPath?.subcategoryId !== state.subcategory) return false;
     return true;
   });
+}
+
+export function sortProducts(products, sort = '', locale = 'en') {
+  const list = [...(products || [])];
+  if (sort === 'price-asc') return list.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+  if (sort === 'price-desc') return list.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+  if (sort === 'newest') return list.sort((a, b) => Number(b.sortOrder || 0) - Number(a.sortOrder || 0));
+  if (sort === 'name') {
+    return list.sort((a, b) => {
+      const left = locale === 'ar' ? (a.nameAr || a.name || '') : (a.name || '');
+      const right = locale === 'ar' ? (b.nameAr || b.name || '') : (b.name || '');
+      return String(left).localeCompare(String(right), locale === 'ar' ? 'ar' : 'en');
+    });
+  }
+  return list;
 }
 
 export function filterProducts(state) {
