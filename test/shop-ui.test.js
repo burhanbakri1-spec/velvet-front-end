@@ -221,21 +221,26 @@ test('changing Category clears incompatible Subcategory and keeps unrelated filt
 });
 
 test('product count respects combined hierarchy and attribute filters', () => {
-  const baby = filterProducts({ ...baseState, brand: 'baby' });
-  const babyDev = filterProducts({ ...baseState, brand: 'baby', category: 'baby-development' });
-  const sensory = filterProducts({
+  const collect = filterProducts({ ...baseState, brand: 'collect' });
+  const blindBoxes = filterProducts({ ...baseState, brand: 'collect', category: 'blind-boxes' });
+  const miniFigures = filterProducts({
+    ...baseState, brand: 'collect', category: 'blind-boxes', subcategory: 'mini-figures',
+  });
+  const miniAge = filterProducts({
+    ...baseState, brand: 'collect', category: 'blind-boxes', subcategory: 'mini-figures', age: ['5-6y'],
+  });
+  assert.ok(collect.length > 0);
+  assert.ok(blindBoxes.length > 0 && blindBoxes.length <= collect.length);
+  assert.ok(miniFigures.length > 0 && miniFigures.length <= blindBoxes.length);
+  assert.ok(miniAge.length <= miniFigures.length);
+  assert.ok(miniFigures.every((product) => product.velvetPath.brandId === 'collect'));
+  assert.ok(miniFigures.every((product) => product.velvetPath.categoryId === 'blind-boxes'));
+  assert.ok(miniFigures.every((product) => product.velvetPath.subcategoryId === 'mini-figures'));
+
+  // Empty taxonomy nodes remain available and simply return no products.
+  assert.equal(filterProducts({
     ...baseState, brand: 'baby', category: 'baby-development', subcategory: 'sensory-toys',
-  });
-  const sensoryAge = filterProducts({
-    ...baseState, brand: 'baby', category: 'baby-development', subcategory: 'sensory-toys', age: ['3-4y'],
-  });
-  assert.ok(baby.length > 0);
-  assert.ok(babyDev.length > 0 && babyDev.length <= baby.length);
-  assert.ok(sensory.length > 0 && sensory.length <= babyDev.length);
-  assert.ok(sensoryAge.length <= sensory.length);
-  assert.ok(sensory.every((product) => product.velvetPath.brandId === 'baby'));
-  assert.ok(sensory.every((product) => product.velvetPath.categoryId === 'baby-development'));
-  assert.ok(sensory.every((product) => product.velvetPath.subcategoryId === 'sensory-toys'));
+  }).length, 0);
 });
 
 test('expanded filter option lists do not stretch sibling columns to full catalog height', () => {
