@@ -80,6 +80,13 @@ test('product switch duration is within the premium transition range', () => {
   assert.ok(PRODUCT_SWITCH_DURATION_MS <= 600);
 });
 
+test('sibling switcher slides span the viewport and center inner presentation', () => {
+  const css = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  assert.match(css, /\.product-switcher-slide \{[\s\S]*?align-items:\s*center/);
+  assert.match(css, /\.product-switcher-slide__content \{[\s\S]*?margin-inline:\s*auto/);
+  assert.match(css, /\.product-switcher-viewport\.is-transitioning \.product-switcher-slide \{[\s\S]*?width:\s*100%/);
+});
+
 test('buildInitialSelections resets option defaults per product', () => {
   const withOptions = velvetProducts.find((item) => item.options?.length);
   if (!withOptions) return;
