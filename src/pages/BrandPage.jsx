@@ -92,7 +92,7 @@ export default function BrandPage({ slug }) {
         <div className="category-hero__shade" aria-hidden="true" />
         <a className="category-hero__link" href="#category-products" aria-label={`${copy.home.view} ${brand.name[locale]}`} />
         <div className="category-hero__title">
-          <span className="category-hero__logo">
+          <span className={`category-hero__logo${managedBrandLogo ? ' category-hero__logo--managed' : ''}`}>
             {brandLogo ? (
               <img
                 className={`category-hero__logo-img${managedBrandLogo ? ' category-hero__logo-img--managed' : ''}`}
