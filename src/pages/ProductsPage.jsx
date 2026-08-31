@@ -4,6 +4,7 @@ import ShopFilterBar from '../components/ShopFilterBar';
 import PageNavigation from '../components/PageNavigation';
 import { filterProducts, resolvePath, sortProducts } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
+import { useShopGridDensity } from '../hooks/useShopGridDensity';
 import { useShopState } from '../hooks/useShopState';
 
 const MAX_VISIBLE = 48;
@@ -11,6 +12,7 @@ const MAX_VISIBLE = 48;
 export default function ProductsPage() {
   const { copy, locale } = useI18n();
   const { state, toggle, select, removeFilter, clearFilters, resetAll, setSearch, setSort, clearGroup } = useShopState();
+  const { gridCols, setGridCols } = useShopGridDensity();
   const [limit, setLimit] = useState(MAX_VISIBLE);
   const [queryInput, setQueryInput] = useState(state.search);
 
@@ -58,6 +60,8 @@ export default function ProductsPage() {
         onClearGroup={clearGroup}
         onClearAll={clearFilters}
         onSortChange={setSort}
+        gridCols={gridCols}
+        onGridColsChange={setGridCols}
       />
 
       <main className="shop-content">
@@ -77,7 +81,7 @@ export default function ProductsPage() {
 
         {results.length > 0 ? (
           <>
-            <div className="shop-products">
+            <div className={`shop-products shop-products--pref-${gridCols}`} data-shop-grid-cols={gridCols}>
               {shown.map((product) => <ProductCard product={product} key={product.id} />)}
             </div>
             {showAllNote && (

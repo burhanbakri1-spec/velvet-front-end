@@ -90,20 +90,23 @@ test('duplicate leaf slugs resolve only through the full hierarchy path', () => 
 
 test('Brand → Main → Sub cascade and URL sanitization remain path-aware', () => {
   const brandOptions = getShopHierarchyOptions({});
-  assert.equal(brandOptions.brands.length, 12);
-  const baby = selectPathKey(baseState, 'brand', 'baby');
-  assert.equal(buildShopQuery(baby), 'brand=baby');
-  const babyOptions = getShopHierarchyOptions(baby);
-  assert.ok(babyOptions.categories.every((category) => getCategory('baby', category.id)));
-  assert.equal(babyOptions.subcategories.length, 0);
+  const brandsWithProducts = velvetBrands.filter((brand) =>
+    filterProducts({ ...baseState, brand: brand.slug }).length > 0,
+  );
+  assert.equal(brandOptions.brands.length, brandsWithProducts.length);
+  const collect = selectPathKey(baseState, 'brand', 'collect');
+  assert.equal(buildShopQuery(collect), 'brand=collect');
+  const collectOptions = getShopHierarchyOptions(collect);
+  assert.ok(collectOptions.categories.every((category) => getCategory('collect', category.id)));
+  assert.equal(collectOptions.subcategories.length, 0);
 
-  const withMain = selectPathKey(baby, 'category', 'baby-development');
-  assert.equal(buildShopQuery(withMain), 'brand=baby&category=baby-development');
+  const withMain = selectPathKey(collect, 'category', 'blind-boxes');
+  assert.equal(buildShopQuery(withMain), 'brand=collect&category=blind-boxes');
   const mainOptions = getShopHierarchyOptions(withMain);
-  assert.ok(mainOptions.subcategories.some((sub) => sub.id === 'sensory-toys'));
+  assert.ok(mainOptions.subcategories.some((sub) => sub.id === 'mini-figures'));
 
-  const withSub = selectPathKey(withMain, 'subcategory', 'sensory-toys');
-  assert.equal(buildShopQuery(withSub), 'brand=baby&category=baby-development&subcategory=sensory-toys');
+  const withSub = selectPathKey(withMain, 'subcategory', 'mini-figures');
+  assert.equal(buildShopQuery(withSub), 'brand=collect&category=blind-boxes&subcategory=mini-figures');
 
   const invalid = sanitizeShopState({
     ...baseState,

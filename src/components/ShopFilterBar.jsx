@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { filterGroups, getFilterCounts, getActiveFilterTags, getShopHierarchyOptions } from '../data/velvetCatalog';
+import { getActiveFilterTags } from '../data/velvetCatalog';
+import { getAttributeFacetOptions, getFacetHierarchyOptions } from '../data/shopFacets';
 import { useI18n } from '../i18n/I18nContext';
 
 const HIERARCHY_COLUMNS = [
@@ -18,6 +19,8 @@ const FILTER_COLUMNS = [
 
 function FilterColumn({ column, selected, options, emptyHint, onReset, onToggle, resetLabel }) {
   const hasSelection = selected.length > 0;
+  if (!options.length && !emptyHint && !hasSelection) return null;
+
   return (
     <div
       className={`shop-filter-column${hasSelection ? ' shop-filter-column--has-selection' : ''}`}
@@ -77,6 +80,30 @@ function FilterColumn({ column, selected, options, emptyHint, onReset, onToggle,
   );
 }
 
+function GridDensityControl({ gridCols, onGridColsChange, labels }) {
+  const choices = [2, 3, 4];
+  return (
+    <div className="shop-grid-density" data-shop-grid-density aria-label={labels.view}>
+      <span className="shop-grid-density__label">{labels.view}</span>
+      <div className="shop-grid-density__choices">
+        {choices.map((cols) => (
+          <button
+            type="button"
+            key={cols}
+            className={`shop-grid-density__btn${gridCols === cols ? ' is-active' : ''}`}
+            aria-pressed={gridCols === cols}
+            aria-label={labels[`cols${cols}`]}
+            onClick={() => onGridColsChange(cols)}
+          >
+            <span className="shop-grid-density__icon" aria-hidden="true" data-cols={cols} />
+            <span className="shop-grid-density__text">{cols}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function ShopFilterBar({
   state,
   resultCount,
@@ -86,21 +113,23 @@ export default function ShopFilterBar({
   onClearGroup,
   onClearAll,
   onSortChange,
+  gridCols,
+  onGridColsChange,
 }) {
   const { copy, locale } = useI18n();
   const s = copy.shop;
   const [open, setOpen] = useState(false);
-  const counts = useMemo(() => getFilterCounts(state), [state]);
   const tags = useMemo(() => getActiveFilterTags(state, locale), [state, locale]);
-  const hierarchy = useMemo(() => getShopHierarchyOptions(state), [state]);
+  const hierarchy = useMemo(() => getFacetHierarchyOptions(state), [state]);
+  const attributeOptions = useMemo(() => ({
+    age: getAttributeFacetOptions(state, 'age', locale),
+    gender: getAttributeFacetOptions(state, 'gender', locale),
+    skill: getAttributeFacetOptions(state, 'skill', locale),
+    occasion: getAttributeFacetOptions(state, 'occasion', locale),
+    shopping: getAttributeFacetOptions(state, 'shopping', locale),
+  }), [state, locale]);
   const countLabel = resultCount === 1 ? copy.products.countOne : copy.products.count;
   const currentSort = state.sort || 'featured';
-
-  const withLabels = (key) => filterGroups[key].map((item) => ({
-    id: item.id,
-    label: item.name[locale],
-    count: counts[key][item.id] || 0,
-  }));
 
   const hierarchyOptions = (key) => (hierarchy[key] || []).map((item) => ({
     id: item.id,
@@ -138,6 +167,19 @@ export default function ShopFilterBar({
             </span>
           ))}
         </div>
+
+        {onGridColsChange && (
+          <GridDensityControl
+            gridCols={gridCols}
+            onGridColsChange={onGridColsChange}
+            labels={{
+              view: s.gridView,
+              cols2: s.gridCols2,
+              cols3: s.gridCols3,
+              cols4: s.gridCols4,
+            }}
+          />
+        )}
 
         <label className="shop-filter-bar__sort">
           <span>{s.sort}</span>
@@ -186,7 +228,7 @@ export default function ShopFilterBar({
                   key={column.key}
                   column={{ ...column, label: s[column.labelKey] }}
                   selected={selected}
-                  options={withLabels(column.group)}
+                  options={attributeOptions[column.group]}
                   resetLabel={s.reset}
                   onReset={() => onClearGroup(column.key)}
                   onToggle={(id) => onToggle(column.key, id)}

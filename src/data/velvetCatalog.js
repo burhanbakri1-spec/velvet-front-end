@@ -27,6 +27,7 @@
 // ===========================================================================
 
 import { artwork, products } from './products.js';
+import { getFacetHierarchyOptions } from './shopFacets.js';
 import { getPlatformBrandAbout, getPlatformMedia } from './platformContent.js';
 import {
   outsideTaxonomyProductIds,
@@ -458,8 +459,12 @@ export function hasUploadedBrandLogo(brandSlug, locale = 'en') {
 }
 
 export function hasUploadedSiteLogo() {
-  const url = getPlatformMedia('site.logo');
+  const url = getSiteLogo();
   return Boolean(url) && !isGeneratedBrandLogo(url);
+}
+
+export function getSiteLogo() {
+  return getPlatformMedia('site.logo');
 }
 
 export function getBrandLogo(brandSlug, locale = 'en') {
@@ -537,21 +542,7 @@ export function findSubcategoryBySlug(categorySlug, subSlug, brandSlug = '') {
 }
 
 export function getShopHierarchyOptions(state = {}) {
-  const brands = velvetBrands.map((brand) => ({ id: brand.slug, name: brand.name }));
-  const rawCategories = state.brand
-    ? (getBrand(state.brand)?.categories || [])
-    : velvetBrands.flatMap((brand) => brand.categories || []);
-  const seen = new Set();
-  const categories = rawCategories.filter((category) => {
-    if (seen.has(category.slug)) return false;
-    seen.add(category.slug);
-    return true;
-  }).map((category) => ({ id: category.slug, name: category.name }));
-  const parent = state.category
-    ? (state.brand ? getCategory(state.brand, state.category) : findCategoryBySlug(state.category))
-    : null;
-  const subcategories = (parent?.subs || []).map((sub) => ({ id: sub.slug, name: sub.name }));
-  return { brands, categories, subcategories };
+  return getFacetHierarchyOptions(state);
 }
 
 export function resolvePath(state) {
