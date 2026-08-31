@@ -580,6 +580,7 @@ html[dir="rtl"] .product-card__gallery-btn span { transform: scaleX(-1); }
   min-height: 0;
   height: auto;
   padding: 25px 64px 48px;
+  display: block;
 }
 .category-product-showcase--detail .category-product-showcase__media { width: min(560px, calc(100vw - 160px)); }
 .category-product-showcase--detail .category-product-showcase__copy h1 { margin: 0 auto; font-size: clamp(54px,5vw,74px); line-height: 1.06; letter-spacing: -.05em; }
@@ -1267,6 +1268,7 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
     padding: 20px 20px 32px;
   }
   .category-product-showcase__slide { width: 100%; }
+  .product-switcher-slide__content { width: 100%; }
   .category-product-showcase__media { width: min(346px,calc(100vw - 40px)); }
   .category-product-showcase__copy { padding-top: 63px; }
   .category-product-showcase__copy h2 { font-size: 32px; line-height: 1.1; }
@@ -2084,6 +2086,7 @@ html[lang="ar"] .product-path-hero__copy h1 {
   min-height: 0;
   height: auto;
   touch-action: pan-y;
+  display: block;
 }
 .category-product-showcase--detail .category-product-showcase__media {
   width: min(560px, calc(100vw - 160px));
@@ -2107,10 +2110,15 @@ html[lang="ar"] .product-path-hero__copy h1 {
 .product-switcher-viewport {
   position: relative;
   width: 100%;
+  max-width: 100%;
   overflow: hidden;
 }
 .product-switcher-slide {
   width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .product-switcher-viewport.is-transitioning {
   min-height: var(--product-switcher-height, auto);
@@ -2119,14 +2127,21 @@ html[lang="ar"] .product-path-hero__copy h1 {
   position: absolute;
   top: 0;
   left: 0;
+  right: 0;
   width: 100%;
   transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
 .product-switcher-slide--active {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .product-switcher-slide__content {
+  width: min(720px, calc(100vw - 160px));
+  max-width: 100%;
+  margin-inline: auto;
   animation: none;
 }
 .product-detail-focal {
