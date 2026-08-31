@@ -26,6 +26,7 @@ import {
 import { Link, localizePath, useRouter } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
 import { availableStock, optionValueUnavailable, selectedVariant } from '../data/inventory';
+import { isSiblingDragGesture, shouldNavigateSibling } from '../hooks/siblingCarousel';
 
 const formatPrice = (value) => `$${Number(value).toFixed(2)}`;
 
@@ -37,7 +38,15 @@ export default function ProductDetailsPage({ slug }) {
   const touchStartX = useRef(null);
   const addedTimer = useRef(null);
   const sliderViewportRef = useRef(null);
-  const siblingDrag = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false });
+  const siblingDrag = useRef({
+    active: false,
+    startX: 0,
+    startY: 0,
+    scrollLeft: 0,
+    dragged: false,
+    pressedSlug: '',
+    capturing: false,
+  });
 
   const images = useMemo(() => collectProductImages(product), [product]);
   const initialSelections = useMemo(
@@ -146,42 +155,68 @@ export default function ProductDetailsPage({ slug }) {
     setImageIndex((current) => (current + step + images.length) % images.length);
   };
 
-  const selectSibling = (target) => {
-    if (!target || target.slug === product.slug) return;
-    if (siblingDrag.current.moved) return;
+  const openSiblingProduct = (targetSlug, dragged = siblingDrag.current.dragged) => {
+    if (!shouldNavigateSibling({ dragged, targetSlug, currentSlug: product.slug })) return;
     setDirection('next');
-    navigate(localizePath(`/products/${target.slug}`, locale), { scroll: false });
+    navigate(localizePath(`/products/${targetSlug}`, locale), { scroll: false });
   };
 
   const onSiblingPointerDown = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     const viewport = sliderViewportRef.current;
     if (!viewport) return;
+    const slide = event.target.closest('.same-subcategory-products__slide');
     siblingDrag.current = {
       active: true,
       startX: event.clientX,
+      startY: event.clientY,
       scrollLeft: viewport.scrollLeft,
-      moved: false,
+      dragged: false,
+      pressedSlug: slide?.dataset?.siblingSlug || '',
+      capturing: false,
     };
     viewport.classList.add('is-dragging');
-    try { viewport.setPointerCapture(event.pointerId); } catch { /* ignore */ }
   };
 
   const onSiblingPointerMove = (event) => {
     if (!siblingDrag.current.active) return;
     const viewport = sliderViewportRef.current;
     if (!viewport) return;
-    const delta = event.clientX - siblingDrag.current.startX;
-    if (Math.abs(delta) > 6) siblingDrag.current.moved = true;
-    viewport.scrollLeft = siblingDrag.current.scrollLeft - delta;
+    if (isSiblingDragGesture(
+      siblingDrag.current.startX,
+      siblingDrag.current.startY,
+      event.clientX,
+      event.clientY,
+    )) {
+      siblingDrag.current.dragged = true;
+      if (!siblingDrag.current.capturing) {
+        siblingDrag.current.capturing = true;
+        try { viewport.setPointerCapture(event.pointerId); } catch { /* ignore */ }
+      }
+      const delta = event.clientX - siblingDrag.current.startX;
+      viewport.scrollLeft = siblingDrag.current.scrollLeft - delta;
+    }
   };
 
   const onSiblingPointerUp = (event) => {
     const viewport = sliderViewportRef.current;
-    siblingDrag.current.active = false;
+    const state = siblingDrag.current;
+    if (state.active && state.pressedSlug) {
+      openSiblingProduct(state.pressedSlug, state.dragged);
+    }
+    if (state.capturing && viewport) {
+      try { viewport.releasePointerCapture(event.pointerId); } catch { /* ignore */ }
+    }
+    siblingDrag.current = {
+      active: false,
+      startX: 0,
+      startY: 0,
+      scrollLeft: 0,
+      dragged: false,
+      pressedSlug: '',
+      capturing: false,
+    };
     viewport?.classList.remove('is-dragging');
-    try { viewport?.releasePointerCapture(event.pointerId); } catch { /* ignore */ }
-    window.setTimeout(() => { siblingDrag.current.moved = false; }, 0);
   };
 
   const handleAdd = (event) => {
@@ -375,7 +410,6 @@ export default function ProductDetailsPage({ slug }) {
                     data-sibling-slug={item.slug}
                     aria-current={isActive ? 'true' : undefined}
                     aria-label={getProductName(item, locale)}
-                    onClick={() => selectSibling(item)}
                   >
                     <img src={item.image} alt="" draggable={false} />
                   </button>

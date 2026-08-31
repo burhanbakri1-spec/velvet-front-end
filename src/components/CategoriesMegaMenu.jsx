@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getBrandLogo, getBrandMedia, velvetBrands } from '../data/velvetCatalog';
+import { getBrandLogo, getBrandMedia, hasUploadedBrandLogo, velvetBrands } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { localizePath, useRouter } from '../routing/Router';
 
@@ -17,6 +17,7 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
   const brand = velvetBrands.find((item) => item.slug === activeBrand) || velvetBrands[0];
   const preview = brand ? getBrandMedia(brand.slug) : { poster: '', video: '' };
   const logo = brand ? getBrandLogo(brand.slug, locale) : '';
+  const managedLogo = brand ? hasUploadedBrandLogo(brand.slug, locale) : false;
 
   const selectBrand = (slug) => setActiveBrand(slug);
   const goBrand = (slug) => {
@@ -53,9 +54,9 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
           aria-label={brand.name[locale]}
           data-mega-brand-preview={brand.slug}
         >
-          <div className="mega-menu__preview-brand">
+          <div className={`mega-menu__preview-brand${managedLogo ? ' mega-menu__preview-brand--managed' : ''}`}>
             {logo ? (
-              <img className="mega-menu__preview-logo" src={logo} alt={brand.name[locale]} />
+              <img className={`mega-menu__preview-logo${managedLogo ? ' mega-menu__preview-logo--managed' : ''}`} src={logo} alt={brand.name[locale]} />
             ) : null}
           </div>
           <div className="mega-menu__preview-visual">
