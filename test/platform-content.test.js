@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 import { applyPlatformContent, getPlatformMedia, mapPlatformCategory, mapPlatformProduct, platformContentConfig } from '../src/data/platformContent.js';
-import { hasUploadedSiteLogo } from '../src/data/velvetCatalog.js';
+import { hasUploadedSiteLogo, getSiteLogo } from '../src/data/velvetCatalog.js';
 import { productCategories, products } from '../src/data/products.js';
 
 test('integration is opt-in and requires explicit tenant/site configuration', () => {
@@ -68,6 +68,7 @@ test('site.logo media is exposed for the header and keeps the local logo as fall
     ],
   }, 'https://api.test');
   assert.equal(getPlatformMedia('site.logo'), 'https://api.test/uploads/site-logo.png');
+  assert.equal(getSiteLogo(), 'https://api.test/uploads/site-logo.png');
   assert.equal(getPlatformMedia('about.0.image'), 'https://api.test/uploads/about-0.jpg');
   assert.equal(getPlatformMedia('news.0.image'), 'https://api.test/uploads/news-0.jpg');
   assert.equal(getPlatformMedia('site.logo.missing'), '');
@@ -76,13 +77,41 @@ test('site.logo media is exposed for the header and keeps the local logo as fall
 
 test('header renders the managed site logo and falls back to the text logo when absent', () => {
   const headerSource = fs.readFileSync(new URL('../src/components/Header.jsx', import.meta.url), 'utf8');
-  assert.match(headerSource, /getPlatformMedia\('site\.logo'\)/);
+  assert.match(headerSource, /getSiteLogo/);
   assert.match(headerSource, /hasUploadedSiteLogo/);
   assert.match(headerSource, /managedSiteLogo/);
   assert.match(headerSource, /logo__img--managed-site/);
   assert.match(headerSource, /logo--managed-site/);
   assert.match(headerSource, /<span>VELVET<\/span>/);
   assert.match(headerSource, /siteLogo \? /);
+});
+
+test('footer uses the same site logo resolver as the header', () => {
+  const footerSource = fs.readFileSync(new URL('../src/components/Footer.jsx', import.meta.url), 'utf8');
+  assert.match(footerSource, /getSiteLogo/);
+  assert.match(footerSource, /hasUploadedSiteLogo/);
+  assert.match(footerSource, /footer__brand-logo--managed/);
+  assert.match(footerSource, /<span>VELVET<\/span>/);
+
+  applyPlatformContent({
+    site: { id: 'kids-velvet-storefront', companyId: 'kids-velvet' },
+    categories: [],
+    products: [],
+    texts: [],
+    media: [{ sectionKey: 'site.logo', image: '/uploads/site-logo.png' }],
+  }, 'https://api.test');
+
+  const siteLogoUrl = getSiteLogo();
+  assert.equal(siteLogoUrl, 'https://api.test/uploads/site-logo.png');
+  assert.equal(getSiteLogo(), getPlatformMedia('site.logo'));
+});
+
+test('header logo column sizes to content without oversized grid reservation', () => {
+  const css = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  assert.doesNotMatch(css, /grid-template-columns:\s*minmax\(152px,\s*300px\)/);
+  assert.doesNotMatch(css, /grid-template-columns:\s*minmax\(110px,\s*240px\)/);
+  assert.match(css, /\.nav-bar[\s\S]*grid-template-columns:\s*max-content 1fr auto/);
+  assert.match(css, /\.logo--managed-site[\s\S]*width:\s*max-content/);
 });
 
 test('uploaded site logo is distinct from fallback and uses managed header treatment', () => {
@@ -95,7 +124,7 @@ test('uploaded site logo is distinct from fallback and uses managed header treat
   }, 'https://api.test');
 
   assert.equal(hasUploadedSiteLogo(), true);
-  assert.equal(getPlatformMedia('site.logo'), 'https://api.test/uploads/site-logo.png');
+  assert.equal(getSiteLogo(), 'https://api.test/uploads/site-logo.png');
 
   applyPlatformContent({
     site: { id: 'kids-velvet-storefront', companyId: 'kids-velvet' },
@@ -133,7 +162,7 @@ test('product cards and detail pages render locale-aware product titles', async 
   assert.equal(getProductName(product, 'en'), 'Toy EN');
   assert.equal(getProductName(product, 'ar'), 'لعبة');
   const cardSource = fs.readFileSync(new URL('../src/components/ProductCard.jsx', import.meta.url), 'utf8');
-  const detailSource = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
+  const detailSlideSource = fs.readFileSync(new URL('../src/components/ProductDetailSlide.jsx', import.meta.url), 'utf8');
   assert.match(cardSource, /getProductName\(product, locale\)/);
-  assert.match(detailSource, /getProductName\(product, locale\)/);
+  assert.match(detailSlideSource, /getProductName\(product, locale\)/);
 });

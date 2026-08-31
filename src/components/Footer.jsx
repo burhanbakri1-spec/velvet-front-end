@@ -1,3 +1,4 @@
+import { getSiteLogo, hasUploadedSiteLogo } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 
@@ -10,6 +11,9 @@ const groups = [
 
 export default function Footer() {
   const { copy, locale } = useI18n();
+  const siteLogo = getSiteLogo();
+  const managedSiteLogo = hasUploadedSiteLogo();
+
   return (
     <footer className="footer" id="footer">
       <div className="footer__callout">
@@ -17,7 +21,18 @@ export default function Footer() {
         <a href="#top">{copy.footer.opportunities} <span>{locale === 'ar' ? '←' : '→'}</span></a>
       </div>
       <div className="footer__body">
-        <div className="footer__brand"><span>VELVET</span><p>{copy.footer.tagline}</p></div>
+        <div className={`footer__brand${managedSiteLogo ? ' footer__brand--managed' : ''}`}>
+          {siteLogo ? (
+            <img
+              className={`footer__brand-logo${managedSiteLogo ? ' footer__brand-logo--managed' : ''}`}
+              src={siteLogo}
+              alt="VELVET"
+            />
+          ) : (
+            <span>VELVET</span>
+          )}
+          <p>{copy.footer.tagline}</p>
+        </div>
         <div className="footer__groups">
           {groups.map((group) => (
             <div key={group.title}>

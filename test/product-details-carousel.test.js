@@ -19,18 +19,11 @@ test('isSiblingDragGesture ignores small pointer movement', () => {
   assert.equal(isSiblingDragGesture(10, 10, 30, 10, SIBLING_DRAG_CLICK_THRESHOLD), true);
 });
 
-test('product details carousel navigates client-side without slide onClick handlers', () => {
+test('product details gallery drag uses pointer threshold without product navigation', () => {
   const source = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
-  assert.match(source, /openSiblingProduct/);
-  assert.match(source, /navigate\(localizePath\(`\/products\/\$\{targetSlug\}`/);
-  assert.match(source, /scroll: false/);
-  assert.match(source, /onPointerUp=\{onSiblingPointerUp\}/);
-  assert.doesNotMatch(source, /onClick=\{\(\) => selectSibling/);
-});
-
-test('product details carousel captures pointer only after drag threshold', () => {
-  const source = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
+  assert.match(source, /galleryViewportRef/);
+  assert.match(source, /onGalleryPointerDown/);
   assert.match(source, /isSiblingDragGesture/);
-  assert.match(source, /capturing/);
-  assert.match(source, /releasePointerCapture/);
+  assert.doesNotMatch(source, /openSiblingProduct/);
+  assert.doesNotMatch(source, /onPointerUp=\{onSiblingPointerUp\}/);
 });

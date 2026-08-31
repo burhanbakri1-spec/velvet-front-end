@@ -5,8 +5,7 @@ import { Link, localizePath, useRouter } from '../routing/Router';
 import { useCart } from '../context/CartContext';
 import AboutSubnav from './AboutSubnav';
 import { useI18n } from '../i18n/I18nContext';
-import { getPlatformMedia } from '../data/platformContent';
-import { getBrand, getBrandLogo, getProductBySlug, hasUploadedBrandLogo, hasUploadedSiteLogo } from '../data/velvetCatalog';
+import { getBrand, getBrandLogo, getProductBySlug, getSiteLogo, hasUploadedBrandLogo, hasUploadedSiteLogo } from '../data/velvetCatalog';
 
 export default function Header({ introActive, solid = false }) {
   const [brandsOpen, setBrandsOpen] = useState(false);
@@ -52,7 +51,7 @@ export default function Header({ introActive, solid = false }) {
     return null;
   }, [routePath]);
 
-  const siteLogo = getPlatformMedia('site.logo');
+  const siteLogo = getSiteLogo();
   const contextBrandLogo = contextBrand ? getBrandLogo(contextBrand.slug, locale) : '';
   const managedSiteLogo = !contextBrand && hasUploadedSiteLogo();
   const managedBrandLogo = contextBrand && hasUploadedBrandLogo(contextBrand.slug, locale);

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import ProductDetailSlide from '../components/ProductDetailSlide';
 import ProductShowcaseNavigation from '../components/ProductShowcaseNavigation';
 import PageNavigation from '../components/PageNavigation';
 import { useCart } from '../context/CartContext';
@@ -7,8 +8,6 @@ import {
   getAvailability,
   getCategoryLabel,
   getOptionName,
-  getOptionValue,
-  getProductBadge,
   getProductDescription,
   getProductName,
 } from '../data/products';
@@ -25,56 +24,56 @@ import {
 } from '../data/velvetCatalog';
 import { Link, localizePath, useRouter } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
-import { availableStock, optionValueUnavailable, selectedVariant } from '../data/inventory';
-import { isSiblingDragGesture, shouldNavigateSibling } from '../hooks/siblingCarousel';
-
-const formatPrice = (value) => `$${Number(value).toFixed(2)}`;
+import { availableStock, selectedVariant } from '../data/inventory';
+import { isSiblingDragGesture } from '../hooks/siblingCarousel';
+import {
+  buildInitialSelections,
+  getProductSlidePercent,
+  getSameSubcategoryProducts,
+  getSiblingProduct,
+  PRODUCT_SWITCH_DURATION_MS,
+} from '../hooks/productSiblings';
 
 export default function ProductDetailsPage({ slug }) {
-  const product = getProductBySlug(slug);
+  const routeProduct = getProductBySlug(slug);
   const { copy, locale } = useI18n();
   const { navigate } = useRouter();
   const { addItem } = useCart();
-  const touchStartX = useRef(null);
   const addedTimer = useRef(null);
-  const sliderViewportRef = useRef(null);
-  const siblingDrag = useRef({
+  const galleryViewportRef = useRef(null);
+  const switcherViewportRef = useRef(null);
+  const galleryDrag = useRef({
     active: false,
     startX: 0,
     startY: 0,
     scrollLeft: 0,
     dragged: false,
-    pressedSlug: '',
     capturing: false,
   });
+  const switchTouchStartX = useRef(null);
 
-  const images = useMemo(() => collectProductImages(product), [product]);
+  const sameSubcategory = useMemo(
+    () => getSameSubcategoryProducts(routeProduct, velvetProducts),
+    [routeProduct],
+  );
+
+  const images = useMemo(() => collectProductImages(routeProduct), [routeProduct]);
   const initialSelections = useMemo(
-    () => Object.fromEntries((product?.options || []).map((option) => [option.name, option.values[0]?.label || ''])),
-    [product],
+    () => buildInitialSelections(routeProduct),
+    [routeProduct],
   );
 
   const [selections, setSelections] = useState(initialSelections);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
-  const [direction, setDirection] = useState('next');
   const [imageIndex, setImageIndex] = useState(0);
+  const [transition, setTransition] = useState(null);
+  const [slideAnimating, setSlideAnimating] = useState(false);
 
-  const sameSubcategory = useMemo(() => {
-    if (!product?.velvetPath?.subcategoryId) {
-      if (!product?.velvetPath) return product ? [product] : [];
-      return velvetProducts.filter(
-        (item) => item.velvetPath?.brandId === product.velvetPath.brandId
-          && item.velvetPath?.categoryId === product.velvetPath.categoryId
-          && !item.velvetPath?.subcategoryId,
-      );
-    }
-    return velvetProducts.filter(
-      (item) => item.velvetPath?.brandId === product.velvetPath.brandId
-        && item.velvetPath?.categoryId === product.velvetPath.categoryId
-        && item.velvetPath?.subcategoryId === product.velvetPath.subcategoryId,
-    );
-  }, [product]);
+  const hasSiblings = sameSubcategory.length > 1;
+  const hasGallery = images.length > 1;
+  const isTransitioning = Boolean(transition);
+  const rtl = locale === 'ar';
 
   useEffect(() => () => window.clearTimeout(addedTimer.current), []);
 
@@ -83,24 +82,24 @@ export default function ProductDetailsPage({ slug }) {
     setQuantity(1);
     setAdded(false);
     setImageIndex(0);
-    setDirection('next');
-  }, [product?.id, product?.slug, initialSelections]);
+    setTransition(null);
+    setSlideAnimating(false);
+  }, [routeProduct?.id, routeProduct?.slug, initialSelections]);
 
-  const activeVariant = selectedVariant(product, selections);
-  const stockLimit = availableStock(product, selections);
-  const unavailable = product?.inventoryManaged ? stockLimit <= 0 : product?.availability === 'Out of stock';
+  const stockLimit = availableStock(routeProduct, selections);
+  const unavailable = routeProduct?.inventoryManaged ? stockLimit <= 0 : routeProduct?.availability === 'Out of stock';
 
   useEffect(() => {
     if (Number.isFinite(stockLimit)) setQuantity((value) => Math.max(1, Math.min(stockLimit || 1, value)));
   }, [stockLimit]);
 
   useEffect(() => {
-    if (!product?.slug || sameSubcategory.length < 2) return undefined;
+    if (!routeProduct?.slug || !hasGallery) return undefined;
     let cancelled = false;
     const frame = window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        if (cancelled || siblingDrag.current.active) return;
-        const viewport = sliderViewportRef.current;
+        if (cancelled || galleryDrag.current.active) return;
+        const viewport = galleryViewportRef.current;
         if (!viewport) return;
         const activeSlide = viewport.querySelector('.same-subcategory-products__slide.is-active');
         if (!activeSlide) return;
@@ -116,9 +115,159 @@ export default function ProductDetailsPage({ slug }) {
       cancelled = true;
       window.cancelAnimationFrame(frame);
     };
-  }, [product?.slug, sameSubcategory.length]);
+  }, [routeProduct?.slug, imageIndex, hasGallery]);
 
-  if (!product) {
+  const resolveEyebrow = useCallback((item) => {
+    if (!item) return '';
+    const brand = item.velvetPath?.brandId ? getBrand(item.velvetPath.brandId) : null;
+    const category = item.velvetPath ? getCategory(item.velvetPath.brandId, item.velvetPath.categoryId) : null;
+    const subcategory = item.velvetPath?.subcategoryId
+      ? getSubcategory(item.velvetPath.brandId, item.velvetPath.categoryId, item.velvetPath.subcategoryId)
+      : null;
+    return subcategory?.name[locale] || category?.name[locale] || getVelvetPathLabel(item, locale) || getCategoryLabel(item.categoryId, locale);
+  }, [locale]);
+
+  const completeTransition = useCallback(() => {
+    if (!transition) return;
+    const targetSlug = transition.incoming.slug;
+    setSlideAnimating(false);
+    setTransition(null);
+    navigate(localizePath(`/products/${targetSlug}`, locale), { scroll: false });
+  }, [transition, navigate, locale]);
+
+  useEffect(() => {
+    if (!transition || slideAnimating) return undefined;
+    const frame = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setSlideAnimating(true));
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [transition, slideAnimating]);
+
+  useEffect(() => {
+    if (!transition || !slideAnimating) return undefined;
+    const timer = window.setTimeout(completeTransition, PRODUCT_SWITCH_DURATION_MS + 40);
+    return () => window.clearTimeout(timer);
+  }, [transition, slideAnimating, completeTransition]);
+
+  const beginSiblingTransition = (direction) => {
+    if (!routeProduct || isTransitioning || !hasSiblings) return;
+    const incoming = getSiblingProduct(routeProduct, sameSubcategory, direction);
+    if (!incoming || incoming.slug === routeProduct.slug) return;
+    const viewport = switcherViewportRef.current;
+    if (viewport) {
+      viewport.style.setProperty('--product-switcher-height', `${viewport.offsetHeight}px`);
+    }
+    setSlideAnimating(false);
+    setTransition({ direction, outgoing: routeProduct, incoming });
+  };
+
+  const buildSlideState = (item, imageIdx, itemSelections, itemQuantity, itemAdded) => {
+    const itemImages = collectProductImages(item);
+    const imageSrc = itemImages[imageIdx] || item.image || '';
+    const itemStockLimit = availableStock(item, itemSelections);
+    const itemUnavailable = item.inventoryManaged ? itemStockLimit <= 0 : item.availability === 'Out of stock';
+    return {
+      product: item,
+      eyebrow: resolveEyebrow(item),
+      imageSrc,
+      selections: itemSelections,
+      quantity: itemQuantity,
+      added: itemAdded,
+      unavailable: itemUnavailable,
+      stockLimit: itemStockLimit,
+    };
+  };
+
+  const handleAdd = (event, product = routeProduct, itemSelections = selections, itemQuantity = quantity, imageSrc = images[imageIndex] || product?.image || '') => {
+    event.preventDefault();
+    const itemStockLimit = availableStock(product, itemSelections);
+    const itemUnavailable = product.inventoryManaged ? itemStockLimit <= 0 : product.availability === 'Out of stock';
+    if (itemUnavailable) return;
+    const variant = selectedVariant(product, itemSelections);
+    addItem(product, itemSelections, Math.min(itemQuantity, itemStockLimit), imageSrc, variant);
+    setAdded(true);
+    window.clearTimeout(addedTimer.current);
+    addedTimer.current = window.setTimeout(() => setAdded(false), 1800);
+  };
+
+  const handleBuyNow = (event, product = routeProduct, itemSelections = selections, itemQuantity = quantity, imageSrc = images[imageIndex] || product?.image || '') => {
+    event.preventDefault();
+    const itemStockLimit = availableStock(product, itemSelections);
+    const itemUnavailable = product.inventoryManaged ? itemStockLimit <= 0 : product.availability === 'Out of stock';
+    if (itemUnavailable) return;
+    const variant = selectedVariant(product, itemSelections);
+    addItem(product, itemSelections, Math.min(itemQuantity, itemStockLimit), imageSrc, variant);
+    navigate(localizePath('/checkout', locale));
+  };
+
+  const onGalleryPointerDown = (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const viewport = galleryViewportRef.current;
+    if (!viewport) return;
+    galleryDrag.current = {
+      active: true,
+      startX: event.clientX,
+      startY: event.clientY,
+      scrollLeft: viewport.scrollLeft,
+      dragged: false,
+      capturing: false,
+    };
+    viewport.classList.add('is-dragging');
+  };
+
+  const onGalleryPointerMove = (event) => {
+    if (!galleryDrag.current.active) return;
+    const viewport = galleryViewportRef.current;
+    if (!viewport) return;
+    if (isSiblingDragGesture(
+      galleryDrag.current.startX,
+      galleryDrag.current.startY,
+      event.clientX,
+      event.clientY,
+    )) {
+      galleryDrag.current.dragged = true;
+      if (!galleryDrag.current.capturing) {
+        galleryDrag.current.capturing = true;
+        try { viewport.setPointerCapture(event.pointerId); } catch { /* ignore */ }
+      }
+      const delta = event.clientX - galleryDrag.current.startX;
+      viewport.scrollLeft = galleryDrag.current.scrollLeft - delta;
+    }
+  };
+
+  const onGalleryPointerUp = (event) => {
+    const viewport = galleryViewportRef.current;
+    const state = galleryDrag.current;
+    if (state.capturing && viewport) {
+      try { viewport.releasePointerCapture(event.pointerId); } catch { /* ignore */ }
+    }
+    galleryDrag.current = {
+      active: false,
+      startX: 0,
+      startY: 0,
+      scrollLeft: 0,
+      dragged: false,
+      capturing: false,
+    };
+    viewport?.classList.remove('is-dragging');
+    window.setTimeout(() => { galleryDrag.current.dragged = false; }, 0);
+  };
+
+  const onSwitcherTouchStart = (event) => {
+    if (!hasSiblings) return;
+    switchTouchStartX.current = event.changedTouches?.[0]?.clientX ?? null;
+  };
+
+  const onSwitcherTouchEnd = (event) => {
+    if (!hasSiblings || switchTouchStartX.current == null || isTransitioning) return;
+    const endX = event.changedTouches?.[0]?.clientX ?? switchTouchStartX.current;
+    const delta = endX - switchTouchStartX.current;
+    switchTouchStartX.current = null;
+    if (Math.abs(delta) < 40) return;
+    beginSiblingTransition(delta < 0 ? 'next' : 'previous');
+  };
+
+  if (!routeProduct) {
     return (
       <section className="store-not-found">
         <span className="store-eyebrow">{copy.detail.missingEyebrow}</span>
@@ -128,149 +277,72 @@ export default function ProductDetailsPage({ slug }) {
     );
   }
 
-  const hasGallery = images.length > 1;
-  const activeImage = images[imageIndex] || product.image || '';
-  const productMedia = getProductMedia(product);
-  const pathHero = getPathHeroMedia(product);
-  const optionDelta = product.options.reduce((sum, option) => sum + Number(option.values.find((value) => value.label === selections[option.name])?.priceDelta || 0), 0);
-  const currentPrice = product.price + optionDelta;
-  const optionSummary = product.options.map((option) => getOptionName(option, locale)).join(' · ');
-  const brand = product.velvetPath?.brandId ? getBrand(product.velvetPath.brandId) : null;
-  const category = product.velvetPath ? getCategory(product.velvetPath.brandId, product.velvetPath.categoryId) : null;
-  const subcategory = product.velvetPath?.subcategoryId
-    ? getSubcategory(product.velvetPath.brandId, product.velvetPath.categoryId, product.velvetPath.subcategoryId)
+  const productMedia = getProductMedia(routeProduct);
+  const pathHero = getPathHeroMedia(routeProduct);
+  const brand = routeProduct.velvetPath?.brandId ? getBrand(routeProduct.velvetPath.brandId) : null;
+  const category = routeProduct.velvetPath ? getCategory(routeProduct.velvetPath.brandId, routeProduct.velvetPath.categoryId) : null;
+  const subcategory = routeProduct.velvetPath?.subcategoryId
+    ? getSubcategory(routeProduct.velvetPath.brandId, routeProduct.velvetPath.categoryId, routeProduct.velvetPath.subcategoryId)
     : null;
-  const eyebrow = subcategory?.name[locale] || category?.name[locale] || getVelvetPathLabel(product, locale) || getCategoryLabel(product.categoryId, locale);
+  const eyebrow = resolveEyebrow(routeProduct);
   const heroTitle = pathHero.name?.[locale] || eyebrow || '';
-  const productName = getProductName(product, locale);
+  const productName = getProductName(routeProduct, locale);
 
   const metres = {
-    age: filterGroups.age.find((item) => item.id === product.age),
-    skill: filterGroups.skill.find((item) => item.id === product.skill),
-  };
-
-  const stepImage = (step) => {
-    if (!hasGallery) return;
-    setDirection(step > 0 ? 'next' : 'previous');
-    setImageIndex((current) => (current + step + images.length) % images.length);
-  };
-
-  const openSiblingProduct = (targetSlug, dragged = siblingDrag.current.dragged) => {
-    if (!shouldNavigateSibling({ dragged, targetSlug, currentSlug: product.slug })) return;
-    setDirection('next');
-    navigate(localizePath(`/products/${targetSlug}`, locale), { scroll: false });
-  };
-
-  const onSiblingPointerDown = (event) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    const viewport = sliderViewportRef.current;
-    if (!viewport) return;
-    const slide = event.target.closest('.same-subcategory-products__slide');
-    siblingDrag.current = {
-      active: true,
-      startX: event.clientX,
-      startY: event.clientY,
-      scrollLeft: viewport.scrollLeft,
-      dragged: false,
-      pressedSlug: slide?.dataset?.siblingSlug || '',
-      capturing: false,
-    };
-    viewport.classList.add('is-dragging');
-  };
-
-  const onSiblingPointerMove = (event) => {
-    if (!siblingDrag.current.active) return;
-    const viewport = sliderViewportRef.current;
-    if (!viewport) return;
-    if (isSiblingDragGesture(
-      siblingDrag.current.startX,
-      siblingDrag.current.startY,
-      event.clientX,
-      event.clientY,
-    )) {
-      siblingDrag.current.dragged = true;
-      if (!siblingDrag.current.capturing) {
-        siblingDrag.current.capturing = true;
-        try { viewport.setPointerCapture(event.pointerId); } catch { /* ignore */ }
-      }
-      const delta = event.clientX - siblingDrag.current.startX;
-      viewport.scrollLeft = siblingDrag.current.scrollLeft - delta;
-    }
-  };
-
-  const onSiblingPointerUp = (event) => {
-    const viewport = sliderViewportRef.current;
-    const state = siblingDrag.current;
-    if (state.active && state.pressedSlug) {
-      openSiblingProduct(state.pressedSlug, state.dragged);
-    }
-    if (state.capturing && viewport) {
-      try { viewport.releasePointerCapture(event.pointerId); } catch { /* ignore */ }
-    }
-    siblingDrag.current = {
-      active: false,
-      startX: 0,
-      startY: 0,
-      scrollLeft: 0,
-      dragged: false,
-      pressedSlug: '',
-      capturing: false,
-    };
-    viewport?.classList.remove('is-dragging');
-  };
-
-  const handleAdd = (event) => {
-    event.preventDefault();
-    if (unavailable) return;
-    addItem(product, selections, Math.min(quantity, stockLimit), activeImage, activeVariant);
-    setAdded(true);
-    window.clearTimeout(addedTimer.current);
-    addedTimer.current = window.setTimeout(() => setAdded(false), 1800);
-  };
-
-  const handleBuyNow = (event) => {
-    event.preventDefault();
-    if (unavailable) return;
-    addItem(product, selections, Math.min(quantity, stockLimit), activeImage, activeVariant);
-    navigate(localizePath('/checkout', locale));
-  };
-
-  const onTouchStart = (event) => {
-    touchStartX.current = event.changedTouches?.[0]?.clientX ?? null;
-  };
-
-  const onTouchEnd = (event) => {
-    if (touchStartX.current == null || !hasGallery) return;
-    const endX = event.changedTouches?.[0]?.clientX ?? touchStartX.current;
-    const delta = endX - touchStartX.current;
-    touchStartX.current = null;
-    if (Math.abs(delta) < 40) return;
-    stepImage(delta < 0 ? 1 : -1);
+    age: filterGroups.age.find((item) => item.id === routeProduct.age),
+    skill: filterGroups.skill.find((item) => item.id === routeProduct.skill),
   };
 
   const specs = [];
   if (brand) specs.push({ label: copy.shop.brand, value: brand.name[locale] });
   if (eyebrow) specs.push({ label: copy.shop.category, value: eyebrow });
-  if (product.manufacturer) specs.push({ label: copy.shop.manufacturer, value: product.manufacturer });
+  if (routeProduct.manufacturer) specs.push({ label: copy.shop.manufacturer, value: routeProduct.manufacturer });
   if (metres.age) specs.push({ label: copy.detail.age, value: metres.age.name[locale] });
   if (metres.skill) specs.push({ label: copy.detail.skill, value: metres.skill.name[locale] });
-  if (product.options.length > 0) specs.push({ label: copy.category.variants, value: optionSummary });
-  specs.push({ label: copy.detail.stock, value: getAvailability(product, locale) });
+  if (routeProduct.options.length > 0) {
+    specs.push({
+      label: copy.category.variants,
+      value: routeProduct.options.map((option) => getOptionName(option, locale)).join(' · '),
+    });
+  }
+  specs.push({ label: copy.detail.stock, value: getAvailability(routeProduct, locale) });
 
   const detailBreadcrumbs = [{ label: copy.meta.home, to: '/' }];
-  if (brand) detailBreadcrumbs.push({ label: brand.name[locale], to: `/brands/${product.velvetPath.brandId}` });
+  if (brand) detailBreadcrumbs.push({ label: brand.name[locale], to: `/brands/${routeProduct.velvetPath.brandId}` });
   if (category) {
     detailBreadcrumbs.push({
       label: category.name[locale],
-      to: `/brands/${product.velvetPath.brandId}/category/${product.velvetPath.categoryId}`,
+      to: `/brands/${routeProduct.velvetPath.brandId}/category/${routeProduct.velvetPath.categoryId}`,
     });
   }
   if (subcategory) detailBreadcrumbs.push({ label: subcategory.name[locale] });
   detailBreadcrumbs.push({ label: productName });
 
-  const detailFallback = product.velvetPath
-    ? `/products?brand=${product.velvetPath.brandId}&category=${product.velvetPath.categoryId}${product.velvetPath.subcategoryId ? `&subcategory=${product.velvetPath.subcategoryId}` : ''}`
+  const detailFallback = routeProduct.velvetPath
+    ? `/products?brand=${routeProduct.velvetPath.brandId}&category=${routeProduct.velvetPath.categoryId}${routeProduct.velvetPath.subcategoryId ? `&subcategory=${routeProduct.velvetPath.subcategoryId}` : ''}`
     : '/products';
+
+  const activeSlideState = buildSlideState(routeProduct, imageIndex, selections, quantity, added);
+  const outgoingState = transition ? buildSlideState(
+    transition.outgoing,
+    imageIndex,
+    selections,
+    quantity,
+    added,
+  ) : null;
+  const incomingState = transition ? buildSlideState(
+    transition.incoming,
+    0,
+    buildInitialSelections(transition.incoming),
+    1,
+    false,
+  ) : null;
+
+  const slideStyle = (direction, role, animating) => {
+    const { start, end } = getProductSlidePercent(direction, role, rtl);
+    const percent = animating ? end : start;
+    return { transform: `translate3d(${percent}%, 0, 0)` };
+  };
 
   return (
     <div className="product-detail-page">
@@ -309,109 +381,96 @@ export default function ProductDetailsPage({ slug }) {
       )}
 
       <section className="category-product-showcase category-product-showcase--detail" aria-label={productName}>
-        {hasGallery && (
+        {hasSiblings && (
           <ProductShowcaseNavigation
-            onPrevious={() => stepImage(-1)}
-            onNext={() => stepImage(1)}
+            onPrevious={() => beginSiblingTransition('previous')}
+            onNext={() => beginSiblingTransition('next')}
             previousLabel={copy.detail.previousImage}
             nextLabel={copy.detail.nextImage}
+            disabled={isTransitioning}
           />
         )}
         <div
-          className={`category-product-showcase__slide is-${direction}`}
-          key={product.id}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
+          ref={switcherViewportRef}
+          className={`product-switcher-viewport${isTransitioning ? ' is-transitioning' : ''}${transition ? ` is-${transition.direction}` : ''}`}
+          onTouchStart={onSwitcherTouchStart}
+          onTouchEnd={onSwitcherTouchEnd}
         >
-          <div className="product-detail-focal">
-            <figure className="category-product-showcase__media product-detail-hero__media">
-              <img key={activeImage} className="product-detail-focal__image" src={activeImage} alt={productName} />
-            </figure>
-          </div>
-          <div className="category-product-showcase__copy">
-            <span className="category-product-showcase__category">
-              {eyebrow}
-              {product.badge && <span className="product-detail-badge">{getProductBadge(product, locale)}</span>}
-            </span>
-            <h1>{productName}</h1>
-            <p>{getProductDescription(product, locale, true)}</p>
-            <div className="category-product-showcase__commerce">
-              <div className="category-product-showcase__price">
-                <strong>{formatPrice(currentPrice)}</strong>
-                {product.originalPrice && <del>{formatPrice(product.originalPrice + optionDelta)}</del>}
+          {transition ? (
+            <>
+              <div
+                className="product-switcher-slide product-switcher-slide--outgoing"
+                style={slideStyle(transition.direction, 'outgoing', slideAnimating)}
+              >
+                <ProductDetailSlide
+                  locale={locale}
+                  copy={copy}
+                  interactive={false}
+                  onSelections={setSelections}
+                  onQuantity={setQuantity}
+                  onAdd={(event) => handleAdd(event, outgoingState.product, outgoingState.selections, outgoingState.quantity, outgoingState.imageSrc)}
+                  onBuyNow={(event) => handleBuyNow(event, outgoingState.product, outgoingState.selections, outgoingState.quantity, outgoingState.imageSrc)}
+                  {...outgoingState}
+                />
               </div>
-              <span className={`category-product-showcase__availability ${unavailable ? 'is-unavailable' : ''}`}>{getAvailability(product, locale)}</span>
-              {optionSummary && <span className="category-product-showcase__variants">{copy.category.variants}: {optionSummary}</span>}
+              <div
+                className="product-switcher-slide product-switcher-slide--incoming"
+                style={slideStyle(transition.direction, 'incoming', slideAnimating)}
+              >
+                <ProductDetailSlide
+                  locale={locale}
+                  copy={copy}
+                  interactive={false}
+                  onSelections={setSelections}
+                  onQuantity={setQuantity}
+                  onAdd={(event) => handleAdd(event, incomingState.product, incomingState.selections, incomingState.quantity, incomingState.imageSrc)}
+                  onBuyNow={(event) => handleBuyNow(event, incomingState.product, incomingState.selections, incomingState.quantity, incomingState.imageSrc)}
+                  {...incomingState}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="product-switcher-slide product-switcher-slide--active">
+              <ProductDetailSlide
+                locale={locale}
+                copy={copy}
+                interactive={!isTransitioning}
+                onSelections={setSelections}
+                onQuantity={setQuantity}
+                onAdd={(event) => handleAdd(event)}
+                onBuyNow={(event) => handleBuyNow(event)}
+                {...activeSlideState}
+              />
             </div>
-
-            {product.options.length > 0 && (
-              <div className="product-detail-options">
-                {product.options.map((option) => {
-                  const selectedValue = option.values.find((value) => value.label === selections[option.name]);
-                  return (
-                    <fieldset className="product-option product-detail-option" key={option.name}>
-                      <legend>{getOptionName(option, locale)} <span>{selectedValue ? getOptionValue(selectedValue, locale) : ''}</span></legend>
-                      <div className="product-option__values">
-                        {option.values.map((value) => {
-                          const disabled = optionValueUnavailable(product, selections, option.name, value.label);
-                          return (
-                            <button
-                              disabled={disabled}
-                              aria-disabled={disabled}
-                              className={selections[option.name] === value.label ? 'is-active' : ''}
-                              onClick={() => setSelections((current) => ({ ...current, [option.name]: value.label }))}
-                              type="button"
-                              key={value.label}
-                            >
-                              {value.color && <i style={{ background: value.color }} />}
-                              {getOptionValue(value, locale)}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </fieldset>
-                  );
-                })}
-              </div>
-            )}
-
-            <div className="product-detail-buy">
-              <div className="quantity-control product-detail-qty" aria-label={copy.detail.quantity}>
-                <button type="button" aria-label={copy.detail.decrease} onClick={() => setQuantity((value) => Math.max(1, value - 1))}>−</button>
-                <span>{quantity}</span>
-                <button type="button" disabled={Number.isFinite(stockLimit) && quantity >= stockLimit} aria-label={copy.detail.increase} onClick={() => setQuantity((value) => (Number.isFinite(stockLimit) ? Math.min(stockLimit, value + 1) : value + 1))}>+</button>
-              </div>
-              <button className="store-primary-button product-detail-buy__primary" type="button" disabled={unavailable} onClick={handleAdd}>{added ? copy.detail.added : unavailable ? copy.detail.unavailable : copy.detail.add}</button>
-              <button className="store-primary-button product-detail-buy__secondary" type="button" disabled={unavailable} onClick={handleBuyNow}>{copy.detail.buyNow}</button>
-            </div>
-            {added && <Link className="view-cart-link product-detail-cart-link" to="/cart">{copy.detail.viewCart} {locale === 'ar' ? '←' : '→'}</Link>}
-          </div>
+          )}
         </div>
       </section>
 
-      {sameSubcategory.length > 1 && (
-        <section className="same-subcategory-products" aria-label={copy.detail.sameSubcategory}>
+      {hasGallery && (
+        <section className="same-subcategory-products product-image-gallery" aria-label={copy.detail.galleryTitle}>
           <div
             className="same-subcategory-products__viewport"
-            ref={sliderViewportRef}
-            onPointerDown={onSiblingPointerDown}
-            onPointerMove={onSiblingPointerMove}
-            onPointerUp={onSiblingPointerUp}
-            onPointerCancel={onSiblingPointerUp}
+            ref={galleryViewportRef}
+            onPointerDown={onGalleryPointerDown}
+            onPointerMove={onGalleryPointerMove}
+            onPointerUp={onGalleryPointerUp}
+            onPointerCancel={onGalleryPointerUp}
           >
             <div className="same-subcategory-products__track">
-              {sameSubcategory.map((item) => {
-                const isActive = item.slug === product.slug;
+              {images.map((image, index) => {
+                const isActive = index === imageIndex;
                 return (
                   <button
                     type="button"
                     className={`same-subcategory-products__slide ${isActive ? 'is-active' : ''}`}
-                    key={item.id || item.slug}
-                    data-sibling-slug={item.slug}
+                    key={`${routeProduct.slug}-${image}-${index}`}
                     aria-current={isActive ? 'true' : undefined}
-                    aria-label={getProductName(item, locale)}
+                    aria-label={`${productName} image ${index + 1}`}
+                    onClick={() => {
+                      if (!galleryDrag.current.dragged && !isTransitioning) setImageIndex(index);
+                    }}
                   >
-                    <img src={item.image} alt="" draggable={false} />
+                    <img src={image} alt="" draggable={false} />
                   </button>
                 );
               })}
@@ -430,7 +489,7 @@ export default function ProductDetailsPage({ slug }) {
             <div className="product-detail-specs__blocks">
               <div className="product-detail-specs__about">
                 <h3>{copy.detail.about}</h3>
-                <p>{getProductDescription(product, locale)}</p>
+                <p>{getProductDescription(routeProduct, locale)}</p>
               </div>
               <dl className="product-detail-specs__list">
                 {specs.map((row) => (
@@ -442,7 +501,7 @@ export default function ProductDetailsPage({ slug }) {
         </section>
 
         {productMedia.usageVideo && (
-          <section className="product-usage-video" aria-label={copy.detail.howToUse} key={`usage-${product.slug}`}>
+          <section className="product-usage-video" aria-label={copy.detail.howToUse} key={`usage-${routeProduct.slug}`}>
             <div className="product-detail-section-head">
               <span className="store-eyebrow">{copy.detail.howToUse}</span>
               <h2>{copy.detail.howToUse}</h2>
@@ -450,7 +509,7 @@ export default function ProductDetailsPage({ slug }) {
             <video
               className="product-usage-video__player"
               src={productMedia.usageVideo}
-              poster={productMedia.usageVideoPoster || product.image}
+              poster={productMedia.usageVideoPoster || routeProduct.image}
               controls
               playsInline
               preload="metadata"

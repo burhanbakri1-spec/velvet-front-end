@@ -57,7 +57,7 @@ test('Brand, Main Category and Subcategory filter groups render in the shop filt
   assert.match(filterBar, /key: 'category'/);
   assert.match(filterBar, /key: 'subcategory'/);
   assert.match(filterBar, /labelKey: 'mainCategory'/);
-  assert.match(filterBar, /getShopHierarchyOptions/);
+  assert.match(filterBar, /getFacetHierarchyOptions/);
   assert.match(filterBar, /shop-filter-panel__groups--hierarchy/);
   assert.match(productsPage, /onSelect=\{select\}/);
 });
@@ -110,21 +110,21 @@ test('Categories mega menu logo and poster resolve for each brand', () => {
 });
 
 test('selecting Brand updates URL and scopes Main Category options', () => {
-  const next = selectPathKey(baseState, 'brand', 'baby');
-  assert.equal(buildShopQuery(next), 'brand=baby');
+  const next = selectPathKey(baseState, 'brand', 'collect');
+  assert.equal(buildShopQuery(next), 'brand=collect');
   const options = getShopHierarchyOptions(next);
-  assert.ok(options.brands.some((brand) => brand.id === 'baby'));
-  assert.ok(options.categories.some((category) => category.id === 'baby-development'));
-  assert.ok(options.categories.every((category) => !category.id.includes('preschool')));
+  assert.ok(options.brands.some((brand) => brand.id === 'collect'));
+  assert.ok(options.categories.some((category) => category.id === 'blind-boxes'));
+  assert.ok(options.categories.every((category) => category.id !== 'collectible-figures'));
   assert.equal(options.subcategories.length, 0);
 });
 
 test('selecting Main Category updates URL and scopes Subcategory options', () => {
-  const next = selectPathKey({ ...baseState, brand: 'baby' }, 'category', 'baby-development');
-  assert.equal(buildShopQuery(next), 'brand=baby&category=baby-development');
+  const next = selectPathKey({ ...baseState, brand: 'collect' }, 'category', 'blind-boxes');
+  assert.equal(buildShopQuery(next), 'brand=collect&category=blind-boxes');
   const options = getShopHierarchyOptions(next);
-  assert.ok(options.subcategories.some((sub) => sub.id === 'sensory-toys'));
-  assert.ok(options.subcategories.every((sub) => !['rattles', 'cars'].includes(sub.id)));
+  assert.ok(options.subcategories.some((sub) => sub.id === 'mini-figures'));
+  assert.ok(options.subcategories.some((sub) => sub.id === 'mystery-boxes'));
 });
 
 test('selecting Subcategory updates URL', () => {
