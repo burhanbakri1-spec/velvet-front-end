@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import AboutSubnav from './AboutSubnav';
 import { useI18n } from '../i18n/I18nContext';
 import { getPlatformMedia } from '../data/platformContent';
-import { getBrand, getBrandLogo, getProductBySlug, hasUploadedBrandLogo } from '../data/velvetCatalog';
+import { getBrand, getBrandLogo, getProductBySlug, hasUploadedBrandLogo, hasUploadedSiteLogo } from '../data/velvetCatalog';
 
 export default function Header({ introActive, solid = false }) {
   const [brandsOpen, setBrandsOpen] = useState(false);
@@ -54,6 +54,9 @@ export default function Header({ introActive, solid = false }) {
 
   const siteLogo = getPlatformMedia('site.logo');
   const contextBrandLogo = contextBrand ? getBrandLogo(contextBrand.slug, locale) : '';
+  const managedSiteLogo = !contextBrand && hasUploadedSiteLogo();
+  const managedBrandLogo = contextBrand && hasUploadedBrandLogo(contextBrand.slug, locale);
+  const managedHeaderLogo = managedSiteLogo || managedBrandLogo;
 
   const submitSearch = (event) => {
     event.preventDefault();
@@ -115,19 +118,19 @@ export default function Header({ introActive, solid = false }) {
       </div>
       <div className="nav-bar">
         <Link
-          className={`logo ${contextBrand ? 'logo--brand' : ''}${contextBrand && hasUploadedBrandLogo(contextBrand.slug, locale) ? ' logo--managed' : ''}`}
+          className={`logo ${contextBrand ? 'logo--brand' : ''}${managedHeaderLogo ? ' logo--managed' : ''}`}
           to={contextBrand ? localizePath(`/brands/${contextBrand.slug}`, locale) : '/'}
-          style={contextBrand && !hasUploadedBrandLogo(contextBrand.slug, locale) ? { '--brand-accent': contextBrand.accent } : undefined}
+          style={contextBrand && !managedBrandLogo ? { '--brand-accent': contextBrand.accent } : undefined}
           aria-label={contextBrand ? contextBrand.name[locale] : 'VELVET'}
         >
           {contextBrand ? (
             contextBrandLogo ? (
-              <img className="logo__img logo__img--brand" src={contextBrandLogo} alt={contextBrand.name[locale]} />
+              <img className={`logo__img logo__img--brand${managedBrandLogo ? ' logo__img--managed' : ''}`} src={contextBrandLogo} alt={contextBrand.name[locale]} />
             ) : (
               <span>{contextBrand.name[locale]}</span>
             )
           ) : siteLogo ? (
-            <img className="logo__img" src={siteLogo} alt="VELVET" />
+            <img className={`logo__img${managedSiteLogo ? ' logo__img--managed' : ''}`} src={siteLogo} alt="VELVET" />
           ) : (
             <span>VELVET</span>
           )}
