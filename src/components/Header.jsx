@@ -56,7 +56,6 @@ export default function Header({ introActive, solid = false }) {
   const contextBrandLogo = contextBrand ? getBrandLogo(contextBrand.slug, locale) : '';
   const managedSiteLogo = !contextBrand && hasUploadedSiteLogo();
   const managedBrandLogo = contextBrand && hasUploadedBrandLogo(contextBrand.slug, locale);
-  const managedHeaderLogo = managedSiteLogo || managedBrandLogo;
 
   const submitSearch = (event) => {
     event.preventDefault();
@@ -118,7 +117,7 @@ export default function Header({ introActive, solid = false }) {
       </div>
       <div className="nav-bar">
         <Link
-          className={`logo ${contextBrand ? 'logo--brand' : ''}${managedHeaderLogo ? ' logo--managed' : ''}`}
+          className={`logo ${contextBrand ? 'logo--brand' : ''}${managedSiteLogo ? ' logo--managed logo--managed-site' : ''}${managedBrandLogo ? ' logo--managed' : ''}`}
           to={contextBrand ? localizePath(`/brands/${contextBrand.slug}`, locale) : '/'}
           style={contextBrand && !managedBrandLogo ? { '--brand-accent': contextBrand.accent } : undefined}
           aria-label={contextBrand ? contextBrand.name[locale] : 'VELVET'}
@@ -130,7 +129,7 @@ export default function Header({ introActive, solid = false }) {
               <span>{contextBrand.name[locale]}</span>
             )
           ) : siteLogo ? (
-            <img className={`logo__img${managedSiteLogo ? ' logo__img--managed' : ''}`} src={siteLogo} alt="VELVET" />
+            <img className={`logo__img${managedSiteLogo ? ' logo__img--managed logo__img--managed-site' : ''}`} src={siteLogo} alt="VELVET" />
           ) : (
             <span>VELVET</span>
           )}

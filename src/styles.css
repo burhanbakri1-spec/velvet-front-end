@@ -130,7 +130,7 @@ button { color: inherit; }
   height: 104px;
   padding: 0 clamp(24px, 7.2vw, 138px);
   display: grid;
-  grid-template-columns: 152px 1fr auto;
+  grid-template-columns: minmax(152px, 300px) 1fr auto;
   align-items: center;
   gap: 30px;
   background: linear-gradient(to bottom, rgba(10,8,14,.45), transparent);
@@ -167,10 +167,12 @@ button { color: inherit; }
   transform: none;
   box-shadow: none;
 }
-.logo--managed:not(.logo--brand) {
+.logo--managed-site {
   overflow: visible;
-  max-width: min(220px, 40vw);
-  max-height: 56px;
+  width: auto;
+  height: 76px;
+  max-width: 300px;
+  max-height: 76px;
 }
 .logo--managed .logo__img--brand,
 .logo--managed .logo__img--managed,
@@ -191,8 +193,14 @@ button { color: inherit; }
   max-width: 180px;
   max-height: 44px;
 }
-.logo--managed:not(.logo--brand) .logo__img--managed {
-  max-height: 56px;
+.logo--managed .logo__img--managed-site,
+.logo__img--managed-site {
+  width: auto;
+  height: 100%;
+  max-width: 300px;
+  max-height: 76px;
+  object-fit: contain;
+  object-position: center;
 }
 
 .main-nav { display: flex; align-items: center; gap: clamp(25px, 4vw, 68px); }
@@ -406,12 +414,13 @@ html[dir="rtl"] .mega-menu__preview-brand { justify-content: flex-end; }
 @media (max-width: 1024px) {
   :root { --header-height: 126px; }
   .utility-bar { height: 38px; padding-inline: 30px; }
-  .nav-bar { height: 88px; padding-inline: 30px; grid-template-columns: 110px 1fr auto; gap: 18px; }
+  .nav-bar { height: 88px; padding-inline: 30px; grid-template-columns: minmax(110px, 240px) 1fr auto; gap: 18px; }
   .logo { width: 86px; height: 46px; }
   .logo--managed:not(.logo--brand),
   .logo--managed.logo--brand { width: auto; height: auto; }
-  .logo--managed:not(.logo--brand) { max-width: min(200px, 38vw); max-height: 48px; }
-  .logo--managed:not(.logo--brand) .logo__img--managed { max-height: 48px; }
+  .logo--managed-site { height: 64px; max-width: 240px; max-height: 64px; }
+  .logo--managed .logo__img--managed-site,
+  .logo__img--managed-site { max-width: 240px; max-height: 64px; }
   .logo--brand { width: auto; min-width: 136px; }
   .main-nav { gap: 24px; }
   .nav-link { font-size: 14px; }
@@ -434,8 +443,9 @@ html[dir="rtl"] .mega-menu__preview-brand { justify-content: flex-end; }
   .logo { width: 78px; height: 42px; }
   .logo--managed:not(.logo--brand),
   .logo--managed.logo--brand { width: auto; height: auto; }
-  .logo--managed:not(.logo--brand) { max-width: min(180px, 42vw); max-height: 44px; }
-  .logo--managed:not(.logo--brand) .logo__img--managed { max-height: 44px; }
+  .logo--managed-site { height: 52px; max-width: 180px; max-height: 52px; }
+  .logo--managed .logo__img--managed-site,
+  .logo__img--managed-site { max-width: 180px; max-height: 52px; }
   .logo--brand { width: auto; min-width: 120px; padding: 0 14px; }
   .logo--brand span { font-size: 16px; }
   .search-pill { display: none; }
