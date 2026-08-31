@@ -457,6 +457,11 @@ export function hasUploadedBrandLogo(brandSlug, locale = 'en') {
   return Boolean(url) && !isGeneratedBrandLogo(url);
 }
 
+export function hasUploadedSiteLogo() {
+  const url = getPlatformMedia('site.logo');
+  return Boolean(url) && !isGeneratedBrandLogo(url);
+}
+
 export function getBrandLogo(brandSlug, locale = 'en') {
   if (!brandSlug) return '';
   const brand = getBrand(brandSlug);

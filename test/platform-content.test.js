@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 import { applyPlatformContent, getPlatformMedia, mapPlatformCategory, mapPlatformProduct, platformContentConfig } from '../src/data/platformContent.js';
+import { hasUploadedSiteLogo } from '../src/data/velvetCatalog.js';
 import { productCategories, products } from '../src/data/products.js';
 
 test('integration is opt-in and requires explicit tenant/site configuration', () => {
@@ -76,9 +77,35 @@ test('site.logo media is exposed for the header and keeps the local logo as fall
 test('header renders the managed site logo and falls back to the text logo when absent', () => {
   const headerSource = fs.readFileSync(new URL('../src/components/Header.jsx', import.meta.url), 'utf8');
   assert.match(headerSource, /getPlatformMedia\('site\.logo'\)/);
-  assert.match(headerSource, /className="logo__img"/);
+  assert.match(headerSource, /hasUploadedSiteLogo/);
+  assert.match(headerSource, /managedSiteLogo/);
+  assert.match(headerSource, /logo__img--managed/);
+  assert.match(headerSource, /logo--managed/);
   assert.match(headerSource, /<span>VELVET<\/span>/);
   assert.match(headerSource, /siteLogo \? /);
+});
+
+test('uploaded site logo is distinct from fallback and uses managed header treatment', () => {
+  applyPlatformContent({
+    site: { id: 'kids-velvet-storefront', companyId: 'kids-velvet' },
+    categories: [],
+    products: [],
+    texts: [],
+    media: [{ sectionKey: 'site.logo', image: '/uploads/site-logo.png' }],
+  }, 'https://api.test');
+
+  assert.equal(hasUploadedSiteLogo(), true);
+  assert.equal(getPlatformMedia('site.logo'), 'https://api.test/uploads/site-logo.png');
+
+  applyPlatformContent({
+    site: { id: 'kids-velvet-storefront', companyId: 'kids-velvet' },
+    categories: [],
+    products: [],
+    texts: [],
+    media: [],
+  }, 'https://api.test');
+
+  assert.equal(hasUploadedSiteLogo(), false);
 });
 
 test('brand pages consume brand.{slug}.logo with the local static logo as fallback', () => {
