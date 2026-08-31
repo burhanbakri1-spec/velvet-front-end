@@ -79,8 +79,8 @@ test('header renders the managed site logo and falls back to the text logo when 
   assert.match(headerSource, /getPlatformMedia\('site\.logo'\)/);
   assert.match(headerSource, /hasUploadedSiteLogo/);
   assert.match(headerSource, /managedSiteLogo/);
-  assert.match(headerSource, /logo__img--managed/);
-  assert.match(headerSource, /logo--managed/);
+  assert.match(headerSource, /logo__img--managed-site/);
+  assert.match(headerSource, /logo--managed-site/);
   assert.match(headerSource, /<span>VELVET<\/span>/);
   assert.match(headerSource, /siteLogo \? /);
 });
