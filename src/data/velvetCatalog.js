@@ -448,6 +448,15 @@ function branchLogoArtwork(brand, locale = 'en') {
 // canonical; the legacy `brand.{slug}.logo` platform slot is next; the static
 // branch wordmark artwork is the final fallback so logo slots always render an
 // image instead of plain text overlays.
+export function isGeneratedBrandLogo(url) {
+  return String(url || '').startsWith('data:image/svg+xml');
+}
+
+export function hasUploadedBrandLogo(brandSlug, locale = 'en') {
+  const url = getBrandLogo(brandSlug, locale);
+  return Boolean(url) && !isGeneratedBrandLogo(url);
+}
+
 export function getBrandLogo(brandSlug, locale = 'en') {
   if (!brandSlug) return '';
   const brand = getBrand(brandSlug);

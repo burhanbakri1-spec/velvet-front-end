@@ -6,7 +6,7 @@ import { useCart } from '../context/CartContext';
 import AboutSubnav from './AboutSubnav';
 import { useI18n } from '../i18n/I18nContext';
 import { getPlatformMedia } from '../data/platformContent';
-import { getBrand, getBrandLogo, getProductBySlug } from '../data/velvetCatalog';
+import { getBrand, getBrandLogo, getProductBySlug, hasUploadedBrandLogo } from '../data/velvetCatalog';
 
 export default function Header({ introActive, solid = false }) {
   const [brandsOpen, setBrandsOpen] = useState(false);
@@ -115,9 +115,9 @@ export default function Header({ introActive, solid = false }) {
       </div>
       <div className="nav-bar">
         <Link
-          className={`logo ${contextBrand ? 'logo--brand' : ''}`}
+          className={`logo ${contextBrand ? 'logo--brand' : ''}${contextBrand && hasUploadedBrandLogo(contextBrand.slug, locale) ? ' logo--managed' : ''}`}
           to={contextBrand ? localizePath(`/brands/${contextBrand.slug}`, locale) : '/'}
-          style={contextBrand ? { '--brand-accent': contextBrand.accent } : undefined}
+          style={contextBrand && !hasUploadedBrandLogo(contextBrand.slug, locale) ? { '--brand-accent': contextBrand.accent } : undefined}
           aria-label={contextBrand ? contextBrand.name[locale] : 'VELVET'}
         >
           {contextBrand ? (
