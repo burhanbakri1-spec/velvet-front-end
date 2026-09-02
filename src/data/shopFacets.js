@@ -1,9 +1,10 @@
+import { getProductAgeIds } from './ageFilter.js';
 import {
-  filterGroups,
   filterProducts,
   findCategoryBySlug,
   getBrand,
   getCategory,
+  getFilterGroup,
   velvetBrands,
 } from './velvetCatalog.js';
 
@@ -63,6 +64,12 @@ export function countFacetValues(pool, facetKey) {
       if (id) counts[id] = (counts[id] || 0) + 1;
       return;
     }
+    if (facetKey === 'age') {
+      getProductAgeIds(product).forEach((id) => {
+        counts[id] = (counts[id] || 0) + 1;
+      });
+      return;
+    }
     const value = product[facetKey];
     if (value) counts[value] = (counts[value] || 0) + 1;
   });
@@ -85,7 +92,7 @@ function isFacetVisible(count, selectedIds, valueId) {
 export function getAttributeFacetOptions(state, groupKey, locale = 'en') {
   const counts = getAvailableFacetValues(state, groupKey, groupKey);
   const selected = state[groupKey] || [];
-  return filterGroups[groupKey]
+  return getFilterGroup(groupKey)
     .filter((item) => isFacetVisible(counts[item.id] || 0, selected, item.id))
     .map((item) => ({
       id: item.id,

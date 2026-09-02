@@ -26,6 +26,7 @@
 // mainSlug + leafSlug — leaf slugs alone are not globally unique.
 // ===========================================================================
 
+import { getProductAgeIds, normalizeAgeFilterDefinitions, productMatchesAgeFilter } from './ageFilter.js';
 import { artwork, products } from './products.js';
 import { getFacetHierarchyOptions } from './shopFacets.js';
 import { getPlatformBrandAbout, getPlatformMedia } from './platformContent.js';
@@ -269,6 +270,22 @@ export function applyDynamicCatalog(brands = null, products = null) {
 // ---------------------------------------------------------------------------
 const filterItem = (id, en, ar) => ({ id, name: { en, ar } });
 
+let liveAgeFilterOptions = [];
+
+export function applyFilterDefinitions(payload) {
+  const mapped = normalizeAgeFilterDefinitions(payload?.filterDefinitions?.age);
+  if (mapped.length) liveAgeFilterOptions = mapped;
+}
+
+export function getFilterGroup(groupKey) {
+  if (groupKey === 'age' && liveAgeFilterOptions.length) return liveAgeFilterOptions;
+  return filterGroups[groupKey] || [];
+}
+
+export function resetFilterDefinitionsForTests() {
+  liveAgeFilterOptions = [];
+}
+
 export const filterGroups = {
   age: [
     filterItem('0-12m', '0–12 Months', '0–12 شهر'),
@@ -343,7 +360,7 @@ export function getActiveFilterTags(state, locale = 'en') {
     { key: 'shopping', group: 'shopping' },
   ].forEach(({ key, group }) => {
     (state[key] || []).forEach((id) => {
-      const item = filterGroups[group].find((entry) => entry.id === id);
+      const item = getFilterGroup(group).find((entry) => entry.id === id);
       tags.push({ groupKey: key, id, label: item ? item.name[locale] : id });
     });
   });
@@ -652,7 +669,7 @@ export function filterProducts(state) {
     if (state.category && product.velvetPath?.categoryId !== state.category) return false;
     if (state.subcategory && product.velvetPath?.subcategoryId !== state.subcategory) return false;
     if (state.manufacturer && product.manufacturerId !== state.manufacturer) return false;
-    if (state.age.length && !state.age.includes(product.age)) return false;
+    if (state.age.length && !productMatchesAgeFilter(product, state.age)) return false;
     if (state.gender.length && !state.gender.includes(product.gender)) return false;
     if (state.skill.length && !state.skill.includes(product.skill)) return false;
     if (state.occasion.length && !state.occasion.includes(product.occasion)) return false;
@@ -683,7 +700,9 @@ export function getFilterCounts(state) {
   const pathProducts = getPathProducts(state);
   const counts = { age: {}, gender: {}, skill: {}, occasion: {}, shopping: {} };
   pathProducts.forEach((product) => {
-    if (product.age) counts.age[product.age] = (counts.age[product.age] || 0) + 1;
+    getProductAgeIds(product).forEach((id) => {
+      counts.age[id] = (counts.age[id] || 0) + 1;
+    });
     if (product.gender) counts.gender[product.gender] = (counts.gender[product.gender] || 0) + 1;
     if (product.skill) counts.skill[product.skill] = (counts.skill[product.skill] || 0) + 1;
     if (product.occasion) counts.occasion[product.occasion] = (counts.occasion[product.occasion] || 0) + 1;
