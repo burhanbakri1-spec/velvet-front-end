@@ -1212,7 +1212,13 @@ html[dir="rtl"] .category-product-showcase__count { right: auto; left: 64px; }
 html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
 
 @media (hover: hover) and (pointer: fine) and (min-width: 761px) {
-  .category-hero,.category-hero a,.category-product-showcase__media { cursor: none; }
+  .category-hero,
+  .category-hero a,
+  .category-product-showcase__media:not(.product-detail-hero__media) { cursor: none; }
+}
+.category-product-showcase--detail .product-detail-hero__media,
+.category-product-showcase--detail .product-detail-focal__image {
+  cursor: default;
 }
 
 @media (max-width: 1024px) {
