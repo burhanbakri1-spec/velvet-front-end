@@ -88,6 +88,8 @@ test('sibling switcher slides span the viewport and center inner presentation', 
   assert.match(css, /\.category-product-showcase__media:not\(\.product-detail-hero__media\):hover img/);
   assert.match(css, /\.product-detail-focal__image:hover[\s\S]*opacity:\s*1/);
   assert.doesNotMatch(css, /\.category-product-showcase__media:hover img \{ transform: scale/);
+  assert.match(css, /\.category-product-showcase__media:not\(\.product-detail-hero__media\) \{ cursor: none/);
+  assert.match(css, /\.product-detail-hero__media[\s\S]*cursor:\s*default/);
 });
 
 test('buildInitialSelections resets option defaults per product', () => {
