@@ -1119,36 +1119,7 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
 .category-hero__description { position: absolute; z-index: 2; right: 64px; bottom: 68px; width: min(410px,31vw); margin: 0; font-size: 17px; line-height: 1.55; pointer-events: none; text-shadow: 0 1px 10px rgba(0,0,0,.24); }
 
 /* Brand storefront hero: full-width video (poster fallback) tinted with the
-   active brand's palette + wordmark overlay. Reuses the category-hero layout. */
-.brand-hero .category-hero__title span { color: var(--c1); }
-.category-hero__title span:has(.category-hero__logo-img) { margin-bottom: 0; font-size: 0; letter-spacing: normal; }
-.category-hero__logo-img { display: block; max-height: 56px; max-width: 220px; width: auto; height: auto; object-fit: contain; filter: none; }
-.brand-hero .category-hero__title .category-hero__logo--managed {
-  display: block;
-  overflow: visible;
-  width: auto;
-  max-width: 100%;
-  max-height: clamp(96px, 22vh, 220px);
-  height: auto;
-  margin-bottom: 12px;
-  font-size: 0;
-  letter-spacing: normal;
-  text-transform: none;
-  color: transparent;
-}
-.category-hero__logo-img--managed {
-  display: block;
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  object-position: center;
-  transform: none;
-  clip-path: none;
-  filter: none;
-  box-shadow: none;
-}
+   active brand's palette. Reuses the category-hero layout. */
 .brand-about {
   display: grid;
   grid-template-columns: minmax(180px, 280px) minmax(0, 1fr);
@@ -1183,7 +1154,6 @@ html[dir="rtl"] .brand-about__description { text-align: right; }
   .brand-hero .category-hero__shade {
     background: transparent;
   }
-  .brand-hero .category-hero__title span { color: color-mix(in srgb, var(--c1) 64%, #fff); }
 }
 
 .category-product-showcase { min-height: 1422px; position: relative; padding: 25px 64px 110px; display: grid; place-items: start center; background: #FFFFFF; }

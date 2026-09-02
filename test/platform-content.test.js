@@ -137,11 +137,11 @@ test('uploaded site logo is distinct from fallback and uses managed header treat
   assert.equal(hasUploadedSiteLogo(), false);
 });
 
-test('brand pages consume brand.{slug}.logo with the local static logo as fallback', () => {
+test('brand pages keep hero media separate from header brand logos', () => {
   const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
-  assert.match(brandPage, /getBrandLogo\(slug, locale\)/);
-  assert.match(brandPage, /category-hero__logo-img/);
-  assert.match(brandPage, /brand\.home\.logo\[locale\]/);
+  assert.match(brandPage, /getBrandMedia\(slug\)/);
+  assert.doesNotMatch(brandPage, /getBrandLogo/);
+  assert.doesNotMatch(brandPage, /category-hero__logo/);
   assert.match(brandPage, /getBrandAbout\(slug, locale\)/);
   assert.match(brandPage, /brand-about/);
   const headerSource = fs.readFileSync(new URL('../src/components/Header.jsx', import.meta.url), 'utf8');

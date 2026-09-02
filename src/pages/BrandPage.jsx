@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { artwork } from '../data/products';
-import { getBrand, getBrandAbout, getBrandLogo, getBrandMedia, hasUploadedBrandLogo } from '../data/velvetCatalog';
+import { getBrand, getBrandAbout, getBrandMedia } from '../data/velvetCatalog';
 import BrandShowcase from '../components/BrandShowcase';
 import { PlayButton } from '../components/Hero';
 import PageNavigation from '../components/PageNavigation';
@@ -37,8 +37,6 @@ export default function BrandPage({ slug }) {
   }
 
   const media = getBrandMedia(slug);
-  const brandLogo = getBrandLogo(slug, locale);
-  const managedBrandLogo = hasUploadedBrandLogo(slug, locale);
   const brandAbout = getBrandAbout(slug, locale);
 
   const videoRef = useRef(null);
@@ -92,15 +90,6 @@ export default function BrandPage({ slug }) {
         <div className="category-hero__shade" aria-hidden="true" />
         <a className="category-hero__link" href="#category-products" aria-label={`${copy.home.view} ${brand.name[locale]}`} />
         <div className="category-hero__title">
-          <span className={`category-hero__logo${managedBrandLogo ? ' category-hero__logo--managed' : ''}`}>
-            {brandLogo ? (
-              <img
-                className={`category-hero__logo-img${managedBrandLogo ? ' category-hero__logo-img--managed' : ''}`}
-                src={brandLogo}
-                alt={brand.name[locale]}
-              />
-            ) : brand.home.logo[locale]}
-          </span>
           <h1>{brand.name[locale]}</h1>
         </div>
         <p className="category-hero__description">{brand.tagline[locale]}</p>
