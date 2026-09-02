@@ -18,6 +18,7 @@
 // directly and passed through untouched (only made absolute against apiUrl).
 // ===========================================================================
 
+import { normalizeAgeIdsFromRaw } from './ageFilter.js';
 import { artwork } from './products.js';
 import { productTaxonomyById } from './velvetTaxonomy.js';
 
@@ -188,6 +189,7 @@ function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
   const price = finiteNumber(raw.price ?? raw.basePrice, 0);
   const originalPrice = raw.originalPrice == null ? null : finiteNumber(raw.originalPrice, 0);
   const hasOffer = badge.toLowerCase().includes('offer') || Boolean(originalPrice);
+  const ageIds = normalizeAgeIdsFromRaw(raw);
   return {
     id: String(raw.id || `${brandSlug}-${index + 1}`),
     slug: String(raw.slug || ''),
@@ -218,7 +220,8 @@ function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
     inventoryManaged: true,
     availability,
     availabilityAr,
-    age: String(raw.age || ''),
+    age: ageIds[0] || String(raw.age || ''),
+    ageIds,
     gender: String(raw.gender || ''),
     skill: String(raw.skill || ''),
     occasion: String(raw.occasion || ''),

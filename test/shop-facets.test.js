@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 import {
-  filterGroups,
   filterProducts,
   getBrand,
+  getFilterGroup,
   getShopHierarchyOptions,
   velvetBrands,
 } from '../src/data/velvetCatalog.js';
@@ -263,6 +263,6 @@ test('getFacetCount returns expected product counts', () => {
 
 test('attribute facet options only include configured filter group ids', () => {
   const options = getAttributeFacetOptions(baseState, 'age', 'en');
-  const configuredIds = new Set(filterGroups.age.map((item) => item.id));
+  const configuredIds = new Set(getFilterGroup('age').map((item) => item.id));
   assert.ok(options.every((opt) => configuredIds.has(opt.id)));
 });
