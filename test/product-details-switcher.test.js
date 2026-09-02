@@ -85,6 +85,9 @@ test('sibling switcher slides span the viewport and center inner presentation', 
   assert.match(css, /\.product-switcher-slide \{[\s\S]*?align-items:\s*center/);
   assert.match(css, /\.product-switcher-slide__content \{[\s\S]*?margin-inline:\s*auto/);
   assert.match(css, /\.product-switcher-viewport\.is-transitioning \.product-switcher-slide \{[\s\S]*?width:\s*100%/);
+  assert.match(css, /\.category-product-showcase__media:not\(\.product-detail-hero__media\):hover img/);
+  assert.match(css, /\.product-detail-focal__image:hover[\s\S]*opacity:\s*1/);
+  assert.doesNotMatch(css, /\.category-product-showcase__media:hover img \{ transform: scale/);
 });
 
 test('buildInitialSelections resets option defaults per product', () => {
