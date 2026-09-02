@@ -68,7 +68,26 @@ test('uploaded brand logos are distinct from generated fallback artwork', () => 
   assert.equal(hasUploadedBrandLogo('kids', 'en'), false);
 });
 
-test('header uses managed-logo classes for uploaded artwork; mega menu preview is media-only', () => {
+test('Categories mega menu preview overlays brand logo on poster without strip wrapper', () => {
+  const megaMenu = fs.readFileSync(new URL('../src/components/CategoriesMegaMenu.jsx', import.meta.url), 'utf8');
+  assert.match(megaMenu, /getBrandLogo\(brand\.slug, locale\)/);
+  assert.match(megaMenu, /getBrandMedia\(brand\.slug\)/);
+  assert.match(megaMenu, /mega-menu__preview-logo/);
+  assert.doesNotMatch(megaMenu, /mega-menu__preview-brand/);
+  assert.match(megaMenu, /onMouseEnter=\{\(\) => selectBrand\(item\.slug\)\}/);
+});
+
+test('BrandPage hero uses full-width adaptive media without hero logo', () => {
+  const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
+  const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  assert.match(brandPage, /getBrandMedia\(slug\)/);
+  assert.doesNotMatch(brandPage, /getBrandLogo/);
+  assert.doesNotMatch(brandPage, /category-hero__logo/);
+  assert.match(styles, /\.brand-hero \.category-hero__media[\s\S]*max-height:\s*none/);
+  assert.match(styles, /\.brand-hero \.category-hero__media[\s\S]*width:\s*100%/);
+});
+
+test('header uses managed-logo classes for uploaded artwork; mega menu overlays logo on poster', () => {
   const header = fs.readFileSync(new URL('../src/components/Header.jsx', import.meta.url), 'utf8');
   const megaMenu = fs.readFileSync(new URL('../src/components/CategoriesMegaMenu.jsx', import.meta.url), 'utf8');
   const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
@@ -76,8 +95,8 @@ test('header uses managed-logo classes for uploaded artwork; mega menu preview i
   assert.match(header, /hasUploadedBrandLogo/);
   assert.match(header, /logo--managed/);
   assert.match(megaMenu, /mega-menu__preview-media/);
-  assert.doesNotMatch(megaMenu, /mega-menu__preview-logo/);
-  assert.doesNotMatch(megaMenu, /getBrandLogo/);
+  assert.match(megaMenu, /mega-menu__preview-logo/);
+  assert.doesNotMatch(megaMenu, /mega-menu__preview-brand/);
   assert.doesNotMatch(brandPage, /category-hero__logo/);
   assert.doesNotMatch(brandPage, /getBrandLogo/);
 });
