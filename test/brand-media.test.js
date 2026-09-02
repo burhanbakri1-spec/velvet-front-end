@@ -68,7 +68,7 @@ test('uploaded brand logos are distinct from generated fallback artwork', () => 
   assert.equal(hasUploadedBrandLogo('kids', 'en'), false);
 });
 
-test('header, mega menu and brand page use managed-logo classes for uploaded artwork', () => {
+test('header and mega menu use managed-logo classes for uploaded artwork', () => {
   const header = fs.readFileSync(new URL('../src/components/Header.jsx', import.meta.url), 'utf8');
   const megaMenu = fs.readFileSync(new URL('../src/components/CategoriesMegaMenu.jsx', import.meta.url), 'utf8');
   const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
@@ -77,7 +77,8 @@ test('header, mega menu and brand page use managed-logo classes for uploaded art
   assert.match(header, /logo--managed/);
   assert.match(megaMenu, /mega-menu__preview-brand--managed/);
   assert.match(megaMenu, /mega-menu__preview-logo--managed/);
-  assert.match(brandPage, /category-hero__logo-img--managed/);
+  assert.doesNotMatch(brandPage, /category-hero__logo/);
+  assert.doesNotMatch(brandPage, /getBrandLogo/);
 });
 
 test('brand about content prefers platform copy and falls back to catalog tagline', () => {
