@@ -254,23 +254,8 @@ button { color: inherit; }
   cursor: pointer;
   color: #fff;
   background: #20191b;
-  display: grid;
-  grid-template-rows: auto 1fr;
+  display: block;
   text-align: start;
-}
-.mega-menu__preview-brand {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 96px;
-  padding: 24px 36px 18px;
-  background: linear-gradient(180deg, rgba(8,7,10,.94), rgba(8,7,10,.78));
-}
-.mega-menu__preview-visual {
-  position: relative;
-  min-height: 320px;
 }
 .mega-menu__preview-media,
 .mega-menu__preview-fallback {
@@ -287,21 +272,6 @@ button { color: inherit; }
 .mega-menu__preview-shade {
   display: none;
 }
-.mega-menu__preview-brand--managed {
-  background: transparent;
-  min-height: 0;
-  padding: 20px 36px 12px;
-}
-.mega-menu__preview-logo {
-  max-height: 56px;
-  max-width: min(320px, 88%);
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  filter: none;
-}
-.mega-menu__preview-logo--managed { filter: none; }
-html[dir="rtl"] .mega-menu__preview-brand { justify-content: flex-end; }
 .mega-menu__column { display: flex; flex-direction: column; gap: 20px; }
 .mega-menu__column a { font-size: 18px; transition: transform .25s ease, opacity .25s ease; }
 .mega-menu__column a:hover { transform: translateX(7px); opacity: .55; }
@@ -1118,8 +1088,25 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
 .category-hero__title h1 { margin: 0; font-size: clamp(55px,5vw,72px); line-height: 1.02; letter-spacing: -.05em; }
 .category-hero__description { position: absolute; z-index: 2; right: 64px; bottom: 68px; width: min(410px,31vw); margin: 0; font-size: 17px; line-height: 1.55; pointer-events: none; text-shadow: 0 1px 10px rgba(0,0,0,.24); }
 
-/* Brand storefront hero: full-width video (poster fallback) tinted with the
-   active brand's palette. Reuses the category-hero layout. */
+/* Brand storefront hero: full-width video/poster with natural media framing. */
+.brand-hero {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
+  background: #FFFFFF;
+}
+.brand-hero .category-hero__media {
+  position: relative;
+  z-index: 0;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  max-height: min(90vh, 900px);
+  object-fit: contain;
+  object-position: center;
+}
+.brand-hero:hover .category-hero__media { transform: none; }
 .brand-about {
   display: grid;
   grid-template-columns: minmax(180px, 280px) minmax(0, 1fr);
@@ -1221,6 +1208,8 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
 
 @media (max-width: 760px) {
   .category-hero { width: 100%; height: 129.85vw; min-height: 0; max-height: 640px; }
+  .brand-hero { width: 100%; height: auto; min-height: 0; max-height: none; }
+  .brand-hero .category-hero__media { max-height: min(80vh, 640px); }
   .category-hero__title,.category-hero__description,html[dir="rtl"] .category-hero__title,html[dir="rtl"] .category-hero__description { left: 20px; right: 20px; width: auto; text-align: start; }
   .category-hero__title { bottom: 96px; }
   .category-hero__title h1 { font-size: 42px; line-height: 1.05; }

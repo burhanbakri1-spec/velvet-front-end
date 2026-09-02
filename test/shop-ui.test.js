@@ -85,11 +85,12 @@ test('sortProducts orders by price without changing filter membership', () => {
 
 test('Categories mega menu is brand-first and omits the category column', () => {
   assert.match(megaMenu, /data-mega-brand-list/);
-  assert.match(megaMenu, /getBrandLogo/);
   assert.match(megaMenu, /getBrandMedia/);
-  assert.match(megaMenu, /mega-menu__preview-brand/);
-  assert.match(megaMenu, /mega-menu__preview-visual/);
-  assert.match(megaMenu, /mega-menu__preview-logo/);
+  assert.doesNotMatch(megaMenu, /getBrandLogo/);
+  assert.match(megaMenu, /mega-menu__preview-media/);
+  assert.doesNotMatch(megaMenu, /mega-menu__preview-brand/);
+  assert.doesNotMatch(megaMenu, /mega-menu__preview-logo/);
+  assert.doesNotMatch(megaMenu, /mega-menu__preview-visual/);
   assert.doesNotMatch(megaMenu, /mega-menu__preview-wordmark/);
   assert.match(megaMenu, /localizePath\(`\/brands\/\$\{slug\}`/);
   assert.doesNotMatch(megaMenu, /copy\.shop\.category/);
