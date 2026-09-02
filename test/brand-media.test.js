@@ -68,15 +68,16 @@ test('uploaded brand logos are distinct from generated fallback artwork', () => 
   assert.equal(hasUploadedBrandLogo('kids', 'en'), false);
 });
 
-test('header and mega menu use managed-logo classes for uploaded artwork', () => {
+test('header uses managed-logo classes for uploaded artwork; mega menu preview is media-only', () => {
   const header = fs.readFileSync(new URL('../src/components/Header.jsx', import.meta.url), 'utf8');
   const megaMenu = fs.readFileSync(new URL('../src/components/CategoriesMegaMenu.jsx', import.meta.url), 'utf8');
   const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
 
   assert.match(header, /hasUploadedBrandLogo/);
   assert.match(header, /logo--managed/);
-  assert.match(megaMenu, /mega-menu__preview-brand--managed/);
-  assert.match(megaMenu, /mega-menu__preview-logo--managed/);
+  assert.match(megaMenu, /mega-menu__preview-media/);
+  assert.doesNotMatch(megaMenu, /mega-menu__preview-logo/);
+  assert.doesNotMatch(megaMenu, /getBrandLogo/);
   assert.doesNotMatch(brandPage, /category-hero__logo/);
   assert.doesNotMatch(brandPage, /getBrandLogo/);
 });
