@@ -3,6 +3,7 @@ import { useRouter, localizePath } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
 import {
   EMPTY_SHOP_STATE,
+  MULTI_KEYS,
   PATH_KEYS,
   SHOP_SORT_OPTIONS,
   buildShopQuery,
@@ -48,7 +49,9 @@ export function useShopState() {
     go(toggleMultiKey(state, key, id));
   }, [go, state]);
   const clearFilters = useCallback(() => {
-    go({ ...state, age: [], gender: [], skill: [], occasion: [], shopping: [], manufacturer: '' });
+    const cleared = { ...state, manufacturer: '' };
+    MULTI_KEYS.forEach((key) => { cleared[key] = []; });
+    go(cleared);
   }, [go, state]);
   const resetAll = useCallback(() => go(EMPTY_SHOP_STATE), [go]);
   const setSearch = useCallback((value) => {
@@ -67,7 +70,7 @@ export function useShopState() {
 
   const activeFilterCount = useMemo(() => (
     (state.manufacturer ? 1 : 0)
-    + state.age.length + state.gender.length + state.skill.length + state.occasion.length + state.shopping.length
+    + MULTI_KEYS.reduce((sum, key) => sum + (state[key]?.length || 0), 0)
   ), [state]);
 
   return {

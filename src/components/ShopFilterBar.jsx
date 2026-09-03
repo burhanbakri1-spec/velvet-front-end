@@ -13,6 +13,10 @@ const FILTER_COLUMNS = [
   { key: 'age', group: 'age', labelKey: 'age', variant: 'check' },
   { key: 'gender', group: 'gender', labelKey: 'gender', variant: 'check' },
   { key: 'skill', group: 'skill', labelKey: 'skill', variant: 'check' },
+  { key: 'material', group: 'material', labelKey: 'material', variant: 'check' },
+  { key: 'productType', group: 'productType', labelKey: 'productType', variant: 'check' },
+  { key: 'theme', group: 'theme', labelKey: 'theme', variant: 'check' },
+  { key: 'collection', group: 'collection', labelKey: 'collectionFilter', variant: 'check' },
   { key: 'occasion', group: 'occasion', labelKey: 'occasion', variant: 'check' },
   { key: 'shopping', group: 'shopping', labelKey: 'quickShop', variant: 'chip' },
 ];
@@ -125,6 +129,10 @@ export default function ShopFilterBar({
     age: getAttributeFacetOptions(state, 'age', locale),
     gender: getAttributeFacetOptions(state, 'gender', locale),
     skill: getAttributeFacetOptions(state, 'skill', locale),
+    material: getAttributeFacetOptions(state, 'material', locale),
+    productType: getAttributeFacetOptions(state, 'productType', locale),
+    theme: getAttributeFacetOptions(state, 'theme', locale),
+    collection: getAttributeFacetOptions(state, 'collection', locale),
     occasion: getAttributeFacetOptions(state, 'occasion', locale),
     shopping: getAttributeFacetOptions(state, 'shopping', locale),
   }), [state, locale]);

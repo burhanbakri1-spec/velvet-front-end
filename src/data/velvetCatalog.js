@@ -26,7 +26,12 @@
 // mainSlug + leafSlug — leaf slugs alone are not globally unique.
 // ===========================================================================
 
-import { getProductAgeIds, normalizeAgeFilterDefinitions, productMatchesAgeFilter } from './ageFilter.js';
+import {
+  LIVE_CLASSIFICATION_KEYS,
+  getProductAttributeIds,
+  normalizeFilterDefinitions,
+  productMatchesAttributeFilter,
+} from './classificationFilter.js';
 import { artwork, products } from './products.js';
 import { getFacetHierarchyOptions } from './shopFacets.js';
 import { getPlatformBrandAbout, getPlatformMedia } from './platformContent.js';
@@ -270,20 +275,28 @@ export function applyDynamicCatalog(brands = null, products = null) {
 // ---------------------------------------------------------------------------
 const filterItem = (id, en, ar) => ({ id, name: { en, ar } });
 
-let liveAgeFilterOptions = [];
+let liveFilterOptions = Object.create(null);
+let liveFilterDefinitionsApplied = false;
 
 export function applyFilterDefinitions(payload) {
-  const mapped = normalizeAgeFilterDefinitions(payload?.filterDefinitions?.age);
-  if (mapped.length) liveAgeFilterOptions = mapped;
+  const defs = payload?.filterDefinitions || {};
+  liveFilterOptions = Object.create(null);
+  LIVE_CLASSIFICATION_KEYS.forEach((key) => {
+    liveFilterOptions[key] = normalizeFilterDefinitions(defs[key]);
+  });
+  liveFilterDefinitionsApplied = true;
 }
 
 export function getFilterGroup(groupKey) {
-  if (groupKey === 'age' && liveAgeFilterOptions.length) return liveAgeFilterOptions;
+  if (liveFilterDefinitionsApplied && LIVE_CLASSIFICATION_KEYS.includes(groupKey)) {
+    return liveFilterOptions[groupKey] || [];
+  }
   return filterGroups[groupKey] || [];
 }
 
 export function resetFilterDefinitionsForTests() {
-  liveAgeFilterOptions = [];
+  liveFilterOptions = Object.create(null);
+  liveFilterDefinitionsApplied = false;
 }
 
 export const filterGroups = {
@@ -336,7 +349,10 @@ export const filterGroups = {
   ],
 };
 
-export const quickShopGroups = ['age', 'gender', 'skill', 'occasion', 'shopping'];
+export const quickShopGroups = [
+  ...LIVE_CLASSIFICATION_KEYS,
+  'shopping',
+];
 
 export function getActiveFilterTags(state, locale = 'en') {
   const tags = [];
@@ -352,15 +368,9 @@ export function getActiveFilterTags(state, locale = 'en') {
     const sub = findSubcategoryBySlug(state.category, state.subcategory, state.brand);
     tags.push({ groupKey: 'subcategory', id: state.subcategory, label: sub ? sub.name[locale] : state.subcategory });
   }
-  [
-    { key: 'age', group: 'age' },
-    { key: 'gender', group: 'gender' },
-    { key: 'skill', group: 'skill' },
-    { key: 'occasion', group: 'occasion' },
-    { key: 'shopping', group: 'shopping' },
-  ].forEach(({ key, group }) => {
+  quickShopGroups.forEach((key) => {
     (state[key] || []).forEach((id) => {
-      const item = getFilterGroup(group).find((entry) => entry.id === id);
+      const item = getFilterGroup(key).find((entry) => entry.id === id);
       tags.push({ groupKey: key, id, label: item ? item.name[locale] : id });
     });
   });
@@ -669,11 +679,11 @@ export function filterProducts(state) {
     if (state.category && product.velvetPath?.categoryId !== state.category) return false;
     if (state.subcategory && product.velvetPath?.subcategoryId !== state.subcategory) return false;
     if (state.manufacturer && product.manufacturerId !== state.manufacturer) return false;
-    if (state.age.length && !productMatchesAgeFilter(product, state.age)) return false;
-    if (state.gender.length && !state.gender.includes(product.gender)) return false;
-    if (state.skill.length && !state.skill.includes(product.skill)) return false;
-    if (state.occasion.length && !state.occasion.includes(product.occasion)) return false;
-    if (state.shopping.length && !state.shopping.some((tag) => product.shopping.includes(tag))) return false;
+    for (const key of LIVE_CLASSIFICATION_KEYS) {
+      const selected = state[key] || [];
+      if (selected.length && !productMatchesAttributeFilter(product, key, selected)) return false;
+    }
+    if (state.shopping?.length && !state.shopping.some((tag) => (product.shopping || []).includes(tag))) return false;
     if (normalized) {
       const haystack = `${product.name} ${product.nameAr || ''} ${product.description} ${product.descriptionAr || ''} ${product.category || ''}`.toLowerCase();
       if (!haystack.includes(normalized)) return false;
@@ -698,14 +708,14 @@ export function getManufacturersForPath(state) {
 
 export function getFilterCounts(state) {
   const pathProducts = getPathProducts(state);
-  const counts = { age: {}, gender: {}, skill: {}, occasion: {}, shopping: {} };
+  const counts = { shopping: {} };
+  LIVE_CLASSIFICATION_KEYS.forEach((key) => { counts[key] = {}; });
   pathProducts.forEach((product) => {
-    getProductAgeIds(product).forEach((id) => {
-      counts.age[id] = (counts.age[id] || 0) + 1;
+    LIVE_CLASSIFICATION_KEYS.forEach((key) => {
+      getProductAttributeIds(product, key).forEach((id) => {
+        counts[key][id] = (counts[key][id] || 0) + 1;
+      });
     });
-    if (product.gender) counts.gender[product.gender] = (counts.gender[product.gender] || 0) + 1;
-    if (product.skill) counts.skill[product.skill] = (counts.skill[product.skill] || 0) + 1;
-    if (product.occasion) counts.occasion[product.occasion] = (counts.occasion[product.occasion] || 0) + 1;
     (product.shopping || []).forEach((tag) => {
       counts.shopping[tag] = (counts.shopping[tag] || 0) + 1;
     });

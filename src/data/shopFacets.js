@@ -1,4 +1,4 @@
-import { getProductAgeIds } from './ageFilter.js';
+import { LIVE_CLASSIFICATION_KEYS, getProductAttributeIds } from './classificationFilter.js';
 import {
   filterProducts,
   findCategoryBySlug,
@@ -9,21 +9,21 @@ import {
 } from './velvetCatalog.js';
 
 const HIERARCHY_KEYS = ['brand', 'category', 'subcategory'];
+const MULTI_ATTRIBUTE_KEYS = [...LIVE_CLASSIFICATION_KEYS, 'shopping'];
 
 export function cloneShopState(state = {}) {
-  return {
+  const next = {
     brand: state.brand || '',
     category: state.category || '',
     subcategory: state.subcategory || '',
     manufacturer: state.manufacturer || '',
-    age: [...(state.age || [])],
-    gender: [...(state.gender || [])],
-    skill: [...(state.skill || [])],
-    occasion: [...(state.occasion || [])],
-    shopping: [...(state.shopping || [])],
     search: state.search || '',
     sort: state.sort || '',
   };
+  MULTI_ATTRIBUTE_KEYS.forEach((key) => {
+    next[key] = [...(state[key] || [])];
+  });
+  return next;
 }
 
 export function filterProductsForFacet(state, excludeKey) {
@@ -32,11 +32,7 @@ export function filterProductsForFacet(state, excludeKey) {
   else if (excludeKey === 'category') next.category = '';
   else if (excludeKey === 'subcategory') next.subcategory = '';
   else if (excludeKey === 'manufacturer') next.manufacturer = '';
-  else if (excludeKey === 'age') next.age = [];
-  else if (excludeKey === 'gender') next.gender = [];
-  else if (excludeKey === 'skill') next.skill = [];
-  else if (excludeKey === 'occasion') next.occasion = [];
-  else if (excludeKey === 'shopping') next.shopping = [];
+  else if (MULTI_ATTRIBUTE_KEYS.includes(excludeKey)) next[excludeKey] = [];
   return filterProducts(next);
 }
 
@@ -64,8 +60,8 @@ export function countFacetValues(pool, facetKey) {
       if (id) counts[id] = (counts[id] || 0) + 1;
       return;
     }
-    if (facetKey === 'age') {
-      getProductAgeIds(product).forEach((id) => {
+    if (LIVE_CLASSIFICATION_KEYS.includes(facetKey)) {
+      getProductAttributeIds(product, facetKey).forEach((id) => {
         counts[id] = (counts[id] || 0) + 1;
       });
       return;
