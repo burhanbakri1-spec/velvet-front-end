@@ -116,11 +116,12 @@ export default function Header({ introActive, solid = false }) {
       </div>
       <div className="nav-bar">
         <Link
-          className={`logo ${contextBrand ? 'logo--brand' : ''}${managedSiteLogo ? ' logo--managed logo--managed-site' : ''}${managedBrandLogo ? ' logo--managed' : ''}`}
+          className={`logo ${contextBrand ? 'logo--brand' : 'logo--velvet'}${managedSiteLogo ? ' logo--managed logo--managed-site' : ''}${managedBrandLogo ? ' logo--managed' : ''}${!contextBrand ? ' logo--velvet-badge' : ''}`}
           to={contextBrand ? localizePath(`/brands/${contextBrand.slug}`, locale) : '/'}
           style={contextBrand && !managedBrandLogo ? { '--brand-accent': contextBrand.accent } : undefined}
           aria-label={contextBrand ? contextBrand.name[locale] : 'VELVET'}
         >
+          {!contextBrand && <span className="logo__badge" aria-hidden="true" />}
           {contextBrand ? (
             contextBrandLogo ? (
               <img className={`logo__img logo__img--brand${managedBrandLogo ? ' logo__img--managed' : ''}`} src={contextBrandLogo} alt={contextBrand.name[locale]} />
@@ -130,7 +131,7 @@ export default function Header({ introActive, solid = false }) {
           ) : siteLogo ? (
             <img className={`logo__img${managedSiteLogo ? ' logo__img--managed logo__img--managed-site' : ''}`} src={siteLogo} alt="VELVET" />
           ) : (
-            <span>VELVET</span>
+            <span className="logo__wordmark">VELVET</span>
           )}
         </Link>
         <nav className={`main-nav ${mobileOpen ? 'is-open' : ''}`} aria-label={copy.header.nav}>

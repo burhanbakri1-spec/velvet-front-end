@@ -56,35 +56,30 @@ test('rtl flips slide transition offsets without reversing product order', () =>
   assert.equal(getSiblingProduct(siblings[0], siblings, 'next').slug, getSiblingProduct(siblings[0], siblings, 'next').slug);
 });
 
-test('product details page uses product switcher and client-side sibling navigation', () => {
+test('product details page uses current-product gallery instead of sibling switcher', () => {
   const source = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
-  assert.match(source, /product-switcher-viewport/);
-  assert.match(source, /beginSiblingTransition/);
-  assert.match(source, /navigate\(localizePath\(`\/products\/\$\{targetSlug\}`/);
-  assert.match(source, /scroll: false/);
-  assert.match(source, /getSameSubcategoryProducts/);
-  assert.doesNotMatch(source, /openSiblingProduct/);
-  assert.doesNotMatch(source, /data-sibling-slug/);
+  assert.match(source, /product-main-gallery/);
+  assert.match(source, /resolveProductImages/);
+  assert.match(source, /getRelatedProducts/);
+  assert.doesNotMatch(source, /product-switcher-viewport/);
+  assert.doesNotMatch(source, /beginSiblingTransition/);
 });
 
 test('lower gallery strip shows current product images and does not navigate products', () => {
   const source = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
   assert.match(source, /product-image-gallery/);
-  assert.match(source, /collectProductImages\(routeProduct\)/);
+  assert.match(source, /resolveProductImages\(routeProduct, selections\)/);
   assert.match(source, /setImageIndex\(index\)/);
   assert.doesNotMatch(source, /sameSubcategory\.map/);
 });
 
-test('product switch duration is within the premium transition range', () => {
+test('product switch duration helper remains in the premium transition range', () => {
   assert.ok(PRODUCT_SWITCH_DURATION_MS >= 400);
   assert.ok(PRODUCT_SWITCH_DURATION_MS <= 600);
 });
 
-test('sibling switcher slides span the viewport and center inner presentation', () => {
+test('detail hero media keeps default cursor and no hover fade', () => {
   const css = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
-  assert.match(css, /\.product-switcher-slide \{[\s\S]*?align-items:\s*center/);
-  assert.match(css, /\.product-switcher-slide__content \{[\s\S]*?margin-inline:\s*auto/);
-  assert.match(css, /\.product-switcher-viewport\.is-transitioning \.product-switcher-slide \{[\s\S]*?width:\s*100%/);
   assert.match(css, /\.category-product-showcase__media:not\(\.product-detail-hero__media\):hover img/);
   assert.match(css, /\.product-detail-focal__image:hover[\s\S]*opacity:\s*1/);
   assert.doesNotMatch(css, /\.category-product-showcase__media:hover img \{ transform: scale/);

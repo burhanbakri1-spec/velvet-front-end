@@ -6,7 +6,7 @@ import {
   getProductDescription,
   getProductName,
 } from '../data/products';
-import { optionValueUnavailable } from '../data/inventory';
+import { optionValueUnavailable, coerceSelectionsToValidVariant } from '../data/inventory';
 import { Link } from '../routing/Router';
 
 const formatPrice = (value) => `$${Number(value).toFixed(2)}`;
@@ -27,6 +27,7 @@ export default function ProductDetailSlide({
   onAdd,
   onBuyNow,
   interactive = true,
+  showMedia = true,
 }) {
   const productName = getProductName(product, locale);
   const optionDelta = product.options.reduce(
@@ -37,12 +38,14 @@ export default function ProductDetailSlide({
   const optionSummary = product.options.map((option) => getOptionName(option, locale)).join(' · ');
 
   return (
-    <div className="category-product-showcase__slide product-switcher-slide__content">
-      <div className="product-detail-focal">
-        <figure className="category-product-showcase__media product-detail-hero__media">
-          <img className="product-detail-focal__image" src={imageSrc} alt={productName} />
-        </figure>
-      </div>
+    <div className={`category-product-showcase__slide product-switcher-slide__content${showMedia ? '' : ' product-detail-slide--commerce-only'}`}>
+      {showMedia && (
+        <div className="product-detail-focal">
+          <figure className="category-product-showcase__media product-detail-hero__media">
+            <img className="product-detail-focal__image" src={imageSrc} alt={productName} />
+          </figure>
+        </div>
+      )}
       <div className="category-product-showcase__copy">
         <span className="category-product-showcase__category">
           {eyebrow}
@@ -74,7 +77,10 @@ export default function ProductDetailSlide({
                           disabled={disabled || !interactive}
                           aria-disabled={disabled || !interactive}
                           className={selections[option.name] === value.label ? 'is-active' : ''}
-                          onClick={() => interactive && onSelections((current) => ({ ...current, [option.name]: value.label }))}
+                          onClick={() => interactive && onSelections((current) => coerceSelectionsToValidVariant(
+                            product,
+                            { ...current, [option.name]: value.label },
+                          ))}
                           type="button"
                           key={value.label}
                         >

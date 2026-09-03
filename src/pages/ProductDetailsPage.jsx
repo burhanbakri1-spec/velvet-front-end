@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import ProductCard from '../components/ProductCard';
 import ProductDetailSlide from '../components/ProductDetailSlide';
-import ProductShowcaseNavigation from '../components/ProductShowcaseNavigation';
 import PageNavigation from '../components/PageNavigation';
 import { useCart } from '../context/CartContext';
 import {
-  collectProductImages,
   getAvailability,
   getCategoryLabel,
   getOptionName,
   getProductDescription,
   getProductName,
+  resolveProductImages,
 } from '../data/products';
 import {
   filterGroups,
   getBrand,
   getCategory,
-  getPathHeroMedia,
+  getFilterGroup,
   getProductBySlug,
   getProductMedia,
   getSubcategory,
@@ -28,10 +28,7 @@ import { availableStock, selectedVariant } from '../data/inventory';
 import { isSiblingDragGesture } from '../hooks/siblingCarousel';
 import {
   buildInitialSelections,
-  getProductSlidePercent,
-  getSameSubcategoryProducts,
-  getSiblingProduct,
-  PRODUCT_SWITCH_DURATION_MS,
+  getRelatedProducts,
 } from '../hooks/productSiblings';
 
 export default function ProductDetailsPage({ slug }) {
@@ -41,7 +38,6 @@ export default function ProductDetailsPage({ slug }) {
   const { addItem } = useCart();
   const addedTimer = useRef(null);
   const galleryViewportRef = useRef(null);
-  const switcherViewportRef = useRef(null);
   const galleryDrag = useRef({
     active: false,
     startX: 0,
@@ -50,14 +46,12 @@ export default function ProductDetailsPage({ slug }) {
     dragged: false,
     capturing: false,
   });
-  const switchTouchStartX = useRef(null);
 
-  const sameSubcategory = useMemo(
-    () => getSameSubcategoryProducts(routeProduct, velvetProducts),
+  const relatedProducts = useMemo(
+    () => getRelatedProducts(routeProduct, velvetProducts),
     [routeProduct],
   );
 
-  const images = useMemo(() => collectProductImages(routeProduct), [routeProduct]);
   const initialSelections = useMemo(
     () => buildInitialSelections(routeProduct),
     [routeProduct],
@@ -67,13 +61,13 @@ export default function ProductDetailsPage({ slug }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
-  const [transition, setTransition] = useState(null);
-  const [slideAnimating, setSlideAnimating] = useState(false);
 
-  const hasSiblings = sameSubcategory.length > 1;
+  const images = useMemo(
+    () => resolveProductImages(routeProduct, selections),
+    [routeProduct, selections],
+  );
   const hasGallery = images.length > 1;
-  const isTransitioning = Boolean(transition);
-  const rtl = locale === 'ar';
+  const activeImage = images[imageIndex] || routeProduct?.image || '';
 
   useEffect(() => () => window.clearTimeout(addedTimer.current), []);
 
@@ -82,12 +76,22 @@ export default function ProductDetailsPage({ slug }) {
     setQuantity(1);
     setAdded(false);
     setImageIndex(0);
-    setTransition(null);
-    setSlideAnimating(false);
   }, [routeProduct?.id, routeProduct?.slug, initialSelections]);
+
+  useEffect(() => {
+    setImageIndex(0);
+  }, [selections]);
+
+  useEffect(() => {
+    setImageIndex((current) => {
+      if (!images.length) return 0;
+      return Math.min(current, images.length - 1);
+    });
+  }, [images]);
 
   const stockLimit = availableStock(routeProduct, selections);
   const unavailable = routeProduct?.inventoryManaged ? stockLimit <= 0 : routeProduct?.availability === 'Out of stock';
+  const activeVariant = selectedVariant(routeProduct, selections);
 
   useEffect(() => {
     if (Number.isFinite(stockLimit)) setQuantity((value) => Math.max(1, Math.min(stockLimit || 1, value)));
@@ -115,7 +119,7 @@ export default function ProductDetailsPage({ slug }) {
       cancelled = true;
       window.cancelAnimationFrame(frame);
     };
-  }, [routeProduct?.slug, imageIndex, hasGallery]);
+  }, [routeProduct?.slug, imageIndex, hasGallery, images]);
 
   const resolveEyebrow = useCallback((item) => {
     if (!item) return '';
@@ -127,76 +131,21 @@ export default function ProductDetailsPage({ slug }) {
     return subcategory?.name[locale] || category?.name[locale] || getVelvetPathLabel(item, locale) || getCategoryLabel(item.categoryId, locale);
   }, [locale]);
 
-  const completeTransition = useCallback(() => {
-    if (!transition) return;
-    const targetSlug = transition.incoming.slug;
-    setSlideAnimating(false);
-    setTransition(null);
-    navigate(localizePath(`/products/${targetSlug}`, locale), { scroll: false });
-  }, [transition, navigate, locale]);
-
-  useEffect(() => {
-    if (!transition || slideAnimating) return undefined;
-    const frame = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => setSlideAnimating(true));
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [transition, slideAnimating]);
-
-  useEffect(() => {
-    if (!transition || !slideAnimating) return undefined;
-    const timer = window.setTimeout(completeTransition, PRODUCT_SWITCH_DURATION_MS + 40);
-    return () => window.clearTimeout(timer);
-  }, [transition, slideAnimating, completeTransition]);
-
-  const beginSiblingTransition = (direction) => {
-    if (!routeProduct || isTransitioning || !hasSiblings) return;
-    const incoming = getSiblingProduct(routeProduct, sameSubcategory, direction);
-    if (!incoming || incoming.slug === routeProduct.slug) return;
-    const viewport = switcherViewportRef.current;
-    if (viewport) {
-      viewport.style.setProperty('--product-switcher-height', `${viewport.offsetHeight}px`);
-    }
-    setSlideAnimating(false);
-    setTransition({ direction, outgoing: routeProduct, incoming });
-  };
-
-  const buildSlideState = (item, imageIdx, itemSelections, itemQuantity, itemAdded) => {
-    const itemImages = collectProductImages(item);
-    const imageSrc = itemImages[imageIdx] || item.image || '';
-    const itemStockLimit = availableStock(item, itemSelections);
-    const itemUnavailable = item.inventoryManaged ? itemStockLimit <= 0 : item.availability === 'Out of stock';
-    return {
-      product: item,
-      eyebrow: resolveEyebrow(item),
-      imageSrc,
-      selections: itemSelections,
-      quantity: itemQuantity,
-      added: itemAdded,
-      unavailable: itemUnavailable,
-      stockLimit: itemStockLimit,
-    };
-  };
-
-  const handleAdd = (event, product = routeProduct, itemSelections = selections, itemQuantity = quantity, imageSrc = images[imageIndex] || product?.image || '') => {
+  const handleAdd = (event) => {
     event.preventDefault();
-    const itemStockLimit = availableStock(product, itemSelections);
-    const itemUnavailable = product.inventoryManaged ? itemStockLimit <= 0 : product.availability === 'Out of stock';
-    if (itemUnavailable) return;
-    const variant = selectedVariant(product, itemSelections);
-    addItem(product, itemSelections, Math.min(itemQuantity, itemStockLimit), imageSrc, variant);
+    if (unavailable || !routeProduct) return;
+    const variant = selectedVariant(routeProduct, selections);
+    addItem(routeProduct, selections, Math.min(quantity, stockLimit), activeImage, variant);
     setAdded(true);
     window.clearTimeout(addedTimer.current);
     addedTimer.current = window.setTimeout(() => setAdded(false), 1800);
   };
 
-  const handleBuyNow = (event, product = routeProduct, itemSelections = selections, itemQuantity = quantity, imageSrc = images[imageIndex] || product?.image || '') => {
+  const handleBuyNow = (event) => {
     event.preventDefault();
-    const itemStockLimit = availableStock(product, itemSelections);
-    const itemUnavailable = product.inventoryManaged ? itemStockLimit <= 0 : product.availability === 'Out of stock';
-    if (itemUnavailable) return;
-    const variant = selectedVariant(product, itemSelections);
-    addItem(product, itemSelections, Math.min(itemQuantity, itemStockLimit), imageSrc, variant);
+    if (unavailable || !routeProduct) return;
+    const variant = selectedVariant(routeProduct, selections);
+    addItem(routeProduct, selections, Math.min(quantity, stockLimit), activeImage, variant);
     navigate(localizePath('/checkout', locale));
   };
 
@@ -253,20 +202,6 @@ export default function ProductDetailsPage({ slug }) {
     window.setTimeout(() => { galleryDrag.current.dragged = false; }, 0);
   };
 
-  const onSwitcherTouchStart = (event) => {
-    if (!hasSiblings) return;
-    switchTouchStartX.current = event.changedTouches?.[0]?.clientX ?? null;
-  };
-
-  const onSwitcherTouchEnd = (event) => {
-    if (!hasSiblings || switchTouchStartX.current == null || isTransitioning) return;
-    const endX = event.changedTouches?.[0]?.clientX ?? switchTouchStartX.current;
-    const delta = endX - switchTouchStartX.current;
-    switchTouchStartX.current = null;
-    if (Math.abs(delta) < 40) return;
-    beginSiblingTransition(delta < 0 ? 'next' : 'previous');
-  };
-
   if (!routeProduct) {
     return (
       <section className="store-not-found">
@@ -278,19 +213,19 @@ export default function ProductDetailsPage({ slug }) {
   }
 
   const productMedia = getProductMedia(routeProduct);
-  const pathHero = getPathHeroMedia(routeProduct);
   const brand = routeProduct.velvetPath?.brandId ? getBrand(routeProduct.velvetPath.brandId) : null;
   const category = routeProduct.velvetPath ? getCategory(routeProduct.velvetPath.brandId, routeProduct.velvetPath.categoryId) : null;
   const subcategory = routeProduct.velvetPath?.subcategoryId
     ? getSubcategory(routeProduct.velvetPath.brandId, routeProduct.velvetPath.categoryId, routeProduct.velvetPath.subcategoryId)
     : null;
   const eyebrow = resolveEyebrow(routeProduct);
-  const heroTitle = pathHero.name?.[locale] || eyebrow || '';
   const productName = getProductName(routeProduct, locale);
 
   const metres = {
-    age: filterGroups.age.find((item) => item.id === routeProduct.age),
-    skill: filterGroups.skill.find((item) => item.id === routeProduct.skill),
+    age: getFilterGroup('age').find((item) => item.id === routeProduct.age)
+      || filterGroups.age.find((item) => item.id === routeProduct.age),
+    skill: getFilterGroup('skill').find((item) => item.id === routeProduct.skill)
+      || filterGroups.skill.find((item) => item.id === routeProduct.skill),
   };
 
   const specs = [];
@@ -304,6 +239,10 @@ export default function ProductDetailsPage({ slug }) {
       label: copy.category.variants,
       value: routeProduct.options.map((option) => getOptionName(option, locale)).join(' · '),
     });
+  }
+  if (activeVariant?.colorName || activeVariant?.size) {
+    const variantLabel = [activeVariant.colorName, activeVariant.size].filter(Boolean).join(' · ');
+    if (variantLabel) specs.push({ label: copy.category.variants, value: variantLabel });
   }
   specs.push({ label: copy.detail.stock, value: getAvailability(routeProduct, locale) });
 
@@ -322,132 +261,22 @@ export default function ProductDetailsPage({ slug }) {
     ? `/products?brand=${routeProduct.velvetPath.brandId}&category=${routeProduct.velvetPath.categoryId}${routeProduct.velvetPath.subcategoryId ? `&subcategory=${routeProduct.velvetPath.subcategoryId}` : ''}`
     : '/products';
 
-  const activeSlideState = buildSlideState(routeProduct, imageIndex, selections, quantity, added);
-  const outgoingState = transition ? buildSlideState(
-    transition.outgoing,
-    imageIndex,
-    selections,
-    quantity,
-    added,
-  ) : null;
-  const incomingState = transition ? buildSlideState(
-    transition.incoming,
-    0,
-    buildInitialSelections(transition.incoming),
-    1,
-    false,
-  ) : null;
-
-  const slideStyle = (direction, role, animating) => {
-    const { start, end } = getProductSlidePercent(direction, role, rtl);
-    const percent = animating ? end : start;
-    return { transform: `translate3d(${percent}%, 0, 0)` };
-  };
-
   return (
     <div className="product-detail-page">
       <PageNavigation fallbackPath={detailFallback} breadcrumbs={detailBreadcrumbs} />
 
-      {pathHero.source === 'subcategory' ? (
-        <section className="category-hero" aria-label={copy.detail.pathHero}>
-          {pathHero.video ? (
-            <video className="category-hero__media" src={pathHero.video} poster={pathHero.image || undefined} autoPlay muted loop playsInline />
-          ) : pathHero.image ? (
-            <img className="category-hero__media" src={pathHero.image} alt="" />
-          ) : (
-            <div className="category-hero__media product-path-hero__fallback" aria-hidden="true" />
-          )}
-          <div className="category-hero__shade" aria-hidden="true" />
-          <div className="category-hero__title">
-            {brand && <span>{brand.name[locale]}</span>}
-            {heroTitle && <h1>{heroTitle}</h1>}
-          </div>
-        </section>
-      ) : (
-        <section className={`product-path-hero ${pathHero.image || pathHero.video ? 'has-media' : 'is-fallback'}`} aria-label={copy.detail.pathHero}>
-          {pathHero.video ? (
-            <video className="product-path-hero__media" src={pathHero.video} poster={pathHero.image || undefined} autoPlay muted loop playsInline />
-          ) : pathHero.image ? (
-            <img className="product-path-hero__media" src={pathHero.image} alt="" />
-          ) : (
-            <div className="product-path-hero__fallback" aria-hidden="true" />
-          )}
-          <div className="product-path-hero__shade" aria-hidden="true" />
-          <div className="product-path-hero__copy">
-            {brand && <span>{brand.name[locale]}</span>}
-            {heroTitle && <h1>{heroTitle}</h1>}
-          </div>
-        </section>
-      )}
-
-      <section className="category-product-showcase category-product-showcase--detail" aria-label={productName}>
-        {hasSiblings && (
-          <ProductShowcaseNavigation
-            onPrevious={() => beginSiblingTransition('previous')}
-            onNext={() => beginSiblingTransition('next')}
-            previousLabel={copy.detail.previousImage}
-            nextLabel={copy.detail.nextImage}
-            disabled={isTransitioning}
-          />
-        )}
-        <div
-          ref={switcherViewportRef}
-          className={`product-switcher-viewport${isTransitioning ? ' is-transitioning' : ''}${transition ? ` is-${transition.direction}` : ''}`}
-          onTouchStart={onSwitcherTouchStart}
-          onTouchEnd={onSwitcherTouchEnd}
-        >
-          {transition ? (
-            <>
-              <div
-                className="product-switcher-slide product-switcher-slide--outgoing"
-                style={slideStyle(transition.direction, 'outgoing', slideAnimating)}
-              >
-                <ProductDetailSlide
-                  locale={locale}
-                  copy={copy}
-                  interactive={false}
-                  onSelections={setSelections}
-                  onQuantity={setQuantity}
-                  onAdd={(event) => handleAdd(event, outgoingState.product, outgoingState.selections, outgoingState.quantity, outgoingState.imageSrc)}
-                  onBuyNow={(event) => handleBuyNow(event, outgoingState.product, outgoingState.selections, outgoingState.quantity, outgoingState.imageSrc)}
-                  {...outgoingState}
-                />
-              </div>
-              <div
-                className="product-switcher-slide product-switcher-slide--incoming"
-                style={slideStyle(transition.direction, 'incoming', slideAnimating)}
-              >
-                <ProductDetailSlide
-                  locale={locale}
-                  copy={copy}
-                  interactive={false}
-                  onSelections={setSelections}
-                  onQuantity={setQuantity}
-                  onAdd={(event) => handleAdd(event, incomingState.product, incomingState.selections, incomingState.quantity, incomingState.imageSrc)}
-                  onBuyNow={(event) => handleBuyNow(event, incomingState.product, incomingState.selections, incomingState.quantity, incomingState.imageSrc)}
-                  {...incomingState}
-                />
-              </div>
-            </>
-          ) : (
-            <div className="product-switcher-slide product-switcher-slide--active">
-              <ProductDetailSlide
-                locale={locale}
-                copy={copy}
-                interactive={!isTransitioning}
-                onSelections={setSelections}
-                onQuantity={setQuantity}
-                onAdd={(event) => handleAdd(event)}
-                onBuyNow={(event) => handleBuyNow(event)}
-                {...activeSlideState}
-              />
-            </div>
-          )}
-        </div>
+      <section className="product-main-gallery" aria-label={productName} data-product-section="gallery">
+        <figure className="product-main-gallery__frame">
+          <img className="product-main-gallery__image" src={activeImage} alt={productName} />
+        </figure>
       </section>
 
       {hasGallery && (
-        <section className="same-subcategory-products product-image-gallery" aria-label={copy.detail.galleryTitle}>
+        <section
+          className="same-subcategory-products product-image-gallery product-image-gallery--compact"
+          aria-label={copy.detail.galleryTitle}
+          data-product-section="thumbs"
+        >
           <div
             className="same-subcategory-products__viewport"
             ref={galleryViewportRef}
@@ -467,7 +296,7 @@ export default function ProductDetailsPage({ slug }) {
                     aria-current={isActive ? 'true' : undefined}
                     aria-label={`${productName} image ${index + 1}`}
                     onClick={() => {
-                      if (!galleryDrag.current.dragged && !isTransitioning) setImageIndex(index);
+                      if (!galleryDrag.current.dragged) setImageIndex(index);
                     }}
                   >
                     <img src={image} alt="" draggable={false} />
@@ -478,6 +307,31 @@ export default function ProductDetailsPage({ slug }) {
           </div>
         </section>
       )}
+
+      <section
+        className="category-product-showcase category-product-showcase--detail product-detail-commerce"
+        aria-label={productName}
+        data-product-section="commerce"
+      >
+        <ProductDetailSlide
+          locale={locale}
+          copy={copy}
+          product={routeProduct}
+          eyebrow={eyebrow}
+          imageSrc={activeImage}
+          selections={selections}
+          quantity={quantity}
+          added={added}
+          unavailable={unavailable}
+          stockLimit={stockLimit}
+          interactive
+          showMedia={false}
+          onSelections={setSelections}
+          onQuantity={setQuantity}
+          onAdd={handleAdd}
+          onBuyNow={handleBuyNow}
+        />
+      </section>
 
       <div className="product-detail-content">
         <section className="product-detail-extras product-detail-extras--specs-only">
@@ -493,7 +347,7 @@ export default function ProductDetailsPage({ slug }) {
               </div>
               <dl className="product-detail-specs__list">
                 {specs.map((row) => (
-                  <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
+                  <div key={`${row.label}-${row.value}`}><dt>{row.label}</dt><dd>{row.value}</dd></div>
                 ))}
               </dl>
             </div>
@@ -518,6 +372,20 @@ export default function ProductDetailsPage({ slug }) {
           </section>
         )}
       </div>
+
+      {relatedProducts.length > 0 && (
+        <section className="product-related" aria-label={copy.detail.related} data-product-section="related">
+          <div className="product-detail-section-head product-related__head">
+            <span className="store-eyebrow">{copy.detail.sameSubcategory}</span>
+            <h2>{copy.detail.related}</h2>
+          </div>
+          <div className="product-related__grid shop-products">
+            {relatedProducts.map((product) => (
+              <ProductCard key={product.id || product.slug} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

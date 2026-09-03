@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { artwork } from '../data/products';
-import { getBrand, getBrandAbout, getBrandMedia } from '../data/velvetCatalog';
+import { getBrand, getBrandAbout, getBrandPageHeaderMedia } from '../data/velvetCatalog';
 import BrandShowcase from '../components/BrandShowcase';
 import { PlayButton } from '../components/Hero';
 import PageNavigation from '../components/PageNavigation';
@@ -36,7 +36,7 @@ export default function BrandPage({ slug }) {
     );
   }
 
-  const media = getBrandMedia(slug);
+  const media = getBrandPageHeaderMedia(slug);
   const brandAbout = getBrandAbout(slug, locale);
 
   const videoRef = useRef(null);

@@ -38,3 +38,8 @@ export function getProductSlidePercent(direction, role, rtl = false) {
 export function buildInitialSelections(product) {
   return Object.fromEntries((product?.options || []).map((option) => [option.name, option.values[0]?.label || '']));
 }
+
+export function getRelatedProducts(product, velvetProducts) {
+  return getSameSubcategoryProducts(product, velvetProducts)
+    .filter((item) => item && item.slug && item.slug !== product?.slug);
+}

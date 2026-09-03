@@ -175,6 +175,7 @@ function mergePlatformBrandMedia(platformBrands = []) {
     const brand = tree.find((item) => item.slug === target.slug);
     if (!brand) continue;
     if (platformBrand.logoUrl) brand.logoUrl = platformBrand.logoUrl;
+    if (platformBrand.headerImage) brand.headerImage = platformBrand.headerImage;
     if (platformBrand.heroVideo) {
       brand.heroVideo = platformBrand.heroVideo;
       brand.home.heroVideo = platformBrand.heroVideo;
@@ -459,6 +460,25 @@ export function getBrandMedia(brandSlug) {
   const video = brand.heroVideo || getPlatformMedia(`brand.${brandSlug}.video`, brand.home.heroVideo || '');
   const poster = brand.heroPoster || getPlatformMedia(`brand.${brandSlug}.poster`, brand.home.heroPoster || brand.image || '');
   return { video, poster };
+}
+
+// Dedicated Brand Page header image. Prefer API `headerImage` (also accepts
+// pageHeaderImage / brandPageHeader / pageHeroImage aliases and the
+// `brand.{slug}.headerImage` media slot). Falls back to getBrandMedia poster
+// when the dedicated field is empty so older payloads keep rendering.
+export function getBrandPageHeaderMedia(brandSlug) {
+  const brand = getBrand(brandSlug);
+  if (!brand) return { video: '', poster: '' };
+  const media = getBrandMedia(brandSlug);
+  const dedicated = [
+    brand.headerImage,
+    getPlatformMedia(`brand.${brandSlug}.headerImage`, ''),
+    getPlatformMedia(`brand.${brandSlug}.pageHeader`, ''),
+  ].map((url) => String(url || '').trim()).filter(Boolean)[0] || '';
+  return {
+    video: media.video,
+    poster: dedicated || media.poster,
+  };
 }
 
 function branchLogoArtwork(brand, locale = 'en') {
