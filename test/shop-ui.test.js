@@ -49,7 +49,10 @@ test('expanded filter groups use existing VELVET attributes', () => {
     assert.match(filterBar, new RegExp(`key: '${key}'`));
     assert.ok(filterGroups[key].length > 0);
   });
-  assert.doesNotMatch(filterBar, /Shoe color|Material|Size/);
+  ['material', 'productType', 'theme', 'collection'].forEach((key) => {
+    assert.match(filterBar, new RegExp(`key: '${key}'`));
+  });
+  assert.doesNotMatch(filterBar, /Shoe color|Size/);
 });
 
 test('Brand, Main Category and Subcategory filter groups render in the shop filter bar', () => {

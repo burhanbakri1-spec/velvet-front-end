@@ -1,20 +1,34 @@
 import { useMemo } from 'react';
 import FilterGroup from './FilterGroup';
-import { filterGroups, getFilterCounts } from '../data/velvetCatalog';
+import { getFilterCounts, getFilterGroup } from '../data/velvetCatalog';
+import { LIVE_CLASSIFICATION_KEYS } from '../data/classificationFilter';
 import { useI18n } from '../i18n/I18nContext';
+
+const LABEL_KEYS = {
+  age: 'age',
+  gender: 'gender',
+  skill: 'skill',
+  material: 'material',
+  productType: 'productType',
+  theme: 'theme',
+  collection: 'collectionFilter',
+  occasion: 'occasion',
+  shopping: 'quickShop',
+};
 
 export default function ProductFilters({ state, onToggle, onClear }) {
   const { copy, locale } = useI18n();
   const s = copy.shop;
   const counts = useMemo(() => getFilterCounts(state), [state]);
 
-  const withLabels = (key) => filterGroups[key].map((item) => ({
+  const withLabels = (key) => getFilterGroup(key).map((item) => ({
     id: item.id,
     label: item.name[locale],
-    count: counts[key][item.id] || 0,
+    count: counts[key]?.[item.id] || 0,
   }));
 
-  const activeCount = state.age.length + state.gender.length + state.skill.length + state.occasion.length + state.shopping.length;
+  const groups = [...LIVE_CLASSIFICATION_KEYS, 'shopping'];
+  const activeCount = groups.reduce((sum, key) => sum + (state[key]?.length || 0), 0);
 
   return (
     <div className="product-filters">
@@ -24,11 +38,20 @@ export default function ProductFilters({ state, onToggle, onClear }) {
           <button type="button" className="product-filters__clear" onClick={onClear}>{s.clearAll}</button>
         )}
       </div>
-      <FilterGroup title={s.age} options={withLabels('age')} selected={state.age} onToggle={(id) => onToggle('age', id)} />
-      <FilterGroup title={s.gender} options={withLabels('gender')} selected={state.gender} onToggle={(id) => onToggle('gender', id)} />
-      <FilterGroup title={s.skill} options={withLabels('skill')} selected={state.skill} onToggle={(id) => onToggle('skill', id)} />
-      <FilterGroup title={s.occasion} options={withLabels('occasion')} selected={state.occasion} onToggle={(id) => onToggle('occasion', id)} />
-      <FilterGroup title={s.quickShop} options={withLabels('shopping')} selected={state.shopping} onToggle={(id) => onToggle('shopping', id)} variant="chip" />
+      {groups.map((key) => {
+        const options = withLabels(key);
+        if (!options.length && !(state[key]?.length)) return null;
+        return (
+          <FilterGroup
+            key={key}
+            title={s[LABEL_KEYS[key]]}
+            options={options}
+            selected={state[key] || []}
+            onToggle={(id) => onToggle(key, id)}
+            variant={key === 'shopping' ? 'chip' : undefined}
+          />
+        );
+      })}
     </div>
   );
 }

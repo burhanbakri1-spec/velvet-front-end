@@ -18,8 +18,8 @@
 // directly and passed through untouched (only made absolute against apiUrl).
 // ===========================================================================
 
-import { normalizeAgeIdsFromRaw } from './ageFilter.js';
 import { artwork } from './products.js';
+import { buildProductClassificationFields } from './classificationFilter.js';
 import { productTaxonomyById } from './velvetTaxonomy.js';
 
 const slugify = (value) => String(value || '')
@@ -189,7 +189,7 @@ function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
   const price = finiteNumber(raw.price ?? raw.basePrice, 0);
   const originalPrice = raw.originalPrice == null ? null : finiteNumber(raw.originalPrice, 0);
   const hasOffer = badge.toLowerCase().includes('offer') || Boolean(originalPrice);
-  const ageIds = normalizeAgeIdsFromRaw(raw);
+  const classification = buildProductClassificationFields(raw);
   return {
     id: String(raw.id || `${brandSlug}-${index + 1}`),
     slug: String(raw.slug || ''),
@@ -220,11 +220,7 @@ function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
     inventoryManaged: true,
     availability,
     availabilityAr,
-    age: ageIds[0] || String(raw.age || ''),
-    ageIds,
-    gender: String(raw.gender || ''),
-    skill: String(raw.skill || ''),
-    occasion: String(raw.occasion || ''),
+    ...classification,
     shopping: deriveShopping(badge, price, hasOffer),
     usageVideo: absoluteUrl(raw.usageVideo, apiUrl),
     usageVideoPoster: absoluteUrl(raw.usageVideoPoster, apiUrl),
