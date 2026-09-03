@@ -114,6 +114,10 @@ function buildBrand(raw, index, apiUrl) {
   const nameAr = localized(raw.name, 'ar', nameEn);
   const heroVideo = absoluteUrl(raw.heroVideo, apiUrl);
   const heroPoster = absoluteUrl(raw.heroPoster, apiUrl);
+  const headerImage = absoluteUrl(
+    raw.headerImage || raw.pageHeaderImage || raw.brandPageHeader || raw.pageHeroImage,
+    apiUrl,
+  );
   const logoUrl = absoluteUrl(raw.logoUrl, apiUrl);
   const short = { en: wordmark(nameEn), ar: wordmark(nameAr) };
   const order = finiteNumber(raw.sortOrder, index + 1);
@@ -128,6 +132,7 @@ function buildBrand(raw, index, apiUrl) {
     accent: palette[0],
     heroVideo,
     heroPoster,
+    headerImage,
     logoUrl,
     image: heroPoster || logoUrl || artwork(nameEn || raw.slug || 'Brand', palette, index % 6),
     palette,

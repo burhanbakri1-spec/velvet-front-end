@@ -123,3 +123,38 @@ export function collectProductImages(product) {
   push(product.hoverImage);
   return images;
 }
+
+/**
+ * Variant-aware gallery: lead with selected variant / option images when the
+ * API provides them, then fall back to the product gallery.
+ */
+export function resolveProductImages(product, selections = {}) {
+  if (!product) return [];
+  const images = [];
+  const push = (url) => {
+    const value = typeof url === 'string' ? url.trim() : '';
+    if (value && !images.includes(value)) images.push(value);
+  };
+
+  const selectedValues = Object.values(selections || {}).filter(Boolean);
+  if (Array.isArray(product.variants) && product.variants.length && selectedValues.length) {
+    const normalized = (value) => String(value || '').trim().toLowerCase();
+    const selected = selectedValues.map(normalized);
+    const matched = product.variants.find((variant) => {
+      const descriptors = [variant.colorName, variant.colorNameAr, variant.size, variant.sizeAr]
+        .map(normalized)
+        .filter(Boolean);
+      return descriptors.length > 0 && descriptors.every((descriptor) => selected.includes(descriptor));
+    });
+    if (matched?.image) push(matched.image);
+  }
+
+  (product.options || []).forEach((option) => {
+    const selectedLabel = selections?.[option.name];
+    const value = (option.values || []).find((entry) => entry.label === selectedLabel);
+    if (value?.image) push(value.image);
+  });
+
+  collectProductImages(product).forEach(push);
+  return images;
+}

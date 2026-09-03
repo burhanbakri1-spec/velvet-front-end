@@ -82,7 +82,7 @@ test('header renders the managed site logo and falls back to the text logo when 
   assert.match(headerSource, /managedSiteLogo/);
   assert.match(headerSource, /logo__img--managed-site/);
   assert.match(headerSource, /logo--managed-site/);
-  assert.match(headerSource, /<span>VELVET<\/span>/);
+  assert.match(headerSource, /logo__wordmark|>VELVET</);
   assert.match(headerSource, /siteLogo \? /);
 });
 
@@ -139,7 +139,7 @@ test('uploaded site logo is distinct from fallback and uses managed header treat
 
 test('brand pages keep hero media separate from header brand logos', () => {
   const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
-  assert.match(brandPage, /getBrandMedia\(slug\)/);
+  assert.match(brandPage, /getBrandPageHeaderMedia\(slug\)/);
   assert.doesNotMatch(brandPage, /getBrandLogo/);
   assert.doesNotMatch(brandPage, /category-hero__logo/);
   assert.match(brandPage, /getBrandAbout\(slug, locale\)/);

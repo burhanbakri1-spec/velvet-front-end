@@ -80,7 +80,7 @@ test('Categories mega menu preview overlays brand logo on poster without strip w
 test('BrandPage hero uses full-width adaptive media without hero logo', () => {
   const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
   const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
-  assert.match(brandPage, /getBrandMedia\(slug\)/);
+  assert.match(brandPage, /getBrandPageHeaderMedia\(slug\)/);
   assert.doesNotMatch(brandPage, /getBrandLogo/);
   assert.doesNotMatch(brandPage, /category-hero__logo/);
   assert.match(styles, /\.brand-hero \.category-hero__media[\s\S]*max-height:\s*none/);
