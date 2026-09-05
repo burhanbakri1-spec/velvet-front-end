@@ -152,13 +152,14 @@ test('header restores velvet white plate for the main site logo only', () => {
   assert.match(headerSource, /logo--velvet-badge/);
   assert.match(headerSource, /logo__badge/);
   assert.match(headerSource, /!contextBrand \? ' logo--velvet-badge'/);
-  assert.match(css, /\.logo__badge/);
+  assert.match(css, /\.logo--velvet-badge \.logo__badge/);
   assert.match(css, /\.logo--velvet-badge/);
-  assert.match(css, /\.logo__badge[\s\S]{0,360}?background:\s*#fff/);
-  assert.match(css, /\.logo__badge[\s\S]{0,360}?clip-path:\s*polygon\(0%\s*26%,\s*100%\s*0%,\s*97%\s*74%,\s*3%\s*100%\)/);
-  assert.match(css, /\.logo--velvet-badge[\s\S]{0,220}?height:\s*48px/);
-  assert.match(css, /\.logo__badge[\s\S]{0,220}?width:\s*158px/);
-  assert.doesNotMatch(css, /\.logo__badge[\s\S]{0,220}?background:\s*var\(--red\)/);
+  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,360}?background:\s*#fff/);
+  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,360}?clip-path:\s*polygon\(0%\s*18%,\s*100%\s*0%,\s*94%\s*100%,\s*0%\s*82%\)/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]{0,280}?display:\s*grid/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]{0,280}?height:\s*46px/);
+  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,220}?width:\s*156px/);
+  assert.doesNotMatch(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,220}?background:\s*var\(--red\)/);
   assert.doesNotMatch(css, /html\[dir="rtl"\]\s+\.logo__badge/);
 });
 
@@ -206,9 +207,10 @@ test('main site logo plate remains scoped away from brand logos', () => {
   assert.match(headerSource, /logo--velvet-badge/);
   assert.match(headerSource, /!contextBrand \? ' logo--velvet-badge'/);
   assert.match(css, /\.logo--velvet-badge/);
-  assert.match(css, /\.logo--velvet-badge[\s\S]{0,420}?align-self:\s*center/);
-  assert.match(css, /\.logo__badge[\s\S]{0,360}?translate\(-50%,\s*-50%\)/);
-  assert.match(css, /width:\s*120px;[\s\S]{0,160}?max-height:\s*none;[\s\S]{0,120}?transform:\s*translate\(-50%,\s*-50%\)/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]{0,420}?place-items:\s*center/);
+  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,280}?grid-area:\s*1\s*\/\s*1/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]{0,500}?logo__img--managed-site[\s\S]{0,220}?transform:\s*translate\(1px,\s*-1px\)/);
+  assert.doesNotMatch(css, /\.logo--velvet-badge \.logo__img--managed-site[\s\S]{0,180}?left:\s*50%/);
 });
 
 test('technical Default labels are hidden while real sizes stay dynamic', () => {
