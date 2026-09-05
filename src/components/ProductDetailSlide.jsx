@@ -1,5 +1,7 @@
 import {
   getAvailability,
+  getCustomerFacingOptionLabels,
+  getCustomerFacingOptions,
   getOptionName,
   getOptionValue,
   getProductBadge,
@@ -35,7 +37,8 @@ export default function ProductDetailSlide({
     0,
   );
   const currentPrice = product.price + optionDelta;
-  const optionSummary = product.options.map((option) => getOptionName(option, locale)).join(' · ');
+  const facingOptions = getCustomerFacingOptions(product);
+  const optionSummary = getCustomerFacingOptionLabels(product, locale).join(' · ');
 
   return (
     <div className={`category-product-showcase__slide product-switcher-slide__content${showMedia ? '' : ' product-detail-slide--commerce-only'}`}>
@@ -62,9 +65,9 @@ export default function ProductDetailSlide({
           {optionSummary && <span className="category-product-showcase__variants">{copy.category.variants}: {optionSummary}</span>}
         </div>
 
-        {product.options.length > 0 && (
+        {facingOptions.length > 0 && (
           <div className="product-detail-options">
-            {product.options.map((option) => {
+            {facingOptions.map((option) => {
               const selectedValue = option.values.find((value) => value.label === selections[option.name]);
               return (
                 <fieldset className="product-option product-detail-option" key={option.name}>

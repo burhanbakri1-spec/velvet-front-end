@@ -7,7 +7,8 @@ import { useCart } from '../context/CartContext';
 import {
   getAvailability,
   getCategoryLabel,
-  getOptionName,
+  getCustomerFacingSelectionLabels,
+  getCustomerFacingVariantLabels,
   getProductDescription,
   getProductName,
   resolveProductImages,
@@ -30,7 +31,10 @@ import { isSiblingDragGesture } from '../hooks/siblingCarousel';
 import {
   buildInitialSelections,
   getProductSlidePercent,
+  getRelatedPageSize,
+  getRelatedPageSlice,
   getRelatedProducts,
+  normalizeRelatedPageIndex,
   PRODUCT_SWITCH_DURATION_MS,
 } from '../hooks/productSiblings';
 
@@ -68,6 +72,10 @@ export default function ProductDetailsPage({ slug }) {
   const [imageIndex, setImageIndex] = useState(0);
   const [transition, setTransition] = useState(null);
   const [slideAnimating, setSlideAnimating] = useState(false);
+  const [relatedPage, setRelatedPage] = useState(0);
+  const [relatedPageSize, setRelatedPageSize] = useState(() => (
+    typeof window === 'undefined' ? 4 : getRelatedPageSize(window.innerWidth)
+  ));
 
   const images = useMemo(
     () => resolveProductImages(routeProduct, selections),
@@ -87,7 +95,22 @@ export default function ProductDetailsPage({ slug }) {
     setImageIndex(0);
     setTransition(null);
     setSlideAnimating(false);
+    setRelatedPage(0);
   }, [routeProduct?.id, routeProduct?.slug, initialSelections]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const updatePageSize = () => {
+      setRelatedPageSize(getRelatedPageSize(window.innerWidth));
+    };
+    updatePageSize();
+    window.addEventListener('resize', updatePageSize);
+    return () => window.removeEventListener('resize', updatePageSize);
+  }, []);
+
+  useEffect(() => {
+    setRelatedPage((current) => normalizeRelatedPageIndex(current, relatedProducts.length, relatedPageSize));
+  }, [relatedProducts.length, relatedPageSize]);
 
   useEffect(() => {
     setImageIndex(0);
@@ -285,15 +308,14 @@ export default function ProductDetailsPage({ slug }) {
   if (routeProduct.manufacturer) specs.push({ label: copy.shop.manufacturer, value: routeProduct.manufacturer });
   if (metres.age) specs.push({ label: copy.detail.age, value: metres.age.name[locale] });
   if (metres.skill) specs.push({ label: copy.detail.skill, value: metres.skill.name[locale] });
-  if (routeProduct.options.length > 0) {
+  const selectionLabels = getCustomerFacingSelectionLabels(routeProduct, selections, locale);
+  const variantLabels = getCustomerFacingVariantLabels(activeVariant, locale);
+  const optionSpecValue = (selectionLabels.length ? selectionLabels : variantLabels).join(' · ');
+  if (optionSpecValue) {
     specs.push({
       label: copy.category.variants,
-      value: routeProduct.options.map((option) => getOptionName(option, locale)).join(' · '),
+      value: optionSpecValue,
     });
-  }
-  if (activeVariant?.colorName || activeVariant?.size) {
-    const variantLabel = [activeVariant.colorName, activeVariant.size].filter(Boolean).join(' · ');
-    if (variantLabel) specs.push({ label: copy.category.variants, value: variantLabel });
   }
   specs.push({ label: copy.detail.stock, value: getAvailability(routeProduct, locale) });
 
@@ -473,12 +495,46 @@ export default function ProductDetailsPage({ slug }) {
 
       {relatedProducts.length > 0 && (
         <section className="product-related" aria-label={copy.detail.related} data-product-section="related">
-          <div className="product-detail-section-head product-related__head">
-            <span className="store-eyebrow">{copy.detail.sameSubcategory}</span>
-            <h2>{copy.detail.related}</h2>
+          <div className="product-related__toolbar">
+            <div className="product-detail-section-head product-related__head">
+              <span className="store-eyebrow">{copy.detail.sameSubcategory}</span>
+              <h2>{copy.detail.related}</h2>
+            </div>
+            {relatedProducts.length > relatedPageSize && (
+              <div className="product-related__nav" aria-label={copy.detail.related}>
+                <button
+                  type="button"
+                  className="product-related__nav-button"
+                  aria-label={copy.category.previous}
+                  onClick={() => setRelatedPage((current) => normalizeRelatedPageIndex(
+                    current - 1,
+                    relatedProducts.length,
+                    relatedPageSize,
+                  ))}
+                >
+                  <span aria-hidden="true">←</span>
+                </button>
+                <button
+                  type="button"
+                  className="product-related__nav-button"
+                  aria-label={copy.category.next}
+                  onClick={() => setRelatedPage((current) => normalizeRelatedPageIndex(
+                    current + 1,
+                    relatedProducts.length,
+                    relatedPageSize,
+                  ))}
+                >
+                  <span aria-hidden="true">→</span>
+                </button>
+              </div>
+            )}
           </div>
-          <div className="product-related__grid shop-products">
-            {relatedProducts.map((product) => (
+          <div
+            className="product-related__grid shop-products"
+            style={{ '--related-columns': relatedPageSize }}
+            data-related-page-size={relatedPageSize}
+          >
+            {getRelatedPageSlice(relatedProducts, relatedPage, relatedPageSize).map((product) => (
               <ProductCard key={product.id || product.slug} product={product} />
             ))}
           </div>
