@@ -1165,9 +1165,32 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
 /* Category discovery pages */
 .brand-showcase__link { position: absolute; inset: 0; z-index: 1; }
 .category-page { background: #fff; color: var(--ink); overflow: clip; }
-.category-hero { height: clamp(720px,100vh,900px); position: relative; overflow: hidden; color: #fff; background: #20191b; isolation: isolate; }
-.category-hero__media { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: transform 1.2s cubic-bezier(.22,1,.36,1); }
-.category-hero:hover .category-hero__media { transform: scale(1.025); }
+/* Category / Brand / Subcategory banners: always show the full uploaded image.
+   Same composition at every breakpoint — width 100%, height auto, no crop. */
+.category-hero {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background: #20191b;
+  isolation: isolate;
+}
+.category-hero__media {
+  position: relative;
+  z-index: 0;
+  inset: auto;
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+  object-position: center;
+  transition: none;
+}
+.category-hero:hover .category-hero__media { transform: none; }
 .category-hero__shade { position: absolute; inset: 0; z-index: -1; background: transparent; pointer-events: none; }
 .category-hero__link { position: absolute; inset: 0; z-index: 1; }
 .category-hero__title { position: absolute; z-index: 2; left: 64px; bottom: 62px; width: min(720px,55vw); pointer-events: none; text-shadow: 0 1px 12px rgba(0,0,0,.28); }
@@ -1175,7 +1198,7 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
 .category-hero__title h1 { margin: 0; font-size: clamp(55px,5vw,72px); line-height: 1.02; letter-spacing: -.05em; }
 .category-hero__description { position: absolute; z-index: 2; right: 64px; bottom: 68px; width: min(410px,31vw); margin: 0; font-size: 17px; line-height: 1.55; pointer-events: none; text-shadow: 0 1px 10px rgba(0,0,0,.24); }
 
-/* Brand storefront hero: full-width media at natural aspect ratio. */
+/* Brand page banner shares the same full-image responsive framing. */
 .brand-hero {
   width: 100%;
   height: auto;
@@ -1192,7 +1215,7 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
   width: 100%;
   height: auto;
   max-height: none;
-  object-fit: initial;
+  object-fit: contain;
   object-position: center;
 }
 .brand-hero:hover .category-hero__media { transform: none; }
@@ -1302,8 +1325,20 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
 }
 
 @media (max-width: 760px) {
-  .category-hero { width: 100%; height: 129.85vw; min-height: 0; max-height: 640px; }
-  .brand-hero { width: 100%; height: auto; min-height: 0; max-height: none; }
+  .category-hero,
+  .brand-hero {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+  .category-hero__media,
+  .brand-hero .category-hero__media {
+    width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+  }
   .category-hero__title,.category-hero__description,html[dir="rtl"] .category-hero__title,html[dir="rtl"] .category-hero__description { left: 20px; right: 20px; width: auto; text-align: start; }
   .category-hero__title { bottom: 96px; }
   .category-hero__title h1 { font-size: 42px; line-height: 1.05; }
