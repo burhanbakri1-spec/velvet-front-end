@@ -46,7 +46,7 @@ export default function ProductCard({ product, onAddToCart, onSelect, active = f
           onClick={handleProductActivate}
         >
           {badge && <span className="product-card__badge">{badge}</span>}
-          <img className="product-card__image" src={activeImage} alt={name} />
+          <img className="product-card__image" src={activeImage} alt={name} loading="lazy" />
         </Link>
         {hasGallery && (
           <div className="product-card__gallery-nav" aria-hidden="false">

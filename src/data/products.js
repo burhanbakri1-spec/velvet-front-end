@@ -110,6 +110,68 @@ export const getOptionName = (option, locale) => locale === 'ar' ? option.nameAr
 export const getOptionValue = (value, locale) => locale === 'ar' ? value.labelAr : value.label;
 export const getProductBySlug = (slug) => products.find((product) => product.slug === slug);
 
+/** Internal Shopify/CPanel fallback labels that must not appear to shoppers. */
+export function isTechnicalOptionLabel(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (!normalized) return true;
+  return (
+    normalized === 'default'
+    || normalized === 'default title'
+    || normalized === 'title'
+    || normalized === 'default value'
+  );
+}
+
+/**
+ * Customer-facing product options only. Keeps real catalog values (e.g. 500ml)
+ * and drops technical fallback option/value names such as "Default".
+ * Does not mutate product data used for variant matching.
+ */
+export function getCustomerFacingOptions(product) {
+  return (product?.options || [])
+    .map((option) => {
+      const nameEn = String(option?.name || '').trim();
+      const nameAr = String(option?.nameAr || '').trim();
+      if (isTechnicalOptionLabel(nameEn) && (isTechnicalOptionLabel(nameAr) || !nameAr)) {
+        return null;
+      }
+      const values = (option.values || []).filter((value) => (
+        !isTechnicalOptionLabel(value?.label)
+        && !isTechnicalOptionLabel(value?.labelAr)
+      ));
+      if (!values.length) return null;
+      return { ...option, values };
+    })
+    .filter(Boolean);
+}
+
+export function getCustomerFacingOptionLabels(product, locale = 'en') {
+  return getCustomerFacingOptions(product)
+    .map((option) => getOptionName(option, locale))
+    .filter((label) => label && !isTechnicalOptionLabel(label));
+}
+
+export function getCustomerFacingSelectionLabels(product, selections = {}, locale = 'en') {
+  return getCustomerFacingOptions(product)
+    .map((option) => {
+      const selected = (option.values || []).find((value) => value.label === selections?.[option.name]);
+      if (!selected) return '';
+      return getOptionValue(selected, locale);
+    })
+    .filter((label) => label && !isTechnicalOptionLabel(label));
+}
+
+export function getCustomerFacingVariantLabels(variant, locale = 'en') {
+  if (!variant) return [];
+  const color = locale === 'ar'
+    ? (variant.colorNameAr || variant.colorName)
+    : (variant.colorName || variant.colorNameAr);
+  const size = locale === 'ar'
+    ? (variant.sizeAr || variant.size)
+    : (variant.size || variant.sizeAr);
+  return [color, size].filter((label) => label && !isTechnicalOptionLabel(label));
+}
+
 /** Deduplicated product media list from real product fields only (no invented URLs). */
 export function collectProductImages(product) {
   if (!product) return [];

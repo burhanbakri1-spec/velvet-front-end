@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
-import { collectProductImages, resolveProductImages } from '../src/data/products.js';
+import {
+  collectProductImages,
+  getCustomerFacingOptions,
+  getCustomerFacingSelectionLabels,
+  getCustomerFacingVariantLabels,
+  isTechnicalOptionLabel,
+  resolveProductImages,
+} from '../src/data/products.js';
 import {
   coerceSelectionsToValidVariant,
   optionValueUnavailable,
@@ -10,6 +17,8 @@ import {
 } from '../src/data/inventory.js';
 import {
   buildInitialSelections,
+  getRelatedPageSize,
+  getRelatedPageSlice,
   getRelatedProducts,
   getSameSubcategoryProducts,
 } from '../src/hooks/productSiblings.js';
@@ -55,7 +64,8 @@ test('related products share the same subcategory path', () => {
 test('compact secondary gallery styles reduce vertical height', () => {
   assert.match(pageSource, /product-image-gallery--compact/);
   assert.match(css, /\.product-image-gallery--compact/);
-  assert.match(css, /max-height:\s*112px/);
+  assert.match(css, /max-height:\s*168px/);
+  assert.match(css, /\.product-detail-page\s+\.same-subcategory-products\.product-image-gallery[\s\S]*#fdfdfd/);
 });
 
 test('resolveProductImages prefers variant and option images then falls back', () => {
@@ -153,19 +163,64 @@ test('brand page uses dedicated header image helper with fallback', () => {
 });
 
 test('commerce section keeps real option selectors', () => {
-  assert.match(slideSource, /product\.options\.map/);
+  assert.match(slideSource, /getCustomerFacingOptions/);
   assert.match(slideSource, /optionValueUnavailable/);
   assert.match(pageSource, /data-product-section="commerce"/);
 });
 
 test('product details page uses soft #fdfdfd background only', () => {
   assert.match(css, /\.product-detail-page\s*\{[^}]*background:\s*#fdfdfd/);
+  assert.match(css, /\.product-related\s*\{[^}]*background:\s*#fdfdfd/);
 });
 
 test('product details focal image stays contained and controlled', () => {
   assert.match(css, /\.product-detail-page\s+\.product-detail-focal/);
   assert.match(css, /object-fit:\s*contain/);
   assert.doesNotMatch(css, /\.product-main-gallery__frame/);
+});
+
+test('related products render only the current page slice', () => {
+  assert.match(pageSource, /getRelatedPageSlice\(relatedProducts, relatedPage, relatedPageSize\)/);
+  assert.doesNotMatch(pageSource, /relatedProducts\.map\(/);
+  assert.match(pageSource, /getRelatedPageSize/);
+  assert.equal(getRelatedPageSize(1440), 4);
+  assert.equal(getRelatedPageSize(900), 3);
+  assert.equal(getRelatedPageSize(390), 2);
+  const related = getRelatedProducts(sampleProduct, velvetProducts);
+  if (related.length > 4) {
+    const page = getRelatedPageSlice(related, 0, 4);
+    assert.equal(page.length, 4);
+    assert.ok(page.every((item) => item.slug !== sampleProduct.slug));
+  }
+});
+
+test('main site logo plate remains scoped away from brand logos', () => {
+  assert.match(headerSource, /logo--velvet-badge/);
+  assert.match(headerSource, /!contextBrand \? ' logo--velvet-badge'/);
+  assert.match(css, /\.logo--velvet-badge/);
+  assert.match(css, /\.logo--velvet-badge \.logo__img--managed-site[\s\S]*translate\(-50%,\s*-50%\)/);
+});
+
+test('technical Default labels are hidden while real sizes stay dynamic', () => {
+  const product = {
+    options: [
+      { name: 'Default', nameAr: 'افتراضي', values: [{ label: 'Default', labelAr: 'افتراضي' }] },
+      { name: 'Size', nameAr: 'الحجم', values: [{ label: '500ml', labelAr: '500 مل' }] },
+    ],
+    variants: [{ id: 'v1', colorName: 'Default', size: '500ml', stock: 2 }],
+  };
+  assert.equal(isTechnicalOptionLabel('Default'), true);
+  assert.equal(isTechnicalOptionLabel('500ml'), false);
+  const facing = getCustomerFacingOptions(product);
+  assert.equal(facing.length, 1);
+  assert.equal(facing[0].name, 'Size');
+  assert.deepEqual(
+    getCustomerFacingSelectionLabels(product, { Default: 'Default', Size: '500ml' }, 'en'),
+    ['500ml'],
+  );
+  assert.deepEqual(getCustomerFacingVariantLabels(product.variants[0], 'en'), ['500ml']);
+  assert.doesNotMatch(slideSource, /product\.options\.map\(/);
+  assert.match(slideSource, /facingOptions\.map/);
 });
 
 test('buildInitialSelections still seeds first option values', () => {
