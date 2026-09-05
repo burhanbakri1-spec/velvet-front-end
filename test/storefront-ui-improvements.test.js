@@ -154,8 +154,10 @@ test('header restores velvet white plate for the main site logo only', () => {
   assert.match(headerSource, /!contextBrand \? ' logo--velvet-badge'/);
   assert.match(css, /\.logo__badge/);
   assert.match(css, /\.logo--velvet-badge/);
-  assert.match(css, /\.logo__badge[\s\S]{0,320}?background:\s*#fff/);
-  assert.match(css, /\.logo__badge[\s\S]{0,320}?clip-path:\s*polygon\(0%\s*28%,\s*100%\s*0%,\s*100%\s*72%,\s*0%\s*100%\)/);
+  assert.match(css, /\.logo__badge[\s\S]{0,360}?background:\s*#fff/);
+  assert.match(css, /\.logo__badge[\s\S]{0,360}?clip-path:\s*polygon\(0%\s*26%,\s*100%\s*0%,\s*97%\s*74%,\s*3%\s*100%\)/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]{0,220}?height:\s*48px/);
+  assert.match(css, /\.logo__badge[\s\S]{0,220}?width:\s*158px/);
   assert.doesNotMatch(css, /\.logo__badge[\s\S]{0,220}?background:\s*var\(--red\)/);
   assert.doesNotMatch(css, /html\[dir="rtl"\]\s+\.logo__badge/);
 });
@@ -204,9 +206,9 @@ test('main site logo plate remains scoped away from brand logos', () => {
   assert.match(headerSource, /logo--velvet-badge/);
   assert.match(headerSource, /!contextBrand \? ' logo--velvet-badge'/);
   assert.match(css, /\.logo--velvet-badge/);
-  assert.match(css, /\.logo--velvet-badge[\s\S]*?display:\s*grid/);
-  assert.match(css, /\.logo__badge[\s\S]{0,280}?grid-area:\s*1\s*\/\s*1/);
-  assert.match(css, /width:\s*104px;[\s\S]{0,160}?max-height:\s*none;[\s\S]{0,120}?transform:\s*translateY\(-1px\)/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]{0,420}?align-self:\s*center/);
+  assert.match(css, /\.logo__badge[\s\S]{0,360}?translate\(-50%,\s*-50%\)/);
+  assert.match(css, /width:\s*120px;[\s\S]{0,160}?max-height:\s*none;[\s\S]{0,120}?transform:\s*translate\(-50%,\s*-50%\)/);
 });
 
 test('technical Default labels are hidden while real sizes stay dynamic', () => {
