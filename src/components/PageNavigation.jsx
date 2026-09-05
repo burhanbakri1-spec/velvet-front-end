@@ -1,55 +1,59 @@
-import { Link, localizePath, useRouter } from '../routing/Router';
+import { Link } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
- * Shared Back / Home / Breadcrumb navigation for storefront pages.
+ * Sticky storefront context bar with an explicit VELVET Home return path.
  * Props:
- *   fallbackPath – unlocalized path to navigate when no browser history (e.g. "/products")
- *   breadcrumbs  – array of { label, to } (to is unlocalized, last item has no link)
+ *   fallbackPath – unused for primary return (kept for call-site compatibility)
+ *   breadcrumbs  – array of { label, to } (to is unlocalized; last item may omit to)
  */
 export default function PageNavigation({ fallbackPath = '/', breadcrumbs = [] }) {
-  const { locale } = useI18n();
-  const { navigate } = useRouter();
-
-  const handleBack = () => {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      navigate(localizePath(fallbackPath, locale));
-    }
-  };
-
+  const { copy, locale } = useI18n();
   const isRtl = locale === 'ar';
-  const backArrow = isRtl ? '→' : '←';
   const separator = isRtl ? '\\' : '/';
+  const homeLabel = copy.meta.velvetHome;
+  const homeArrow = isRtl ? '→' : '←';
+
+  const contextualCrumbs = (breadcrumbs || []).filter((crumb) => {
+    if (!crumb?.label) return false;
+    const label = String(crumb.label).trim().toLowerCase();
+    const homeAliases = [copy.meta.home, homeLabel, 'home', 'الرئيسية']
+      .map((value) => String(value || '').trim().toLowerCase())
+      .filter(Boolean);
+    if (crumb.to === '/' && homeAliases.includes(label)) return false;
+    return true;
+  });
+
+  const trail = [{ label: homeLabel, to: '/' }, ...contextualCrumbs];
+  const current = trail[trail.length - 1];
 
   return (
-    <nav className="page-nav" aria-label="Page navigation">
-      <div className="page-nav__actions">
-        <button type="button" className="page-nav__back" onClick={handleBack} aria-label={isRtl ? 'رجوع' : 'Go back'}>
-          {backArrow}
-        </button>
-        <Link className="page-nav__home" to="/" aria-label={isRtl ? 'الرئيسية' : 'Home'}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8l6-6 6 6M4 7v6a1 1 0 001 1h2V10h2v4h2a1 1 0 001-1V7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    <nav className="page-nav page-nav--sticky" aria-label={homeLabel}>
+      <div className="page-nav__mobile">
+        <Link className="page-nav__velvet-home" to="/" aria-label={homeLabel}>
+          <span className="page-nav__velvet-home-arrow" aria-hidden="true">{homeArrow}</span>
+          <span>{homeLabel}</span>
         </Link>
+        {current?.to !== '/' && current?.label ? (
+          <span className="page-nav__mobile-current" aria-current="page">{current.label}</span>
+        ) : null}
       </div>
-      {breadcrumbs.length > 0 && (
-        <ol className="page-nav__breadcrumb">
-          {breadcrumbs.map((crumb, i) => {
-            const isLast = i === breadcrumbs.length - 1;
-            return (
-              <li key={i}>
-                {i > 0 && <span className="page-nav__sep" aria-hidden="true">{separator}</span>}
-                {isLast || !crumb.to ? (
-                  <span aria-current="page">{crumb.label}</span>
-                ) : (
-                  <Link to={crumb.to}>{crumb.label}</Link>
-                )}
-              </li>
-            );
-          })}
-        </ol>
-      )}
+
+      <ol className="page-nav__breadcrumb page-nav__breadcrumb--desktop">
+        {trail.map((crumb, index) => {
+          const isLast = index === trail.length - 1;
+          return (
+            <li key={`${crumb.label}-${index}`}>
+              {index > 0 && <span className="page-nav__sep" aria-hidden="true">{separator}</span>}
+              {isLast || !crumb.to ? (
+                <span aria-current={isLast ? 'page' : undefined}>{crumb.label}</span>
+              ) : (
+                <Link to={crumb.to}>{crumb.label}</Link>
+              )}
+            </li>
+          );
+        })}
+      </ol>
     </nav>
   );
 }
