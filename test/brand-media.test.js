@@ -83,10 +83,13 @@ test('BrandPage hero uses full-width adaptive media without hero logo', () => {
   assert.match(brandPage, /getBrandPageHeaderMedia\(slug\)/);
   assert.doesNotMatch(brandPage, /getBrandLogo/);
   assert.doesNotMatch(brandPage, /category-hero__logo/);
-  assert.match(styles, /\.brand-hero \.category-hero__media[\s\S]*max-height:\s*min\(90vh,\s*900px\)/);
-  assert.match(styles, /\.brand-hero \.category-hero__media[\s\S]*object-fit:\s*contain/);
-  assert.match(styles, /\.brand-hero \.category-hero__media[\s\S]*width:\s*100%/);
-  assert.match(styles, /\.category-hero\s*\{[^}]*height:\s*clamp\(720px,\s*100vh,\s*900px\)/);
+  assert.match(styles, /\.category-hero\s*\{[^}]*height:\s*auto/);
+  assert.match(styles, /\.category-hero__media[\s\S]*width:\s*100%/);
+  assert.match(styles, /\.category-hero__media[\s\S]*height:\s*auto/);
+  assert.match(styles, /\.category-hero__media[\s\S]*object-fit:\s*contain/);
+  assert.doesNotMatch(styles, /\.category-hero__media[^}]*object-fit:\s*cover/);
+  assert.doesNotMatch(styles, /\.category-hero\s*\{[^}]*100vh/);
+  assert.match(styles, /\.brand-hero \.category-hero__media[\s\S]*max-height:\s*none/);
 });
 
 test('header uses managed-logo classes for uploaded artwork; mega menu overlays logo on poster', () => {
