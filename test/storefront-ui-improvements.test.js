@@ -202,7 +202,7 @@ test('main site logo plate remains scoped away from brand logos', () => {
   assert.match(css, /\.logo--velvet-badge/);
   assert.match(css, /\.logo--velvet-badge[\s\S]*?display:\s*grid/);
   assert.match(css, /\.logo__badge[\s\S]{0,280}?grid-area:\s*1\s*\/\s*1/);
-  assert.match(css, /width:\s*88px;[\s\S]{0,160}?max-height:\s*64px;[\s\S]{0,120}?transform:\s*translateY\(-2px\)/);
+  assert.match(css, /width:\s*104px;[\s\S]{0,160}?max-height:\s*none;[\s\S]{0,120}?transform:\s*translateY\(-2px\)/);
 });
 
 test('technical Default labels are hidden while real sizes stay dynamic', () => {
@@ -245,8 +245,9 @@ test('storefront pages expose sticky VELVET Home context navigation', () => {
   assert.match(translations, /velvetHome:\s*'VELVET Home'/);
   assert.match(css, /\.page-nav--sticky[\s\S]*position:\s*sticky/);
   assert.match(css, /\.page-nav--sticky[\s\S]*top:\s*var\(--header-height\)/);
-  assert.match(css, /\.product-detail-page\s*\{[^}]*overflow-x:\s*hidden/);
-  assert.match(css, /\.product-detail-page\s*\{[^}]*overflow-y:\s*visible/);
+  assert.match(css, /\.product-detail-page\s*\{[^}]*overflow:\s*visible/);
+  assert.doesNotMatch(css, /\.product-detail-page\s*\{[^}]*overflow-x:\s*hidden/);
+  assert.match(css, /\.product-switcher-viewport\s*\{[^}]*overflow:\s*hidden/);
   assert.match(brandPage, /PageNavigation/);
   assert.match(brandCategory, /PageNavigation/);
   assert.match(pageSource, /PageNavigation/);
