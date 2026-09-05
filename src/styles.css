@@ -169,51 +169,71 @@ button { color: inherit; }
   transform: none;
   box-shadow: none;
 }
-/* Main VELVET site logo only: white ZURU-style plate behind artwork.
-   Fixed layout height keeps the plate optically centered with nav items;
-   artwork is absolutely centered so square assets cannot drop the row. */
+/* Main VELVET site.logo — ONE composition: plate + artwork share the same grid cell.
+   Avoid absolute left/top:50% + translate centering: .logo__img--managed { transform:none }
+   cancels the translate and parks the image by its top-left (detached above/left). */
 .logo--velvet-badge,
 .logo--velvet-badge.logo--managed,
 .logo--velvet-badge.logo--managed-site {
   position: relative;
-  width: 158px;
-  min-width: 158px;
-  height: 48px;
-  min-height: 48px;
-  max-height: 48px;
+  box-sizing: border-box;
+  width: 156px;
+  min-width: 156px;
+  max-width: 156px;
+  height: 46px;
+  min-height: 46px;
+  max-height: 46px;
   padding: 0;
+  margin: 0;
   color: inherit;
   background: transparent;
   clip-path: none;
   transform: none;
   box-shadow: none;
   overflow: visible;
-  display: block;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  place-items: center;
   align-self: center;
   flex: 0 0 auto;
 }
-.logo__badge {
-  position: absolute;
+.logo--velvet-badge .logo__badge {
+  grid-area: 1 / 1;
+  position: relative;
   z-index: 0;
-  left: 50%;
-  top: 50%;
-  width: 158px;
-  height: 48px;
+  left: auto;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  width: 156px;
+  height: 46px;
+  justify-self: center;
+  align-self: center;
   background: #fff;
-  /* Asymmetric low trapezoid — same EN/AR geometry (no RTL mirror) */
-  clip-path: polygon(0% 26%, 100% 0%, 97% 74%, 3% 100%);
-  transform: translate(-50%, -50%);
+  /* ZURU-style: wide/short, top rises to the right, bottom angled, right inset */
+  clip-path: polygon(0% 18%, 100% 0%, 94% 100%, 0% 82%);
+  transform: none;
   box-shadow: 0 10px 22px rgba(18, 18, 20, .15), 0 3px 6px rgba(18, 18, 20, .08);
   pointer-events: none;
 }
 .logo--velvet-badge .logo__img,
-.logo--velvet-badge .logo__wordmark {
-  position: absolute;
+.logo--velvet-badge .logo__wordmark,
+.logo--velvet-badge.logo--managed .logo__img.logo__img--managed-site,
+.logo--velvet-badge .logo__img--managed-site {
+  grid-area: 1 / 1;
+  position: relative;
   z-index: 1;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  left: auto;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  justify-self: center;
+  align-self: center;
   margin: 0;
+  padding: 0;
+  /* Optical center for square asset with transparent padding */
+  transform: translate(1px, -1px);
 }
 .logo--velvet-badge .logo__wordmark {
   font-weight: 900;
@@ -259,18 +279,18 @@ button { color: inherit; }
   display: block;
   padding: 0;
 }
-/* Prominent MAIN site.logo — centered on plate; may protrude for layered presence. */
+/* MAIN site.logo size — must restate transform after .logo__img--managed { transform:none } */
 .logo--velvet-badge .logo__img--managed-site,
-.logo--velvet-badge.logo--managed .logo__img--managed-site {
-  width: 120px;
+.logo--velvet-badge.logo--managed .logo__img.logo__img--managed-site {
+  width: 118px;
   height: auto;
-  max-width: 120px;
+  max-width: 118px;
   max-height: none;
   object-fit: contain;
   object-position: center;
   display: block;
   padding: 0;
-  transform: translate(-50%, -50%);
+  transform: translate(1px, -1px);
 }
 
 .main-nav { display: flex; align-items: center; gap: clamp(25px, 4vw, 68px); }
@@ -495,19 +515,25 @@ html[dir="rtl"] .mega-menu__preview-logo {
   .logo--velvet-badge.logo--managed-site {
     width: 134px;
     min-width: 134px;
+    max-width: 134px;
     height: 42px;
     min-height: 42px;
     max-height: 42px;
+    display: grid;
+    place-items: center;
   }
-  .logo__badge { width: 134px; height: 42px; }
+  .logo--velvet-badge .logo__badge { width: 134px; height: 42px; left: auto; top: auto; transform: none; }
   .logo--managed-site { max-width: none; }
   .logo--managed .logo__img--managed-site,
   .logo__img--managed-site { max-width: 196px; max-height: 60px; }
   .logo--velvet-badge .logo__img--managed-site,
-  .logo--velvet-badge.logo--managed .logo__img--managed-site {
+  .logo--velvet-badge.logo--managed .logo__img.logo__img--managed-site {
     width: 102px;
     max-width: 102px;
     max-height: none;
+    left: auto;
+    top: auto;
+    transform: translate(1px, -1px);
   }
   .footer__brand-logo,
   .footer__brand-logo--managed { max-width: 180px; max-height: 64px; }
@@ -540,19 +566,25 @@ html[dir="rtl"] .mega-menu__preview-logo {
   .logo--velvet-badge.logo--managed-site {
     width: 114px;
     min-width: 114px;
+    max-width: 114px;
     height: 36px;
     min-height: 36px;
     max-height: 36px;
+    display: grid;
+    place-items: center;
   }
-  .logo__badge { width: 114px; height: 36px; }
+  .logo--velvet-badge .logo__badge { width: 114px; height: 36px; left: auto; top: auto; transform: none; }
   .logo--managed-site { max-width: none; }
   .logo--managed .logo__img--managed-site,
   .logo__img--managed-site { max-width: 168px; max-height: 52px; }
   .logo--velvet-badge .logo__img--managed-site,
-  .logo--velvet-badge.logo--managed .logo__img--managed-site {
+  .logo--velvet-badge.logo--managed .logo__img.logo__img--managed-site {
     width: 88px;
     max-width: 88px;
     max-height: none;
+    left: auto;
+    top: auto;
+    transform: translate(1px, -1px);
   }
   .footer__brand-logo,
   .footer__brand-logo--managed { max-width: 160px; max-height: 52px; }
