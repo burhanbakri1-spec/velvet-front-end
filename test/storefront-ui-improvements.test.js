@@ -24,10 +24,10 @@ const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.m
 const sampleProduct = velvetProducts.find((item) => item.velvetPath?.subcategoryId);
 
 test('main gallery uses current product images only', () => {
-  assert.match(pageSource, /product-main-gallery/);
   assert.match(pageSource, /resolveProductImages\(routeProduct, selections\)/);
+  assert.match(pageSource, /beginImageTransition/);
+  assert.match(pageSource, /product-switcher-viewport/);
   assert.doesNotMatch(pageSource, /beginSiblingTransition/);
-  assert.doesNotMatch(pageSource, /product-switcher-viewport/);
   assert.doesNotMatch(pageSource, /getSiblingProduct/);
 });
 
@@ -55,7 +55,7 @@ test('related products share the same subcategory path', () => {
 test('compact secondary gallery styles reduce vertical height', () => {
   assert.match(pageSource, /product-image-gallery--compact/);
   assert.match(css, /\.product-image-gallery--compact/);
-  assert.match(css, /max-height:\s*160px/);
+  assert.match(css, /max-height:\s*112px/);
 });
 
 test('resolveProductImages prefers variant and option images then falls back', () => {
@@ -133,7 +133,7 @@ test('selected variant drives add-to-cart image and id wiring on the page', () =
   assert.match(pageSource, /addItem\(routeProduct, selections/);
   assert.match(pageSource, /activeImage/);
   assert.match(slideSource, /showMedia/);
-  assert.match(pageSource, /showMedia=\{false\}/);
+  assert.match(pageSource, /showMedia:\s*true/);
 });
 
 test('header restores velvet red badge for the main site logo only', () => {
@@ -141,6 +141,7 @@ test('header restores velvet red badge for the main site logo only', () => {
   assert.match(headerSource, /logo__badge/);
   assert.match(css, /\.logo__badge/);
   assert.match(css, /\.logo--velvet-badge/);
+  assert.match(css, /clip-path:\s*polygon\(3%\s*12%,\s*100%\s*0,\s*91%\s*91%,\s*8%\s*100%\)/);
 });
 
 test('brand page uses dedicated header image helper with fallback', () => {
@@ -155,6 +156,16 @@ test('commerce section keeps real option selectors', () => {
   assert.match(slideSource, /product\.options\.map/);
   assert.match(slideSource, /optionValueUnavailable/);
   assert.match(pageSource, /data-product-section="commerce"/);
+});
+
+test('product details page uses soft #fdfdfd background only', () => {
+  assert.match(css, /\.product-detail-page\s*\{[^}]*background:\s*#fdfdfd/);
+});
+
+test('product details focal image stays contained and controlled', () => {
+  assert.match(css, /\.product-detail-page\s+\.product-detail-focal/);
+  assert.match(css, /object-fit:\s*contain/);
+  assert.doesNotMatch(css, /\.product-main-gallery__frame/);
 });
 
 test('buildInitialSelections still seeds first option values', () => {

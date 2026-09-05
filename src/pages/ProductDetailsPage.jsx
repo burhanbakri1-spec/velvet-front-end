@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import ProductDetailSlide from '../components/ProductDetailSlide';
+import ProductShowcaseNavigation from '../components/ProductShowcaseNavigation';
 import PageNavigation from '../components/PageNavigation';
 import { useCart } from '../context/CartContext';
 import {
@@ -28,7 +29,9 @@ import { availableStock, selectedVariant } from '../data/inventory';
 import { isSiblingDragGesture } from '../hooks/siblingCarousel';
 import {
   buildInitialSelections,
+  getProductSlidePercent,
   getRelatedProducts,
+  PRODUCT_SWITCH_DURATION_MS,
 } from '../hooks/productSiblings';
 
 export default function ProductDetailsPage({ slug }) {
@@ -38,6 +41,7 @@ export default function ProductDetailsPage({ slug }) {
   const { addItem } = useCart();
   const addedTimer = useRef(null);
   const galleryViewportRef = useRef(null);
+  const switcherViewportRef = useRef(null);
   const galleryDrag = useRef({
     active: false,
     startX: 0,
@@ -46,6 +50,7 @@ export default function ProductDetailsPage({ slug }) {
     dragged: false,
     capturing: false,
   });
+  const switchTouchStartX = useRef(null);
 
   const relatedProducts = useMemo(
     () => getRelatedProducts(routeProduct, velvetProducts),
@@ -61,12 +66,16 @@ export default function ProductDetailsPage({ slug }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
+  const [transition, setTransition] = useState(null);
+  const [slideAnimating, setSlideAnimating] = useState(false);
 
   const images = useMemo(
     () => resolveProductImages(routeProduct, selections),
     [routeProduct, selections],
   );
   const hasGallery = images.length > 1;
+  const isTransitioning = Boolean(transition);
+  const rtl = locale === 'ar';
   const activeImage = images[imageIndex] || routeProduct?.image || '';
 
   useEffect(() => () => window.clearTimeout(addedTimer.current), []);
@@ -76,10 +85,14 @@ export default function ProductDetailsPage({ slug }) {
     setQuantity(1);
     setAdded(false);
     setImageIndex(0);
+    setTransition(null);
+    setSlideAnimating(false);
   }, [routeProduct?.id, routeProduct?.slug, initialSelections]);
 
   useEffect(() => {
     setImageIndex(0);
+    setTransition(null);
+    setSlideAnimating(false);
   }, [selections]);
 
   useEffect(() => {
@@ -130,6 +143,30 @@ export default function ProductDetailsPage({ slug }) {
       : null;
     return subcategory?.name[locale] || category?.name[locale] || getVelvetPathLabel(item, locale) || getCategoryLabel(item.categoryId, locale);
   }, [locale]);
+
+  const beginImageTransition = useCallback((direction) => {
+    if (!hasGallery || isTransitioning || !routeProduct) return;
+    const step = direction === 'next' ? 1 : -1;
+    const nextIndex = (imageIndex + step + images.length) % images.length;
+    if (nextIndex === imageIndex) return;
+
+    const viewport = switcherViewportRef.current;
+    if (viewport) {
+      viewport.style.setProperty('--product-switcher-height', `${viewport.offsetHeight}px`);
+    }
+
+    setTransition({ direction, fromIndex: imageIndex, toIndex: nextIndex });
+    setSlideAnimating(false);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setSlideAnimating(true));
+    });
+    window.setTimeout(() => {
+      setImageIndex(nextIndex);
+      setTransition(null);
+      setSlideAnimating(false);
+      if (viewport) viewport.style.removeProperty('--product-switcher-height');
+    }, PRODUCT_SWITCH_DURATION_MS);
+  }, [hasGallery, isTransitioning, routeProduct, imageIndex, images.length]);
 
   const handleAdd = (event) => {
     event.preventDefault();
@@ -202,6 +239,20 @@ export default function ProductDetailsPage({ slug }) {
     window.setTimeout(() => { galleryDrag.current.dragged = false; }, 0);
   };
 
+  const onSwitcherTouchStart = (event) => {
+    if (!hasGallery) return;
+    switchTouchStartX.current = event.changedTouches?.[0]?.clientX ?? null;
+  };
+
+  const onSwitcherTouchEnd = (event) => {
+    if (!hasGallery || switchTouchStartX.current == null || isTransitioning) return;
+    const endX = event.changedTouches?.[0]?.clientX ?? switchTouchStartX.current;
+    const delta = endX - switchTouchStartX.current;
+    switchTouchStartX.current = null;
+    if (Math.abs(delta) < 40) return;
+    beginImageTransition(delta < 0 ? 'next' : 'previous');
+  };
+
   if (!routeProduct) {
     return (
       <section className="store-not-found">
@@ -261,14 +312,86 @@ export default function ProductDetailsPage({ slug }) {
     ? `/products?brand=${routeProduct.velvetPath.brandId}&category=${routeProduct.velvetPath.categoryId}${routeProduct.velvetPath.subcategoryId ? `&subcategory=${routeProduct.velvetPath.subcategoryId}` : ''}`
     : '/products';
 
+  const slideProps = {
+    locale,
+    copy,
+    product: routeProduct,
+    eyebrow,
+    selections,
+    quantity,
+    added,
+    unavailable,
+    stockLimit,
+    interactive: !isTransitioning,
+    showMedia: true,
+    onSelections: setSelections,
+    onQuantity: setQuantity,
+    onAdd: handleAdd,
+    onBuyNow: handleBuyNow,
+  };
+
+  const slideStyle = (direction, role, animating) => {
+    const { start, end } = getProductSlidePercent(direction, role, rtl);
+    const percent = animating ? end : start;
+    return { transform: `translate3d(${percent}%, 0, 0)` };
+  };
+
   return (
     <div className="product-detail-page">
       <PageNavigation fallbackPath={detailFallback} breadcrumbs={detailBreadcrumbs} />
 
-      <section className="product-main-gallery" aria-label={productName} data-product-section="gallery">
-        <figure className="product-main-gallery__frame">
-          <img className="product-main-gallery__image" src={activeImage} alt={productName} />
-        </figure>
+      <section
+        className="category-product-showcase category-product-showcase--detail"
+        aria-label={productName}
+        data-product-section="gallery"
+      >
+        {hasGallery && (
+          <ProductShowcaseNavigation
+            onPrevious={() => beginImageTransition('previous')}
+            onNext={() => beginImageTransition('next')}
+            previousLabel={copy.detail.previousImage}
+            nextLabel={copy.detail.nextImage}
+            disabled={isTransitioning}
+          />
+        )}
+        <div
+          ref={switcherViewportRef}
+          className={`product-switcher-viewport${isTransitioning ? ' is-transitioning' : ''}${transition ? ` is-${transition.direction}` : ''}`}
+          onTouchStart={onSwitcherTouchStart}
+          onTouchEnd={onSwitcherTouchEnd}
+        >
+          {transition ? (
+            <>
+              <div
+                className="product-switcher-slide product-switcher-slide--outgoing"
+                style={slideStyle(transition.direction, 'outgoing', slideAnimating)}
+              >
+                <ProductDetailSlide
+                  {...slideProps}
+                  interactive={false}
+                  imageSrc={images[transition.fromIndex] || activeImage}
+                />
+              </div>
+              <div
+                className="product-switcher-slide product-switcher-slide--incoming"
+                style={slideStyle(transition.direction, 'incoming', slideAnimating)}
+              >
+                <ProductDetailSlide
+                  {...slideProps}
+                  interactive={false}
+                  imageSrc={images[transition.toIndex] || activeImage}
+                />
+              </div>
+            </>
+          ) : (
+            <div className="product-switcher-slide product-switcher-slide--active">
+              <ProductDetailSlide
+                {...slideProps}
+                imageSrc={activeImage}
+              />
+            </div>
+          )}
+        </div>
       </section>
 
       {hasGallery && (
@@ -296,7 +419,7 @@ export default function ProductDetailsPage({ slug }) {
                     aria-current={isActive ? 'true' : undefined}
                     aria-label={`${productName} image ${index + 1}`}
                     onClick={() => {
-                      if (!galleryDrag.current.dragged) setImageIndex(index);
+                      if (!galleryDrag.current.dragged && !isTransitioning) setImageIndex(index);
                     }}
                   >
                     <img src={image} alt="" draggable={false} />
@@ -308,32 +431,7 @@ export default function ProductDetailsPage({ slug }) {
         </section>
       )}
 
-      <section
-        className="category-product-showcase category-product-showcase--detail product-detail-commerce"
-        aria-label={productName}
-        data-product-section="commerce"
-      >
-        <ProductDetailSlide
-          locale={locale}
-          copy={copy}
-          product={routeProduct}
-          eyebrow={eyebrow}
-          imageSrc={activeImage}
-          selections={selections}
-          quantity={quantity}
-          added={added}
-          unavailable={unavailable}
-          stockLimit={stockLimit}
-          interactive
-          showMedia={false}
-          onSelections={setSelections}
-          onQuantity={setQuantity}
-          onAdd={handleAdd}
-          onBuyNow={handleBuyNow}
-        />
-      </section>
-
-      <div className="product-detail-content">
+      <div className="product-detail-content" data-product-section="commerce">
         <section className="product-detail-extras product-detail-extras--specs-only">
           <div className="product-detail-specs">
             <div className="product-detail-section-head">
