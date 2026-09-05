@@ -169,16 +169,16 @@ button { color: inherit; }
   transform: none;
   box-shadow: none;
 }
-/* Main VELVET site logo only: original red angled plate behind artwork.
+/* Main VELVET site logo only: low white angled plate (ZURU-style) behind artwork.
    Badge + artwork share one grid cell so the logo centers on the plate. */
 .logo--velvet-badge,
 .logo--velvet-badge.logo--managed,
 .logo--velvet-badge.logo--managed-site {
   position: relative;
   width: max-content;
-  min-width: 128px;
-  min-height: 68px;
-  height: 72px;
+  min-width: 140px;
+  min-height: 58px;
+  height: 60px;
   padding: 0;
   color: inherit;
   background: transparent;
@@ -195,18 +195,16 @@ button { color: inherit; }
   z-index: 0;
   left: auto;
   top: auto;
-  width: 112px;
-  height: 56px;
+  width: 136px;
+  height: 36px;
   justify-self: center;
   align-self: center;
-  background: var(--red);
-  clip-path: polygon(3% 12%, 100% 0, 91% 91%, 8% 100%);
-  transform: rotate(-2deg);
-  box-shadow: 14px 16px 16px rgba(0, 0, 0, .18);
+  background: #fff;
+  /* Low-height asymmetric trapezoid — same EN/AR geometry */
+  clip-path: polygon(0% 28%, 100% 0%, 100% 72%, 0% 100%);
+  transform: none;
+  box-shadow: 0 8px 18px rgba(18, 18, 20, .14), 0 2px 5px rgba(18, 18, 20, .08);
   pointer-events: none;
-}
-html[dir="rtl"] .logo__badge {
-  transform: rotate(2deg);
 }
 .logo--velvet-badge .logo__img,
 .logo--velvet-badge .logo__wordmark {
@@ -217,13 +215,13 @@ html[dir="rtl"] .logo__badge {
   top: auto;
   justify-self: center;
   align-self: center;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 .logo--velvet-badge .logo__wordmark {
   font-weight: 900;
   font-size: 24px;
   letter-spacing: -.06em;
-  color: #fff;
+  color: var(--ink);
 }
 .logo--managed-site {
   overflow: visible;
@@ -262,7 +260,7 @@ html[dir="rtl"] .logo__badge {
   display: block;
   padding: 0;
 }
-/* Prominent MAIN site.logo — may extend above/below the 112×56 plate. */
+/* Prominent MAIN site.logo — may extend above/below the low white plate. */
 .logo--velvet-badge .logo__img--managed-site,
 .logo--velvet-badge.logo--managed .logo__img--managed-site {
   width: 104px;
@@ -273,7 +271,7 @@ html[dir="rtl"] .logo__badge {
   object-position: center;
   display: block;
   padding: 0;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .main-nav { display: flex; align-items: center; gap: clamp(25px, 4vw, 68px); }
@@ -495,8 +493,8 @@ html[dir="rtl"] .mega-menu__preview-logo {
   .logo--managed.logo--brand { width: auto; height: auto; }
   .logo--velvet-badge,
   .logo--velvet-badge.logo--managed,
-  .logo--velvet-badge.logo--managed-site { min-width: 112px; min-height: 60px; height: 64px; }
-  .logo__badge { width: 96px; height: 48px; }
+  .logo--velvet-badge.logo--managed-site { min-width: 120px; min-height: 52px; height: 54px; }
+  .logo__badge { width: 116px; height: 32px; }
   .logo--managed-site { max-width: none; }
   .logo--managed .logo__img--managed-site,
   .logo__img--managed-site { max-width: 196px; max-height: 60px; }
@@ -534,8 +532,8 @@ html[dir="rtl"] .mega-menu__preview-logo {
   .logo--managed.logo--brand { width: auto; height: auto; }
   .logo--velvet-badge,
   .logo--velvet-badge.logo--managed,
-  .logo--velvet-badge.logo--managed-site { min-width: 96px; min-height: 52px; height: 56px; }
-  .logo__badge { width: 86px; height: 44px; }
+  .logo--velvet-badge.logo--managed-site { min-width: 104px; min-height: 46px; height: 48px; }
+  .logo__badge { width: 100px; height: 28px; }
   .logo--managed-site { max-width: none; }
   .logo--managed .logo__img--managed-site,
   .logo__img--managed-site { max-width: 168px; max-height: 52px; }
