@@ -177,12 +177,12 @@ button { color: inherit; }
 .logo--velvet-badge.logo--managed-site {
   position: relative;
   box-sizing: border-box;
-  width: 156px;
-  min-width: 156px;
-  max-width: 156px;
-  height: 46px;
-  min-height: 46px;
-  max-height: 46px;
+  width: 144px;
+  min-width: 144px;
+  max-width: 144px;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
   padding: 0;
   margin: 0;
   color: inherit;
@@ -206,15 +206,18 @@ button { color: inherit; }
   top: auto;
   right: auto;
   bottom: auto;
-  width: 156px;
-  height: 46px;
+  width: 144px;
+  height: 48px;
   justify-self: center;
   align-self: center;
   background: #fff;
-  /* ZURU-style: wide/short, top rises to the right, bottom angled, right inset */
-  clip-path: polygon(0% 18%, 100% 0%, 94% 100%, 0% 82%);
+  /* Compact ZURU-style: angled top/bottom, sharper inward right edge */
+  clip-path: polygon(0% 24%, 100% 0%, 89% 100%, 0% 76%);
   transform: none;
-  box-shadow: 0 10px 22px rgba(18, 18, 20, .15), 0 3px 6px rgba(18, 18, 20, .08);
+  box-shadow:
+    0 14px 28px rgba(18, 18, 20, .16),
+    0 6px 12px rgba(18, 18, 20, .12),
+    0 2px 4px rgba(18, 18, 20, .08);
   pointer-events: none;
 }
 .logo--velvet-badge .logo__img,
@@ -513,16 +516,16 @@ html[dir="rtl"] .mega-menu__preview-logo {
   .logo--velvet-badge,
   .logo--velvet-badge.logo--managed,
   .logo--velvet-badge.logo--managed-site {
-    width: 134px;
-    min-width: 134px;
-    max-width: 134px;
+    width: 124px;
+    min-width: 124px;
+    max-width: 124px;
     height: 42px;
     min-height: 42px;
     max-height: 42px;
     display: grid;
     place-items: center;
   }
-  .logo--velvet-badge .logo__badge { width: 134px; height: 42px; left: auto; top: auto; transform: none; }
+  .logo--velvet-badge .logo__badge { width: 124px; height: 42px; left: auto; top: auto; transform: none; }
   .logo--managed-site { max-width: none; }
   .logo--managed .logo__img--managed-site,
   .logo__img--managed-site { max-width: 196px; max-height: 60px; }
@@ -564,16 +567,16 @@ html[dir="rtl"] .mega-menu__preview-logo {
   .logo--velvet-badge,
   .logo--velvet-badge.logo--managed,
   .logo--velvet-badge.logo--managed-site {
-    width: 114px;
-    min-width: 114px;
-    max-width: 114px;
+    width: 106px;
+    min-width: 106px;
+    max-width: 106px;
     height: 36px;
     min-height: 36px;
     max-height: 36px;
     display: grid;
     place-items: center;
   }
-  .logo--velvet-badge .logo__badge { width: 114px; height: 36px; left: auto; top: auto; transform: none; }
+  .logo--velvet-badge .logo__badge { width: 106px; height: 36px; left: auto; top: auto; transform: none; }
   .logo--managed-site { max-width: none; }
   .logo--managed .logo__img--managed-site,
   .logo__img--managed-site { max-width: 168px; max-height: 52px; }
