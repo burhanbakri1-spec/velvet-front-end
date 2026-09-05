@@ -155,11 +155,14 @@ test('header restores velvet white plate for the main site logo only', () => {
   assert.match(css, /\.logo--velvet-badge \.logo__badge/);
   assert.match(css, /\.logo--velvet-badge/);
   assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,360}?background:\s*#fff/);
-  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,360}?clip-path:\s*polygon\(0%\s*20%,\s*100%\s*0%,\s*86%\s*100%,\s*0%\s*80%\)/);
+  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,360}?clip-path:\s*polygon\(0%\s*28%,\s*100%\s*0%,\s*88%\s*100%,\s*0%\s*72%\)/);
   assert.match(css, /\.logo--velvet-badge[\s\S]{0,280}?display:\s*grid/);
-  assert.match(css, /\.logo--velvet-badge[\s\S]{0,280}?height:\s*48px/);
-  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,220}?width:\s*132px/);
-  assert.match(css, /drop-shadow\(0\s+14px\s+26px\s+rgba\(18,\s*18,\s*20,\s*\.16\)\)/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]{0,280}?height:\s*50px/);
+  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,220}?width:\s*124px/);
+  assert.match(css, /\.logo--velvet-badge::before,\s*\.logo--velvet-badge::after[\s\S]{0,280}?clip-path:\s*polygon\(0%\s*28%,\s*100%\s*0%,\s*88%\s*100%,\s*0%\s*72%\)/);
+  assert.match(css, /\.logo--velvet-badge::before\s*\{[\s\S]{0,200}?translate\(8px,\s*14px\)[\s\S]{0,120}?blur\(12px\)/);
+  assert.match(css, /\.logo--velvet-badge::after\s*\{[\s\S]{0,200}?translate\(5px,\s*8px\)[\s\S]{0,120}?blur\(3px\)/);
+  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,520}?drop-shadow\(1px\s+2px\s+2px\s+rgba\(12,\s*12,\s*14,\s*\.16\)\)/);
   assert.doesNotMatch(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,220}?background:\s*var\(--red\)/);
   assert.doesNotMatch(css, /html\[dir="rtl"\]\s+\.logo__badge/);
 });
@@ -210,7 +213,7 @@ test('main site logo plate remains scoped away from brand logos', () => {
   assert.match(css, /\.logo--velvet-badge/);
   assert.match(css, /\.logo--velvet-badge[\s\S]{0,420}?place-items:\s*center/);
   assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,280}?grid-area:\s*1\s*\/\s*1/);
-  assert.match(css, /\.logo--velvet-badge[\s\S]{0,500}?logo__img--managed-site[\s\S]{0,220}?transform:\s*translate\(1px,\s*-1px\)/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]{0,500}?logo__img--managed-site[\s\S]{0,220}?transform:\s*translate\(1px,\s*0\)/);
   assert.doesNotMatch(css, /\.logo--velvet-badge \.logo__img--managed-site[\s\S]{0,180}?left:\s*50%/);
 });
 
