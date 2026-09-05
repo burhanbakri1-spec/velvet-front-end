@@ -66,6 +66,8 @@ test('compact secondary gallery styles reduce vertical height', () => {
   assert.match(css, /\.product-image-gallery--compact/);
   assert.match(css, /max-height:\s*168px/);
   assert.match(css, /\.product-detail-page\s+\.same-subcategory-products\.product-image-gallery[\s\S]*#fdfdfd/);
+  assert.match(css, /\.product-image-gallery--compact\s+\.same-subcategory-products__slide\.is-active[\s\S]*border-color:\s*rgba\(21,\s*18,\s*37/);
+  assert.doesNotMatch(css, /\.product-image-gallery--compact\s+\.same-subcategory-products__slide\.is-active[\s\S]*outline:\s*2px\s+solid\s+var\(--red\)/);
 });
 
 test('resolveProductImages prefers variant and option images then falls back', () => {
@@ -198,7 +200,9 @@ test('main site logo plate remains scoped away from brand logos', () => {
   assert.match(headerSource, /logo--velvet-badge/);
   assert.match(headerSource, /!contextBrand \? ' logo--velvet-badge'/);
   assert.match(css, /\.logo--velvet-badge/);
-  assert.match(css, /\.logo--velvet-badge \.logo__img--managed-site[\s\S]*translate\(-50%,\s*-50%\)/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]*?display:\s*grid/);
+  assert.match(css, /\.logo__badge[\s\S]{0,280}?grid-area:\s*1\s*\/\s*1/);
+  assert.match(css, /max-height:\s*58px;[\s\S]{0,120}?transform:\s*translateY\(-2px\)/);
 });
 
 test('technical Default labels are hidden while real sizes stay dynamic', () => {
@@ -228,4 +232,20 @@ test('buildInitialSelections still seeds first option values', () => {
   if (!withOptions) return;
   const selections = buildInitialSelections(withOptions);
   assert.equal(selections[withOptions.options[0].name], withOptions.options[0].values[0]?.label);
+});
+
+test('storefront pages expose sticky VELVET Home context navigation', () => {
+  const navSource = fs.readFileSync(new URL('../src/components/PageNavigation.jsx', import.meta.url), 'utf8');
+  const translations = fs.readFileSync(new URL('../src/i18n/translations.js', import.meta.url), 'utf8');
+  const brandCategory = fs.readFileSync(new URL('../src/pages/BrandCategoryPage.jsx', import.meta.url), 'utf8');
+  assert.match(navSource, /page-nav--sticky/);
+  assert.match(navSource, /copy\.meta\.velvetHome/);
+  assert.match(navSource, /to="\/"/);
+  assert.doesNotMatch(navSource, /history\.back/);
+  assert.match(translations, /velvetHome:\s*'VELVET Home'/);
+  assert.match(css, /\.page-nav--sticky[\s\S]*position:\s*sticky/);
+  assert.match(css, /\.page-nav--sticky[\s\S]*top:\s*var\(--header-height\)/);
+  assert.match(brandPage, /PageNavigation/);
+  assert.match(brandCategory, /PageNavigation/);
+  assert.match(pageSource, /PageNavigation/);
 });

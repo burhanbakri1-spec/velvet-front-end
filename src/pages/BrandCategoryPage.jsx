@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { artwork } from '../data/products';
 import { filterProducts, getBrand, getCategory, getSubcategory } from '../data/velvetCatalog';
 import CategoryProductShowcase from '../components/CategoryProductShowcase';
+import PageNavigation from '../components/PageNavigation';
 import { useI18n } from '../i18n/I18nContext';
 import { Link, localizePath } from '../routing/Router';
 import { EMPTY_SHOP_STATE } from '../hooks/useShopState';
@@ -81,6 +82,17 @@ export default function BrandCategoryPage({ slug, categorySlug, subcategorySlug 
 
   return (
     <div className="category-page">
+      <PageNavigation
+        fallbackPath={`/brands/${slug}`}
+        breadcrumbs={[
+          { label: brand.name[locale], to: `/brands/${slug}` },
+          {
+            label: category.name[locale],
+            to: isSubMode ? `/brands/${slug}/category/${categorySlug}` : undefined,
+          },
+          ...(isSubMode ? [{ label: subcategory.name[locale] }] : []),
+        ]}
+      />
       <section className="category-hero" onPointerEnter={moveCursor} onPointerMove={moveCursor} onPointerLeave={hideCursor}>
         {hasHeroMedia && (
           heroVideo ? (

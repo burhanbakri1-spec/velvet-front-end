@@ -1,6 +1,6 @@
 export const translations = {
   en: {
-    meta: { site: 'VELVET — Make room for wonder', description: 'Discover imaginative toys, creative play, and bright new worlds from VELVET.', home: 'Home', products: 'Products', categories: 'Categories', cart: 'Cart', checkout: 'Checkout', about: 'About', news: 'News', contact: 'Contact', vlogs: 'Vlogs' },
+    meta: { site: 'VELVET — Make room for wonder', description: 'Discover imaginative toys, creative play, and bright new worlds from VELVET.', home: 'Home', velvetHome: 'VELVET Home', products: 'Products', categories: 'Categories', cart: 'Cart', checkout: 'Checkout', about: 'About', news: 'News', contact: 'Contact', vlogs: 'Vlogs' },
     header: { tagline: 'Make room for wonder.', categories: 'Categories', about: 'About us', products: 'Products', contact: 'Contact', shop: 'Shop', search: 'Search', searchLabel: 'Search products', cart: 'Shopping cart', account: 'Customer account', menu: 'Toggle menu', language: 'العربية', languageLabel: 'Switch to Arabic', nav: 'Main navigation' },
     categoryMenu: { eyebrow: 'Shop every way to play', all: 'All Products', explore: 'Explore all products' },
     aboutNav: { about: 'About', news: 'News', contact: 'Contact', vlogs: 'Vlogs' },
@@ -25,7 +25,7 @@ export const translations = {
     contact: { title: 'Contact Us', eyebrow: 'Questions, ideas, hellos', talk: 'Talk to VELVET', heading: 'What can we help you imagine?', intro: 'Send a note to the right team. We will make sure your message reaches the right place.', name: 'Name', namePlaceholder: 'Your name', email: 'Email', emailPlaceholder: 'you@example.com', subject: 'Subject', choose: 'Choose a topic', product: 'Product question', order: 'Order support', press: 'Press and partnerships', general: 'General enquiry', message: 'Message', messagePlaceholder: 'Tell us what is on your mind', submit: 'Send message', success: 'Thanks—your message is ready for the VELVET team.' },
   },
   ar: {
-    meta: { site: 'VELVET — مساحة أكبر للدهشة', description: 'اكتشف ألعاباً مبتكرة وتجارب لعب إبداعية وعوالم مبهجة من VELVET.', home: 'الرئيسية', products: 'المنتجات', categories: 'الأقسام', cart: 'السلة', checkout: 'إتمام الشراء', about: 'من نحن', news: 'الأخبار', contact: 'تواصل معنا', vlogs: 'المدونات المرئية' },
+    meta: { site: 'VELVET — مساحة أكبر للدهشة', description: 'اكتشف ألعاباً مبتكرة وتجارب لعب إبداعية وعوالم مبهجة من VELVET.', home: 'الرئيسية', velvetHome: 'الرئيسية VELVET', products: 'المنتجات', categories: 'الأقسام', cart: 'السلة', checkout: 'إتمام الشراء', about: 'من نحن', news: 'الأخبار', contact: 'تواصل معنا', vlogs: 'المدونات المرئية' },
     header: { tagline: 'مساحة أكبر للدهشة.', categories: 'الأقسام', about: 'من نحن', products: 'المنتجات', contact: 'تواصل معنا', shop: 'المتجر', search: 'بحث', searchLabel: 'البحث في المنتجات', cart: 'سلة التسوق', account: 'حساب العميل', menu: 'فتح القائمة', language: 'English', languageLabel: 'التبديل إلى الإنجليزية', nav: 'التنقل الرئيسي' },
     categoryMenu: { eyebrow: 'تسوّق حسب أسلوب اللعب', all: 'كل المنتجات', explore: 'استكشف كل المنتجات' },
     aboutNav: { about: 'من نحن', news: 'الأخبار', contact: 'تواصل معنا', vlogs: 'المدونات المرئية' },
