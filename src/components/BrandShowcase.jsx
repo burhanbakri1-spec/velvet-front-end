@@ -2,13 +2,14 @@ import { useRef } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 
-export default function BrandShowcase({ brand, to }) {
+export default function BrandShowcase({ brand, to, variant }) {
   const viewCursorRef = useRef(null);
   const { copy, locale } = useI18n();
   const arrow = locale === 'ar' ? '←' : '→';
   const name = brand.name[locale];
   const brandPath = to || `/brands/${brand.slug}`;
   const logo = brand.home.logo[locale];
+  const isFullBanner = variant === 'full-banner';
 
   const moveViewCursor = (event) => {
     if (event.pointerType !== 'mouse' || window.innerWidth <= 760 || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -22,7 +23,7 @@ export default function BrandShowcase({ brand, to }) {
 
   return (
     <article
-      className={`brand-showcase brand-showcase--${brand.scene}`}
+      className={`brand-showcase brand-showcase--${brand.scene}${isFullBanner ? ' brand-showcase--full-banner' : ''}`}
       style={{ '--c1': brand.palette[0], '--c2': brand.palette[1], '--c3': brand.palette[2] }}
       onPointerEnter={moveViewCursor}
       onPointerMove={moveViewCursor}

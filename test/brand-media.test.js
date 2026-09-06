@@ -81,15 +81,20 @@ test('BrandPage hero uses full-width adaptive media without hero logo', () => {
   const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
   const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
   assert.match(brandPage, /getBrandPageHeaderMedia\(slug\)/);
+  assert.match(brandPage, /variant="full-banner"/);
   assert.doesNotMatch(brandPage, /getBrandLogo/);
   assert.doesNotMatch(brandPage, /category-hero__logo/);
   assert.match(styles, /\.category-hero\s*\{[^}]*height:\s*auto/);
+  assert.match(styles, /\.category-hero\s*\{[^}]*overflow:\s*visible/);
   assert.match(styles, /\.category-hero__media[\s\S]*width:\s*100%/);
   assert.match(styles, /\.category-hero__media[\s\S]*height:\s*auto/);
   assert.match(styles, /\.category-hero__media[\s\S]*object-fit:\s*contain/);
   assert.doesNotMatch(styles, /\.category-hero__media[^}]*object-fit:\s*cover/);
   assert.doesNotMatch(styles, /\.category-hero\s*\{[^}]*100vh/);
   assert.match(styles, /\.brand-hero \.category-hero__media[\s\S]*max-height:\s*none/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner[\s\S]*height:\s*auto/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]*object-fit:\s*contain/);
+  assert.doesNotMatch(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[^}]*object-fit:\s*cover/);
 });
 
 test('header uses managed-logo classes for uploaded artwork; mega menu overlays logo on poster', () => {
