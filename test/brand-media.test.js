@@ -97,6 +97,23 @@ test('BrandPage hero uses full-width adaptive media without hero logo', () => {
   assert.doesNotMatch(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[^}]*object-fit:\s*cover/);
 });
 
+test('homepage BrandShowcase uses full-banner natural media without cover crop', () => {
+  const homePage = fs.readFileSync(new URL('../src/pages/HomePage.jsx', import.meta.url), 'utf8');
+  const showcase = fs.readFileSync(new URL('../src/components/BrandShowcase.jsx', import.meta.url), 'utf8');
+  const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  assert.match(homePage, /variant="full-banner"/);
+  assert.match(showcase, /isFullBanner \? ' brand-showcase--full-banner'/);
+  assert.match(showcase, /brand-showcase__content/);
+  assert.match(showcase, /showcase-more/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner[\s\S]{0,220}?height:\s*auto/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner[\s\S]{0,220}?overflow:\s*visible/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]{0,280}?width:\s*100%/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]{0,280}?height:\s*auto/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]{0,280}?object-fit:\s*contain/);
+  assert.doesNotMatch(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[^}]*object-fit:\s*cover/);
+  assert.doesNotMatch(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[^}]*position:\s*absolute/);
+});
+
 test('header uses managed-logo classes for uploaded artwork; mega menu overlays logo on poster', () => {
   const header = fs.readFileSync(new URL('../src/components/Header.jsx', import.meta.url), 'utf8');
   const megaMenu = fs.readFileSync(new URL('../src/components/CategoriesMegaMenu.jsx', import.meta.url), 'utf8');

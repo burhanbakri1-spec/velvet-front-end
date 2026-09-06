@@ -41,6 +41,7 @@ export default function HomePage() {
         <section id="showcases" aria-label={copy.home.worlds}>
           {[...velvetBrands].sort((a, b) => a.home.order - b.home.order).map((brand) => (
             <BrandShowcase
+              variant="full-banner"
               brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
               key={brand.slug}
             />
