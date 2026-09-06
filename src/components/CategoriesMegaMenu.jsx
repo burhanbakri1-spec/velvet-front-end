@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getBrandLogo, getBrandMedia, hasUploadedBrandLogo, velvetBrands } from '../data/velvetCatalog';
+import { getBrandLogo, hasUploadedBrandLogo, velvetBrands } from '../data/velvetCatalog';
+import { getBrandMenuMedia } from '../data/platformContent';
 import { useI18n } from '../i18n/I18nContext';
 import { localizePath, useRouter } from '../routing/Router';
 
@@ -15,7 +16,7 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
   }, [open, contextBrand?.slug]);
 
   const brand = velvetBrands.find((item) => item.slug === activeBrand) || velvetBrands[0];
-  const preview = brand ? getBrandMedia(brand.slug) : { poster: '', video: '' };
+  const preview = brand ? getBrandMenuMedia(brand.slug) : { poster: '' };
   const brandLogo = brand ? getBrandLogo(brand.slug, locale) : '';
   const managedLogo = brand ? hasUploadedBrandLogo(brand.slug, locale) : false;
 

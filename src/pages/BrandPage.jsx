@@ -111,6 +111,7 @@ export default function BrandPage({ slug }) {
         {brand.categories.map((category, index) => (
           <BrandShowcase
             key={category.slug}
+            variant="full-banner"
             to={`/products?brand=${slug}&category=${category.slug}`}
             brand={{
               ...brand,

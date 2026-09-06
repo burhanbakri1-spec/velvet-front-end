@@ -642,6 +642,20 @@ html[dir="rtl"] .mega-menu__preview-logo {
   .intro-section h2 { margin-bottom: 55px; }
   .intro-section__body p { font-size: 17px; }
   .brand-showcase { height: 750px; min-height: 0; }
+  .brand-showcase.brand-showcase--full-banner {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+  }
+  .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+  }
   .brand-showcase__content { left: 24px; bottom: 55px; }
   .brand-showcase__content h2 { font-size: clamp(68px,20vw,105px); }
   .art-shape--one { width: 82vw; height: 88vw; right: -13%; top: 15%; }
@@ -1126,6 +1140,28 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 .brand-showcase:hover .brand-showcase__image { transform: scale(1.025); }
 .brand-showcase--pals .brand-showcase__image { object-position: center 58%; }
 .brand-showcase--race .brand-showcase__image { object-position: center 52%; }
+/* Brand page Main Category banners: full uploaded image, no cover crop */
+.brand-showcase.brand-showcase--full-banner {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  overflow: visible;
+  background: #20191b;
+}
+.brand-showcase.brand-showcase--full-banner .brand-showcase__image {
+  position: relative;
+  inset: auto;
+  z-index: 0;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  max-height: none;
+  aspect-ratio: auto;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+}
+.brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
 .brand-showcase__content { z-index: 2; left: 64px; bottom: 73px; text-shadow: 0 1px 12px rgba(0,0,0,.28); }
 .brand-showcase__content h2 { font-family: Arial, Helvetica, sans-serif; font-size: 55px; line-height: 1.05; text-transform: none; letter-spacing: -.05em; }
 .showcase-more { z-index: 3; right: 64px; bottom: 64px; }
@@ -1209,6 +1245,20 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   .intro-section h2 { font-size: 52px; }
   .intro-section__body { margin-top: 42px; }
   .brand-showcase { height: 100svh; min-height: 650px; max-height: 790px; }
+  .brand-showcase.brand-showcase--full-banner {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+  }
+  .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+  }
   .brand-showcase__content { left: 20px; right: 20px; bottom: 106px; }
   .brand-showcase__content h2 { font-size: 48px; }
   .showcase-more { right: 20px; bottom: 30px; }
@@ -1258,7 +1308,7 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
 
 /* Category discovery pages */
 .brand-showcase__link { position: absolute; inset: 0; z-index: 1; }
-.category-page { background: #fff; color: var(--ink); overflow: clip; }
+.category-page { background: #fff; color: var(--ink); overflow: visible; }
 /* Category / Brand / Subcategory banners: always show the full uploaded image.
    Same composition at every breakpoint — width 100%, height auto, no crop. */
 .category-hero {
@@ -1267,7 +1317,7 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
   min-height: 0;
   max-height: none;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   color: #fff;
   background: #20191b;
   isolation: isolate;
@@ -1279,7 +1329,9 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
   display: block;
   width: 100%;
   height: auto;
+  max-width: 100%;
   max-height: none;
+  aspect-ratio: auto;
   object-fit: contain;
   object-position: center;
   transition: none;
@@ -1298,7 +1350,7 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
   height: auto;
   min-height: 0;
   max-height: none;
-  overflow: hidden;
+  overflow: visible;
   background: #FFFFFF;
 }
 .brand-hero .category-hero__media {
@@ -1308,7 +1360,9 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
   display: block;
   width: 100%;
   height: auto;
+  max-width: 100%;
   max-height: none;
+  aspect-ratio: auto;
   object-fit: contain;
   object-position: center;
 }
@@ -1425,6 +1479,7 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
     height: auto;
     min-height: 0;
     max-height: none;
+    overflow: visible;
   }
   .category-hero__media,
   .brand-hero .category-hero__media {
