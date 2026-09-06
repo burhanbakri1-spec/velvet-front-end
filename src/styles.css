@@ -213,16 +213,16 @@ button { color: inherit; }
   pointer-events: none;
 }
 .logo--velvet-badge::before {
-  /* Ambient cast — soft floating depth */
-  background: rgba(10, 10, 12, .22);
-  transform: translate(8px, 14px);
-  filter: blur(12px);
+  /* Far cast — softer floating silhouette down/right */
+  background: rgba(18, 18, 20, .20);
+  transform: translate(10px, 15px);
+  filter: blur(6px);
 }
 .logo--velvet-badge::after {
-  /* Contact cast — readable plate silhouette under/right */
-  background: rgba(10, 10, 12, .30);
-  transform: translate(5px, 8px);
-  filter: blur(3px);
+  /* Close cast — darker, sharper plate silhouette under/right */
+  background: rgba(18, 18, 20, .34);
+  transform: translate(6px, 9px);
+  filter: blur(2px);
 }
 .logo--velvet-badge .logo__badge {
   grid-area: 1 / 1;
@@ -241,8 +241,7 @@ button { color: inherit; }
   clip-path: polygon(0% 28%, 100% 0%, 88% 100%, 0% 72%);
   transform: none;
   box-shadow: none;
-  /* Subtle secondary edge depth only — main depth is ::before/::after cast layers */
-  filter: drop-shadow(1px 2px 2px rgba(12, 12, 14, .16));
+  filter: none;
   pointer-events: none;
 }
 .logo--velvet-badge .logo__img,

@@ -160,9 +160,9 @@ test('header restores velvet white plate for the main site logo only', () => {
   assert.match(css, /\.logo--velvet-badge[\s\S]{0,280}?height:\s*50px/);
   assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,220}?width:\s*124px/);
   assert.match(css, /\.logo--velvet-badge::before,\s*\.logo--velvet-badge::after[\s\S]{0,280}?clip-path:\s*polygon\(0%\s*28%,\s*100%\s*0%,\s*88%\s*100%,\s*0%\s*72%\)/);
-  assert.match(css, /\.logo--velvet-badge::before\s*\{[\s\S]{0,200}?translate\(8px,\s*14px\)[\s\S]{0,120}?blur\(12px\)/);
-  assert.match(css, /\.logo--velvet-badge::after\s*\{[\s\S]{0,200}?translate\(5px,\s*8px\)[\s\S]{0,120}?blur\(3px\)/);
-  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,520}?drop-shadow\(1px\s+2px\s+2px\s+rgba\(12,\s*12,\s*14,\s*\.16\)\)/);
+  assert.match(css, /\.logo--velvet-badge::before\s*\{[\s\S]{0,200}?rgba\(18,\s*18,\s*20,\s*\.20\)[\s\S]{0,80}?translate\(10px,\s*15px\)[\s\S]{0,80}?blur\(6px\)/);
+  assert.match(css, /\.logo--velvet-badge::after\s*\{[\s\S]{0,200}?rgba\(18,\s*18,\s*20,\s*\.34\)[\s\S]{0,80}?translate\(6px,\s*9px\)[\s\S]{0,80}?blur\(2px\)/);
+  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,520}?filter:\s*none/);
   assert.doesNotMatch(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,220}?background:\s*var\(--red\)/);
   assert.doesNotMatch(css, /html\[dir="rtl"\]\s+\.logo__badge/);
 });
