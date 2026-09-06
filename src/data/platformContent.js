@@ -1,14 +1,48 @@
 import { aboutSections, newsCategories, newsItems } from './company.js';
 import { homeCategories, productCategories, products } from './products.js';
 import { buildDynamicCatalog } from './dynamicCatalog.js';
-import { applyDynamicCatalog, applyFilterDefinitions } from './velvetCatalog.js';
+import { applyDynamicCatalog, applyFilterDefinitions, getBrand, getBrandMedia } from './velvetCatalog.js';
 import { applyVlogContent } from './vlogs.js';
 import { translations } from '../i18n/translations.js';
 
 const websiteMedia = new Map();
 const brandAboutContent = new Map();
+/** Independent Mega Menu preview images (brand.{slug}.menuImage / brand.menuImage). */
+const brandMenuImages = new Map();
 
 export const getPlatformMedia = (key, fallback = '') => websiteMedia.get(key) || fallback;
+
+export function applyBrandMenuImages(platformBrands = []) {
+  brandMenuImages.clear();
+  if (!Array.isArray(platformBrands)) return;
+  for (const brand of platformBrands) {
+    const slug = String(brand?.slug || '').trim();
+    const url = String(brand?.menuImage || '').trim();
+    if (slug && url) brandMenuImages.set(slug, url);
+  }
+}
+
+/**
+ * Mega Menu large preview for a VELVET brand.
+ * Prefer brand.{slug}.menuImage, then existing getBrandMedia poster fallback.
+ * Never falls back to another brand's menuImage.
+ */
+export function getBrandMenuMedia(brandSlug) {
+  if (!brandSlug) return { poster: '' };
+  const brand = getBrand(brandSlug);
+  const dedicated = [
+    brandMenuImages.get(brandSlug),
+    brand?.menuImage,
+    getPlatformMedia(`brand.${brandSlug}.menuImage`, ''),
+  ]
+    .map((url) => String(url || '').trim())
+    .filter(Boolean)[0] || '';
+
+  if (dedicated) return { poster: dedicated };
+
+  const fallback = getBrandMedia(brandSlug);
+  return { poster: fallback.poster || '' };
+}
 
 export function getPlatformBrandAbout(brandSlug) {
   return brandAboutContent.get(brandSlug) || null;
@@ -291,6 +325,7 @@ export function applyPlatformContent(payload, apiUrl) {
   if (!payload?.site || !Array.isArray(payload.categories) || !Array.isArray(payload.products)) throw new Error('The platform content response is invalid.');
   websiteMedia.clear();
   brandAboutContent.clear();
+  brandMenuImages.clear();
   const heroVideos = {};
   for (const item of payload.media || []) {
     const match = String(item.sectionKey || '').match(/^category\.([^.]+)\.heroVideo$/);
@@ -311,6 +346,7 @@ export function applyPlatformContent(payload, apiUrl) {
   applyFilterDefinitions(payload);
   const dynamic = buildDynamicCatalog(payload, apiUrl);
   applyDynamicCatalog(dynamic?.brands || null, dynamic?.products || null);
+  applyBrandMenuImages(dynamic?.brands || []);
   applyStructuredContent(payload, apiUrl);
   newsCategories.splice(0, newsCategories.length, { id: 'all', en: 'All', ar: 'الكل' }, ...[...new Set(newsItems.map((item) => item.category))].map((category) => {
     const item = newsItems.find((entry) => entry.category === category);

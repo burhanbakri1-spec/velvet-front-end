@@ -118,6 +118,10 @@ function buildBrand(raw, index, apiUrl) {
     raw.headerImage || raw.pageHeaderImage || raw.brandPageHeader || raw.pageHeroImage,
     apiUrl,
   );
+  const menuImage = absoluteUrl(
+    raw.menuImage || raw.megaMenuImage || raw.menuPoster || raw.categoriesMenuImage,
+    apiUrl,
+  );
   const logoUrl = absoluteUrl(raw.logoUrl, apiUrl);
   const short = { en: wordmark(nameEn), ar: wordmark(nameAr) };
   const order = finiteNumber(raw.sortOrder, index + 1);
@@ -133,6 +137,7 @@ function buildBrand(raw, index, apiUrl) {
     heroVideo,
     heroPoster,
     headerImage,
+    menuImage,
     logoUrl,
     image: heroPoster || logoUrl || artwork(nameEn || raw.slug || 'Brand', palette, index % 6),
     palette,

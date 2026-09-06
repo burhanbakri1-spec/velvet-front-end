@@ -71,7 +71,7 @@ test('uploaded brand logos are distinct from generated fallback artwork', () => 
 test('Categories mega menu preview overlays brand logo on poster without strip wrapper', () => {
   const megaMenu = fs.readFileSync(new URL('../src/components/CategoriesMegaMenu.jsx', import.meta.url), 'utf8');
   assert.match(megaMenu, /getBrandLogo\(brand\.slug, locale\)/);
-  assert.match(megaMenu, /getBrandMedia\(brand\.slug\)/);
+  assert.match(megaMenu, /getBrandMenuMedia\(brand\.slug\)/);
   assert.match(megaMenu, /mega-menu__preview-logo/);
   assert.doesNotMatch(megaMenu, /mega-menu__preview-brand/);
   assert.match(megaMenu, /onMouseEnter=\{\(\) => selectBrand\(item\.slug\)\}/);
