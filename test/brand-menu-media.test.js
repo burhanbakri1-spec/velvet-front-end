@@ -104,3 +104,13 @@ test('Mega Menu hover/focus wires preview to getBrandMenuMedia for the active br
   assert.match(megaMenu, /mega-menu__preview-media/);
   assert.doesNotMatch(megaMenu, /getBrandMedia\(brand\.slug\)/);
 });
+
+test('Mega Menu preview media uses contain fit inside the existing panel frame', () => {
+  const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  assert.match(styles, /\.mega-menu__preview\s*\{[\s\S]{0,220}?min-height:\s*480px/);
+  assert.match(styles, /\.mega-menu__preview-media[\s\S]{0,220}?width:\s*100%/);
+  assert.match(styles, /\.mega-menu__preview-media[\s\S]{0,220}?height:\s*100%/);
+  assert.match(styles, /\.mega-menu__preview-media[\s\S]{0,280}?object-fit:\s*contain/);
+  assert.match(styles, /\.mega-menu__preview-media[\s\S]{0,280}?object-position:\s*center/);
+  assert.doesNotMatch(styles, /\.mega-menu__preview-media[^}]*object-fit:\s*cover/);
+});
