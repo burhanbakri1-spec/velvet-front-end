@@ -373,6 +373,16 @@ button { color: inherit; }
   display: block;
   text-align: start;
 }
+.mega-menu__preview-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(10px) brightness(0.75);
+  z-index: 1;
+  display: block;
+}
 .mega-menu__preview-media,
 .mega-menu__preview-fallback {
   position: absolute;
@@ -382,6 +392,7 @@ button { color: inherit; }
   object-fit: contain;
   object-position: center;
   display: block;
+  z-index: 2;
 }
 .mega-menu__preview-fallback {
   background: linear-gradient(145deg, #9c321f, #ef7b30 52%, #752012);
