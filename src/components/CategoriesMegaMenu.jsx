@@ -56,7 +56,18 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
           data-mega-brand-preview={brand.slug}
         >
           {preview.poster ? (
-            <img className="mega-menu__preview-media" src={preview.poster} alt="" />
+            <>
+              <img
+                className="mega-menu__preview-bg"
+                src={preview.poster}
+                alt=""
+              />
+              <img
+                className="mega-menu__preview-media"
+                src={preview.poster}
+                alt=""
+              />
+            </>
           ) : (
             <span className="mega-menu__preview-fallback" aria-hidden="true" />
           )}
