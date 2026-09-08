@@ -84,16 +84,19 @@ test('BrandPage hero uses full-width adaptive media without hero logo', () => {
   assert.match(brandPage, /variant="full-banner"/);
   assert.doesNotMatch(brandPage, /getBrandLogo/);
   assert.doesNotMatch(brandPage, /category-hero__logo/);
-  assert.match(styles, /\.category-hero\s*\{[^}]*height:\s*auto/);
-  assert.match(styles, /\.category-hero\s*\{[^}]*overflow:\s*visible/);
+  assert.match(styles, /\.category-hero\s*\{[^}]*height:\s*min\(/);
+  assert.match(styles, /\.category-hero\s*\{[^}]*overflow:\s*hidden/);
   assert.match(styles, /\.category-hero__media[\s\S]*width:\s*100%/);
-  assert.match(styles, /\.category-hero__media[\s\S]*height:\s*auto/);
+  assert.match(styles, /\.category-hero__media[\s\S]*height:\s*100%/);
   assert.match(styles, /\.category-hero__media[\s\S]*object-fit:\s*contain/);
   assert.doesNotMatch(styles, /\.category-hero__media[^}]*object-fit:\s*cover/);
   assert.doesNotMatch(styles, /\.category-hero\s*\{[^}]*100vh/);
-  assert.match(styles, /\.brand-hero \.category-hero__media[\s\S]*max-height:\s*none/);
-  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner[\s\S]*height:\s*auto/);
+  assert.doesNotMatch(styles, /\.category-hero\s*\{[^}]*max-height/);
+  assert.match(styles, /\.brand-hero \.category-hero__media[\s\S]*height:\s*100%/);
+  assert.match(styles, /\.brand-hero\s*\{[^}]*height:\s*min\(/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner[\s\S]*height:\s*min\(/);
   assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]*object-fit:\s*contain/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]*height:\s*100%/);
   assert.doesNotMatch(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[^}]*object-fit:\s*cover/);
 });
 
@@ -105,10 +108,10 @@ test('homepage BrandShowcase uses full-banner natural media without cover crop',
   assert.match(showcase, /isFullBanner \? ' brand-showcase--full-banner'/);
   assert.match(showcase, /brand-showcase__content/);
   assert.match(showcase, /showcase-more/);
-  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner[\s\S]{0,220}?height:\s*auto/);
-  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner[\s\S]{0,220}?overflow:\s*visible/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner[\s\S]{0,220}?height:\s*min\(/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner[\s\S]{0,220}?overflow:\s*hidden/);
   assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]{0,280}?width:\s*100%/);
-  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]{0,280}?height:\s*auto/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]{0,280}?height:\s*100%/);
   assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]{0,280}?object-fit:\s*contain/);
   assert.doesNotMatch(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[^}]*object-fit:\s*cover/);
   assert.doesNotMatch(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[^}]*position:\s*absolute/);
