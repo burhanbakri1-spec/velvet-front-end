@@ -655,17 +655,15 @@ html[dir="rtl"] .mega-menu__preview-logo {
   .intro-section__body p { font-size: 17px; }
   .brand-showcase { height: 750px; min-height: 0; }
   .brand-showcase.brand-showcase--full-banner {
-    height: auto;
+    height: min(60svh, 600px);
     min-height: 0;
-    max-height: none;
-    overflow: visible;
+    overflow: hidden;
   }
   .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
     position: relative;
     inset: auto;
     width: 100%;
-    height: auto;
-    max-height: none;
+    height: 100%;
     object-fit: contain;
   }
   .brand-showcase__content { left: 24px; bottom: 55px; }
@@ -1152,12 +1150,11 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 .brand-showcase:hover .brand-showcase__image { transform: scale(1.025); }
 .brand-showcase--pals .brand-showcase__image { object-position: center 58%; }
 .brand-showcase--race .brand-showcase__image { object-position: center 52%; }
-/* Brand page Main Category banners: full uploaded image, no cover crop */
+/* Brand page Main Category banners: controlled frame + full image via contain. */
 .brand-showcase.brand-showcase--full-banner {
-  height: auto;
+  height: min(70svh, 720px);
   min-height: 0;
-  max-height: none;
-  overflow: visible;
+  overflow: hidden;
   background: #20191b;
 }
 .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
@@ -1165,10 +1162,7 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   inset: auto;
   z-index: 0;
   width: 100%;
-  height: auto;
-  max-width: 100%;
-  max-height: none;
-  aspect-ratio: auto;
+  height: 100%;
   object-fit: contain;
   object-position: center;
   display: block;
@@ -1241,6 +1235,10 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 .contact-form__actions { grid-column: 1; }
 
 @media (max-width: 1024px) {
+  .category-hero,
+  .brand-hero {
+    height: min(60svh, 600px);
+  }
   .intro-section { margin: 55px 0 75px; padding-inline: 40px; }
   .brand-showcase__content { left: 40px; }
   .showcase-more { right: 40px; }
@@ -1260,15 +1258,13 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   .brand-showcase.brand-showcase--full-banner {
     height: auto;
     min-height: 0;
-    max-height: none;
-    overflow: visible;
+    overflow: hidden;
   }
   .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
     position: relative;
     inset: auto;
     width: 100%;
     height: auto;
-    max-height: none;
     object-fit: contain;
   }
   .brand-showcase__content { left: 20px; right: 20px; bottom: 106px; }
@@ -1321,15 +1317,13 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
 /* Category discovery pages */
 .brand-showcase__link { position: absolute; inset: 0; z-index: 1; }
 .category-page { background: #fff; color: var(--ink); overflow: visible; }
-/* Category / Brand / Subcategory banners: always show the full uploaded image.
-   Same composition at every breakpoint — width 100%, height auto, no crop. */
+/* Category / Brand / Subcategory banners: controlled frame + full image via contain. */
 .category-hero {
   width: 100%;
-  height: auto;
+  height: min(70svh, 720px);
   min-height: 0;
-  max-height: none;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   color: #fff;
   background: #20191b;
   isolation: isolate;
@@ -1340,10 +1334,7 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
   inset: auto;
   display: block;
   width: 100%;
-  height: auto;
-  max-width: 100%;
-  max-height: none;
-  aspect-ratio: auto;
+  height: 100%;
   object-fit: contain;
   object-position: center;
   transition: none;
@@ -1356,13 +1347,12 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
 .category-hero__title h1 { margin: 0; font-size: clamp(55px,5vw,72px); line-height: 1.02; letter-spacing: -.05em; }
 .category-hero__description { position: absolute; z-index: 2; right: 64px; bottom: 68px; width: min(410px,31vw); margin: 0; font-size: 17px; line-height: 1.55; pointer-events: none; text-shadow: 0 1px 10px rgba(0,0,0,.24); }
 
-/* Brand page banner shares the same full-image responsive framing. */
+/* Brand page banner shares the same controlled frame. */
 .brand-hero {
   width: 100%;
-  height: auto;
+  height: min(70svh, 720px);
   min-height: 0;
-  max-height: none;
-  overflow: visible;
+  overflow: hidden;
   background: #FFFFFF;
 }
 .brand-hero .category-hero__media {
@@ -1371,10 +1361,7 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
   inset: auto;
   display: block;
   width: 100%;
-  height: auto;
-  max-width: 100%;
-  max-height: none;
-  aspect-ratio: auto;
+  height: 100%;
   object-fit: contain;
   object-position: center;
 }
@@ -1490,14 +1477,12 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
     width: 100%;
     height: auto;
     min-height: 0;
-    max-height: none;
-    overflow: visible;
+    overflow: hidden;
   }
   .category-hero__media,
   .brand-hero .category-hero__media {
     width: 100%;
     height: auto;
-    max-height: none;
     object-fit: contain;
   }
   .category-hero__title,.category-hero__description,html[dir="rtl"] .category-hero__title,html[dir="rtl"] .category-hero__description { left: 20px; right: 20px; width: auto; text-align: start; }
