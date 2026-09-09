@@ -663,8 +663,10 @@ html[dir="rtl"] .mega-menu__preview-logo {
   .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
     position: relative;
     inset: auto;
+    display: block;
     width: 100%;
     height: auto;
+    max-width: none;
     max-height: none;
     object-fit: contain;
   }
@@ -1152,26 +1154,28 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 .brand-showcase:hover .brand-showcase__image { transform: scale(1.025); }
 .brand-showcase--pals .brand-showcase__image { object-position: center 58%; }
 .brand-showcase--race .brand-showcase__image { object-position: center 52%; }
-/* Brand page Main Category banners: full uploaded image, no cover crop */
+/* Storefront banners: uploaded image IS the banner (full width, intrinsic height). */
 .brand-showcase.brand-showcase--full-banner {
+  width: 100%;
   height: auto;
   min-height: 0;
   max-height: none;
+  margin-inline: 0;
   overflow: visible;
-  background: #20191b;
+  background: transparent;
 }
 .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
   position: relative;
   inset: auto;
   z-index: 0;
+  display: block;
   width: 100%;
   height: auto;
-  max-width: 100%;
+  max-width: none;
   max-height: none;
-  aspect-ratio: auto;
+  /* height:auto sizes the box to the image — contain only overrides cover, no letterbox frame */
   object-fit: contain;
   object-position: center;
-  display: block;
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
 .brand-showcase__content { z-index: 2; left: 64px; bottom: 73px; text-shadow: 0 1px 12px rgba(0,0,0,.28); }
@@ -1266,8 +1270,10 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
     position: relative;
     inset: auto;
+    display: block;
     width: 100%;
     height: auto;
+    max-width: none;
     max-height: none;
     object-fit: contain;
   }
@@ -1321,17 +1327,17 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
 /* Category discovery pages */
 .brand-showcase__link { position: absolute; inset: 0; z-index: 1; }
 .category-page { background: #fff; color: var(--ink); overflow: visible; }
-/* Category / Brand / Subcategory banners: always show the full uploaded image.
-   Same composition at every breakpoint — width 100%, height auto, no crop. */
+/* Category / Brand / Subcategory banners: image IS the banner — full width, intrinsic height. */
 .category-hero {
   width: 100%;
   height: auto;
   min-height: 0;
   max-height: none;
+  margin-inline: 0;
   position: relative;
   overflow: visible;
   color: #fff;
-  background: #20191b;
+  background: transparent;
   isolation: isolate;
 }
 .category-hero__media {
@@ -1341,9 +1347,9 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
   display: block;
   width: 100%;
   height: auto;
-  max-width: 100%;
+  max-width: none;
   max-height: none;
-  aspect-ratio: auto;
+  /* height:auto sizes the box to the image — contain only overrides cover, no letterbox frame */
   object-fit: contain;
   object-position: center;
   transition: none;
@@ -1356,14 +1362,15 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
 .category-hero__title h1 { margin: 0; font-size: clamp(55px,5vw,72px); line-height: 1.02; letter-spacing: -.05em; }
 .category-hero__description { position: absolute; z-index: 2; right: 64px; bottom: 68px; width: min(410px,31vw); margin: 0; font-size: 17px; line-height: 1.55; pointer-events: none; text-shadow: 0 1px 10px rgba(0,0,0,.24); }
 
-/* Brand page banner shares the same full-image responsive framing. */
+/* Brand page main banner: same image-as-banner framing. */
 .brand-hero {
   width: 100%;
   height: auto;
   min-height: 0;
   max-height: none;
+  margin-inline: 0;
   overflow: visible;
-  background: #FFFFFF;
+  background: transparent;
 }
 .brand-hero .category-hero__media {
   position: relative;
@@ -1372,13 +1379,13 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
   display: block;
   width: 100%;
   height: auto;
-  max-width: 100%;
+  max-width: none;
   max-height: none;
-  aspect-ratio: auto;
   object-fit: contain;
   object-position: center;
 }
 .brand-hero:hover .category-hero__media { transform: none; }
+
 .brand-about {
   display: grid;
   grid-template-columns: minmax(180px, 280px) minmax(0, 1fr);
@@ -1495,8 +1502,10 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
   }
   .category-hero__media,
   .brand-hero .category-hero__media {
+    display: block;
     width: 100%;
     height: auto;
+    max-width: none;
     max-height: none;
     object-fit: contain;
   }

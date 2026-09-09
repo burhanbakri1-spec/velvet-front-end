@@ -1,12 +1,14 @@
+// Generated fallback banners use the production banner canvas (1920×900 / 32:15).
+// Decorative shapes are re-laid out for the wide frame (uniform proportions — not a stretched 960×820).
 export function artwork(title, colors, scene = 0) {
   const [a, b, c] = colors;
   const safeTitle = title.replace(/&/g, '&amp;');
   const shapes = [
-    `<rect x="260" y="185" width="430" height="500" rx="120" fill="${b}"/><circle cx="390" cy="360" r="38" fill="#151225"/><circle cx="555" cy="360" r="38" fill="#151225"/><path d="M390 500 Q475 570 560 500" fill="none" stroke="#151225" stroke-width="26" stroke-linecap="round"/>`,
-    `<circle cx="480" cy="420" r="270" fill="${b}"/><path d="M330 260 L410 115 L460 295 Z M500 285 L565 105 L635 300 Z" fill="${c}"/><circle cx="390" cy="410" r="38" fill="#151225"/><circle cx="555" cy="410" r="38" fill="#151225"/>`,
-    `<rect x="190" y="250" width="580" height="320" rx="58" fill="${b}" transform="rotate(-7 480 410)"/><circle cx="340" cy="590" r="95" fill="#191629"/><circle cx="650" cy="550" r="95" fill="#191629"/><path d="M255 330 H680" stroke="${c}" stroke-width="42" stroke-linecap="round"/>`,
+    `<rect x="745" y="140" width="430" height="500" rx="120" fill="${b}"/><circle cx="875" cy="315" r="38" fill="#151225"/><circle cx="1040" cy="315" r="38" fill="#151225"/><path d="M875 455 Q960 525 1045 455" fill="none" stroke="#151225" stroke-width="26" stroke-linecap="round"/>`,
+    `<circle cx="960" cy="430" r="300" fill="${b}"/><path d="M790 255 L880 95 L935 295 Z M990 280 L1065 80 L1145 300 Z" fill="${c}"/><circle cx="860" cy="420" r="42" fill="#151225"/><circle cx="1050" cy="420" r="42" fill="#151225"/>`,
+    `<rect x="670" y="240" width="580" height="320" rx="58" fill="${b}" transform="rotate(-7 960 400)"/><circle cx="820" cy="580" r="95" fill="#191629"/><circle cx="1130" cy="540" r="95" fill="#191629"/><path d="M735 320 H1160" stroke="${c}" stroke-width="42" stroke-linecap="round"/>`,
   ][scene % 3];
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 820"><defs><radialGradient id="g"><stop stop-color="${a}"/><stop offset="1" stop-color="${c}"/></radialGradient></defs><rect width="960" height="820" fill="url(#g)"/><circle cx="770" cy="145" r="170" fill="#fff" opacity=".12"/>${shapes}<text x="62" y="745" fill="#fff" font-family="Arial" font-size="54" font-weight="900">${safeTitle}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 900"><defs><radialGradient id="g"><stop stop-color="${a}"/><stop offset="1" stop-color="${c}"/></radialGradient></defs><rect width="1920" height="900" fill="url(#g)"/><circle cx="1580" cy="160" r="220" fill="#fff" opacity=".12"/>${shapes}<text x="72" y="820" fill="#fff" font-family="Arial" font-size="54" font-weight="900">${safeTitle}</text></svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
