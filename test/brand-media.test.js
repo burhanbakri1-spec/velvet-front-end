@@ -131,6 +131,24 @@ test('homepage brand banners overlay managed brand logos without affecting Brand
   assert.match(styles, /\.brand-showcase__brand-logo[\s\S]{0,400}?object-fit:\s*contain/);
   assert.doesNotMatch(styles, /\.brand-showcase__brand-logo[^}]*background:\s*#/);
 });
+
+test('homepage prioritizes first banner media and lazy-loads the rest', () => {
+  const homePage = fs.readFileSync(new URL('../src/pages/HomePage.jsx', import.meta.url), 'utf8');
+  const showcase = fs.readFileSync(new URL('../src/components/BrandShowcase.jsx', import.meta.url), 'utf8');
+  const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  const main = fs.readFileSync(new URL('../src/main.jsx', import.meta.url), 'utf8');
+
+  assert.match(homePage, /mediaLoading=\{index === 0 \? 'eager' : 'lazy'\}/);
+  assert.match(homePage, /mediaFetchPriority=\{index === 0 \? 'high' : undefined\}/);
+  assert.doesNotMatch(homePage, /velvet-home-intro-seen|sessionStorage/);
+  assert.match(showcase, /mediaLoading = 'lazy'/);
+  assert.match(showcase, /loading=\{mediaLoading\}/);
+  assert.match(main, /preconnect/);
+  assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__tint[\s\S]{0,280}?linear-gradient/);
+  assert.match(styles, /\.category-hero__shade[\s\S]{0,280}?linear-gradient/);
+  assert.match(styles, /html\[lang="ar"\] \.brand-showcase__content h2[\s\S]{0,40}?font-size:\s*60px/);
+  assert.match(styles, /html\[lang="ar"\] \.category-hero__title h1[\s\S]{0,80}?clamp\(60px/);
+});
 test('header uses managed-logo classes for uploaded artwork; mega menu overlays logo on poster', () => {
   const header = fs.readFileSync(new URL('../src/components/Header.jsx', import.meta.url), 'utf8');
   const megaMenu = fs.readFileSync(new URL('../src/components/CategoriesMegaMenu.jsx', import.meta.url), 'utf8');

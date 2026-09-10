@@ -39,10 +39,12 @@ export default function HomePage() {
         <Hero introActive={introActive} />
         <IntroSection />
         <section id="showcases" aria-label={copy.home.worlds}>
-          {[...velvetBrands].sort((a, b) => a.home.order - b.home.order).map((brand) => (
+          {[...velvetBrands].sort((a, b) => a.home.order - b.home.order).map((brand, index) => (
             <BrandShowcase
               variant="full-banner"
               showBrandLogo
+              mediaLoading={index === 0 ? 'eager' : 'lazy'}
+              mediaFetchPriority={index === 0 ? 'high' : undefined}
               brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
               key={brand.slug}
             />

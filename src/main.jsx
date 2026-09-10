@@ -1,8 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { bootstrapPlatformContent } from './data/platformContent';
+import { bootstrapPlatformContent, platformContentConfig } from './data/platformContent';
 import './styles.css';
+
+const platformApi = platformContentConfig(import.meta.env || {}).apiUrl;
+if (platformApi && typeof document !== 'undefined') {
+  const preconnect = document.createElement('link');
+  preconnect.rel = 'preconnect';
+  preconnect.href = platformApi;
+  preconnect.crossOrigin = 'anonymous';
+  document.head.appendChild(preconnect);
+}
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 

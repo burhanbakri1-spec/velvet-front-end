@@ -3,7 +3,14 @@ import { getBrandLogo, hasUploadedBrandLogo } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 
-export default function BrandShowcase({ brand, to, variant, showBrandLogo = false }) {
+export default function BrandShowcase({
+  brand,
+  to,
+  variant,
+  showBrandLogo = false,
+  mediaLoading = 'lazy',
+  mediaFetchPriority,
+}) {
   const viewCursorRef = useRef(null);
   const { copy, locale } = useI18n();
   const arrow = locale === 'ar' ? '←' : '→';
@@ -32,7 +39,14 @@ export default function BrandShowcase({ brand, to, variant, showBrandLogo = fals
       onPointerMove={moveViewCursor}
       onPointerLeave={hideViewCursor}
     >
-      <img className="brand-showcase__image" src={brand.image} alt="" />
+      <img
+        className="brand-showcase__image"
+        src={brand.image}
+        alt=""
+        loading={mediaLoading}
+        decoding={mediaLoading === 'eager' ? 'sync' : 'async'}
+        {...(mediaFetchPriority ? { fetchPriority: mediaFetchPriority } : {})}
+      />
       <div className="brand-showcase__tint" aria-hidden="true" />
       <Link className="brand-showcase__link" to={brandPath} aria-label={`${copy.home.view} ${name}`} />
       {brandLogoSrc ? (
@@ -41,6 +55,8 @@ export default function BrandShowcase({ brand, to, variant, showBrandLogo = fals
           src={brandLogoSrc}
           alt=""
           aria-hidden="true"
+          loading={mediaLoading === 'eager' ? 'eager' : 'lazy'}
+          decoding="async"
         />
       ) : null}
       <div className="brand-showcase__content">
