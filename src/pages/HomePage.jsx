@@ -42,6 +42,7 @@ export default function HomePage() {
           {[...velvetBrands].sort((a, b) => a.home.order - b.home.order).map((brand) => (
             <BrandShowcase
               variant="full-banner"
+              showBrandLogo
               brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
               key={brand.slug}
             />
