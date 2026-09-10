@@ -114,6 +114,23 @@ test('homepage BrandShowcase uses full-banner natural media without cover crop',
   assert.doesNotMatch(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[^}]*position:\s*absolute/);
 });
 
+test('homepage brand banners overlay managed brand logos without affecting BrandPage', () => {
+  const homePage = fs.readFileSync(new URL('../src/pages/HomePage.jsx', import.meta.url), 'utf8');
+  const showcase = fs.readFileSync(new URL('../src/components/BrandShowcase.jsx', import.meta.url), 'utf8');
+  const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
+  const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+
+  assert.match(homePage, /showBrandLogo/);
+  assert.match(showcase, /getBrandLogo/);
+  assert.match(showcase, /hasUploadedBrandLogo/);
+  assert.match(showcase, /brand-showcase__brand-logo/);
+  assert.match(showcase, /showBrandLogo = false/);
+  assert.doesNotMatch(brandPage, /showBrandLogo/);
+  assert.match(styles, /\.brand-showcase__brand-logo[\s\S]{0,400}?position:\s*absolute/);
+  assert.match(styles, /\.brand-showcase__brand-logo[\s\S]{0,400}?pointer-events:\s*none/);
+  assert.match(styles, /\.brand-showcase__brand-logo[\s\S]{0,400}?object-fit:\s*contain/);
+  assert.doesNotMatch(styles, /\.brand-showcase__brand-logo[^}]*background:\s*#/);
+});
 test('header uses managed-logo classes for uploaded artwork; mega menu overlays logo on poster', () => {
   const header = fs.readFileSync(new URL('../src/components/Header.jsx', import.meta.url), 'utf8');
   const megaMenu = fs.readFileSync(new URL('../src/components/CategoriesMegaMenu.jsx', import.meta.url), 'utf8');

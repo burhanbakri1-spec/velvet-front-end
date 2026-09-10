@@ -1178,6 +1178,30 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   object-position: center;
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
+/* Homepage-only brand logo overlay — sits on the banner image, no plate/strip. */
+.brand-showcase__brand-logo {
+  position: absolute;
+  top: clamp(18px, 3.2vw, 40px);
+  left: clamp(18px, 4vw, 64px);
+  z-index: 2;
+  pointer-events: none;
+  width: auto;
+  height: auto;
+  max-width: min(240px, 28vw);
+  max-height: clamp(40px, 7.5vw, 84px);
+  object-fit: contain;
+  object-position: left top;
+  filter: none;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+.brand-showcase__brand-logo--managed { filter: none; }
+html[dir="rtl"] .brand-showcase__brand-logo {
+  left: auto;
+  right: clamp(18px, 4vw, 64px);
+  object-position: right top;
+}
 .brand-showcase__content { z-index: 2; left: 64px; bottom: 73px; text-shadow: 0 1px 12px rgba(0,0,0,.28); }
 .brand-showcase__content h2 { font-family: Arial, Helvetica, sans-serif; font-size: 55px; line-height: 1.05; text-transform: none; letter-spacing: -.05em; }
 .showcase-more { z-index: 3; right: 64px; bottom: 64px; }
@@ -1247,6 +1271,13 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 @media (max-width: 1024px) {
   .intro-section { margin: 55px 0 75px; padding-inline: 40px; }
   .brand-showcase__content { left: 40px; }
+  .brand-showcase__brand-logo {
+    top: 22px;
+    left: 40px;
+    max-width: min(200px, 32vw);
+    max-height: 64px;
+  }
+  html[dir="rtl"] .brand-showcase__brand-logo { right: 40px; }
   .showcase-more { right: 40px; }
   .footer { padding-inline: 40px; }
   .page-video-hero__title { left: 40px; }
@@ -1277,6 +1308,13 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
     max-height: none;
     object-fit: contain;
   }
+  .brand-showcase__brand-logo {
+    top: 16px;
+    left: 20px;
+    max-width: min(156px, 42vw);
+    max-height: 48px;
+  }
+  html[dir="rtl"] .brand-showcase__brand-logo { right: 20px; }
   .brand-showcase__content { left: 20px; right: 20px; bottom: 106px; }
   .brand-showcase__content h2 { font-size: 48px; }
   .showcase-more { right: 20px; bottom: 30px; }
