@@ -1,0 +1,62 @@
+---
+alwaysApply: true
+---
+
+# Cursor Development Operating System - Project Workflow
+
+Canonical OS: `docs/CURSOR_DEVELOPMENT_OPERATING_SYSTEM.md`
+
+## Parent Agent
+
+Cursor is the **Parent Agent / Orchestrator** for this repository.
+
+Cursor owns: inspection, classification, planning, review, git, tests, verification, convergence, and final reporting.
+
+Cursor is **not** the default implementation engine for normal bounded coding work.
+
+## Modes
+
+Start each request by identifying one mode:
+`SETUP_ONLY`, `SPEC_ONLY`, `IMPLEMENT`, `BUG`, or `REVIEW`.
+
+## Normal implementation routing (hard rule)
+
+For normal bounded implementation (backend, APIs, services, DB, normal frontend, tests, integrations, refactors, routine features):
+
+1. Delegate to OpenCode agent `imkan-coder`.
+2. Do **not** implement that work in Cursor premium models.
+3. If OpenCode is unavailable (missing CLI, auth/rate/model limits, agent not registered): report **`BLOCKED`**.
+4. **No silent premium-model fallback.**
+
+Exact invocation (repository-safe):
+
+```text
+opencode run --agent imkan-coder --auto --print-logs --log-level INFO --dir "<repo-root>" -- "<scoped task>"
+```
+
+Repo root for this project:
+
+```text
+C:\Users\jamal2000\Documents\velvet-front-end
+```
+
+## Hard / risky work
+
+Follow Master Workflow routing in `docs/CURSOR_DEVELOPMENT_OPERATING_SYSTEM.md`:
+
+- Codex → complex implementation, difficult debugging, risky migration, hard/high-fidelity frontend
+- Playwright / `browser-worker` → real browser E2E and UI evidence
+- Cursor Explore → repository discovery
+- Premium specialists (Fable/Sol/Sonnet/Gemini/Opus/Grok) only when their specialty is materially required
+- Default premium usage = 0; no model fan-out on ordinary tasks
+
+## Orchestration checklist
+
+- Load only the minimum relevant context (`AGENTS.md`, constitution, smallest relevant spec when present).
+- Inspect actual repository files, tooling, tests, and dirty worktree before changing implementation or tooling.
+- Identify canonical owner / source of truth before adding state.
+- Do not plan or implement while a material blocker remains.
+- Preserve unrelated dirty worktree changes.
+- Never request or expose secrets.
+- A worker saying `DONE` is never completion proof — require evidence, verification, and false-completion audit for material claims.
+- Parent remains accountable for handoffs, diff review, real checks, convergence, and final report.
