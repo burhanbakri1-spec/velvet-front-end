@@ -5,3 +5,8 @@ codex_reference_frames/
 *-final.png
 intro-*.png
 npm-debug.log*
+
+# Environment files (keep .env.example tracked)
+.env
+.env.local
+.env.*.local

@@ -2,6 +2,7 @@ import { RouterProvider, useRouter } from './routing/Router';
 import { I18nProvider, useI18n } from './i18n/I18nContext';
 import { useEffect } from 'react';
 import { CartProvider } from './context/CartContext';
+import { useGtmPageViews } from './analytics/useGtmPageViews';
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
@@ -24,6 +25,9 @@ function RouteView() {
     const key = routePath === '/' ? 'home' : routePath.split('/')[1];
     document.title = `${copy.meta[key] || copy.meta.site} | VELVET`;
   }, [copy, routePath]);
+
+  // Push a GTM page_view after document.title has been updated.
+  useGtmPageViews();
 
   if (routePath === '/') return <HomePage />;
 
