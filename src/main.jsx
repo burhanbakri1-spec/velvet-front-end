@@ -2,7 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { bootstrapPlatformContent, platformContentConfig } from './data/platformContent';
+import { initGtm } from './analytics/gtm';
 import './styles.css';
+
+// Initialise GTM early so the container script loads promptly.
+// No-op when VITE_GTM_ID is missing.
+initGtm();
 
 const platformApi = platformContentConfig(import.meta.env || {}).apiUrl;
 if (platformApi && typeof document !== 'undefined') {
