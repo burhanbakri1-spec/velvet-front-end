@@ -1,7 +1,16 @@
 import { aboutSections, newsCategories, newsItems } from './company.js';
 import { homeCategories, productCategories, products } from './products.js';
 import { buildDynamicCatalog } from './dynamicCatalog.js';
-import { applyDynamicCatalog, applyFilterDefinitions, getBrand, getBrandMedia } from './velvetCatalog.js';
+import {
+  applyDynamicCatalog,
+  applyFilterDefinitions,
+  getBrand,
+  getBrandMedia,
+  getCategory,
+  getProductTaxonomy,
+  getSubcategory,
+  velvetProducts,
+} from './velvetCatalog.js';
 import { applyVlogContent } from './vlogs.js';
 import { translations } from '../i18n/translations.js';
 
@@ -19,6 +28,68 @@ export function applyBrandMenuImages(platformBrands = []) {
     const slug = String(brand?.slug || '').trim();
     const url = String(brand?.menuImage || '').trim();
     if (slug && url) brandMenuImages.set(slug, url);
+  }
+}
+
+function resolveCatalogBrand(platformBrand) {
+  const raw = String(platformBrand?.slug || '').trim();
+  if (!raw) return null;
+  return getBrand(raw) || getBrand(raw.replace(/^velvet-/, '')) || null;
+}
+
+function cloneNavCategories(categories = []) {
+  return (Array.isArray(categories) ? categories : []).map((category) => ({
+    ...category,
+    name: category?.name ? { ...category.name } : { en: '', ar: '' },
+    description: category?.description ? { ...category.description } : { en: '', ar: '' },
+    subs: (category?.subs || []).map((sub) => ({
+      ...sub,
+      name: sub?.name ? { ...sub.name } : { en: '', ar: '' },
+    })),
+  }));
+}
+
+/**
+ * Storefront navigation must follow CPanel Main Categories when platform brands
+ * are present. applyDynamicCatalog keeps workbook taxonomy for media merge;
+ * this replaces brand.categories with the platform tree (brandId → brands[].slug).
+ * Empty mains (zero products) remain visible.
+ */
+export function applyPlatformNavigationCategories(platformBrands = []) {
+  if (!Array.isArray(platformBrands) || platformBrands.length === 0) return;
+  for (const platformBrand of platformBrands) {
+    const brand = resolveCatalogBrand(platformBrand);
+    if (!brand) continue;
+    brand.categories = cloneNavCategories(platformBrand.categories);
+  }
+}
+
+/** Restore platform category paths cleared when workbook taxonomy lacked the slug. */
+export function reconcilePlatformProductPaths(platformProducts = []) {
+  if (!Array.isArray(platformProducts) || platformProducts.length === 0) return;
+  const byId = new Map(platformProducts.map((product) => [String(product.id || ''), product]));
+  for (const product of velvetProducts) {
+    if (getProductTaxonomy(product.id)) continue;
+    const source = byId.get(String(product.id || ''));
+    const path = source?.velvetPath;
+    if (!path?.brandId || !path.categoryId) continue;
+    const brand = getBrand(path.brandId) || getBrand(String(path.brandId).replace(/^velvet-/, ''));
+    if (!brand) continue;
+    const category = getCategory(brand.slug, path.categoryId);
+    if (!category) continue;
+    const sub = path.subcategoryId
+      ? getSubcategory(brand.slug, path.categoryId, path.subcategoryId)
+      : null;
+    product.brandId = brand.slug;
+    product.categoryId = category.slug;
+    product.categorySlug = category.slug;
+    product.category = category.name?.en || product.category || '';
+    product.subcategoryId = sub ? sub.slug : '';
+    product.velvetPath = {
+      brandId: brand.slug,
+      categoryId: category.slug,
+      subcategoryId: sub ? sub.slug : '',
+    };
   }
 }
 
@@ -346,6 +417,9 @@ export function applyPlatformContent(payload, apiUrl) {
   applyFilterDefinitions(payload);
   const dynamic = buildDynamicCatalog(payload, apiUrl);
   applyDynamicCatalog(dynamic?.brands || null, dynamic?.products || null);
+  // Navigation SoT: CPanel mains/subs via brandId→brands[].slug (not workbook-only).
+  applyPlatformNavigationCategories(dynamic?.brands || []);
+  reconcilePlatformProductPaths(dynamic?.products || []);
   applyBrandMenuImages(dynamic?.brands || []);
   applyStructuredContent(payload, apiUrl);
   newsCategories.splice(0, newsCategories.length, { id: 'all', en: 'All', ar: 'الكل' }, ...[...new Set(newsItems.map((item) => item.category))].map((category) => {

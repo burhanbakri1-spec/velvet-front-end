@@ -44,36 +44,34 @@ test('zero-product brands are hidden from facet hierarchy', () => {
   ));
 });
 
-test('BABY brand shows only populated main categories', () => {
+test('brand Main Categories stay visible in shop hierarchy even without products', () => {
   const state = { ...baseState, brand: 'collect' };
   const options = getFacetHierarchyOptions(state);
-  const configured = getBrand('collect').categories.length;
-  assert.ok(options.categories.length <= configured);
+  const configured = getBrand('collect').categories;
+  assert.equal(options.categories.length, configured.length);
   assert.ok(options.categories.length > 0);
-  assert.ok(options.categories.every((category) =>
-    filterProducts({ ...state, category: category.id }).length > 0,
+  assert.ok(configured.every((category) =>
+    options.categories.some((item) => item.id === category.slug),
   ));
-  assert.ok(!options.categories.some((category) => category.id === 'collectible-figures'));
 });
 
-test('empty main categories without products are hidden', () => {
+test('empty main categories remain listed for navigation', () => {
   const state = { ...baseState, brand: 'collect' };
   const options = getFacetHierarchyOptions(state);
   const emptyConfigured = getBrand('collect').categories.filter((category) =>
     filterProducts({ ...state, category: category.slug }).length === 0,
   );
+  assert.ok(emptyConfigured.length > 0, 'collect should include empty mains in the static catalog');
   emptyConfigured.forEach((category) => {
-    assert.ok(!options.categories.some((item) => item.id === category.slug));
+    assert.ok(options.categories.some((item) => item.id === category.slug));
   });
 });
 
-test('main category shows only populated subcategories', () => {
+test('main category lists all configured subcategories for navigation', () => {
   const state = { ...baseState, brand: 'collect', category: 'blind-boxes' };
   const options = getFacetHierarchyOptions(state);
-  assert.ok(options.subcategories.length > 0);
-  assert.ok(options.subcategories.every((sub) =>
-    filterProducts({ ...state, subcategory: sub.id }).length > 0,
-  ));
+  const configured = getBrand('collect').categories.find((category) => category.slug === 'blind-boxes')?.subs || [];
+  assert.equal(options.subcategories.length, configured.length);
   assert.ok(options.subcategories.some((sub) => sub.id === 'mini-figures'));
 });
 

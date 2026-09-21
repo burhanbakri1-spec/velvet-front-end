@@ -103,7 +103,8 @@ export function getFacetHierarchyOptions(state = {}) {
     .filter((brand) => isFacetVisible(brandCounts[brand.slug] || 0, state.brand ? [state.brand] : [], brand.slug))
     .map((brand) => ({ id: brand.slug, name: brand.name }));
 
-  const categoryCounts = getAvailableFacetValues(state, 'category', 'category');
+  // Main Categories / Subcategories come from the brand tree (CPanel when
+  // platform content is applied). They must remain visible even with zero products.
   const rawCategories = state.brand
     ? (getBrand(state.brand)?.categories || [])
     : velvetBrands.flatMap((brand) => brand.categories || []);
@@ -113,25 +114,14 @@ export function getFacetHierarchyOptions(state = {}) {
       if (seen.has(category.slug)) return false;
       seen.add(category.slug);
       if (state.brand && !getCategory(state.brand, category.slug)) return false;
-      return isFacetVisible(
-        categoryCounts[category.slug] || 0,
-        state.category ? [state.category] : [],
-        category.slug,
-      );
+      return true;
     })
     .map((category) => ({ id: category.slug, name: category.name }));
 
-  const subCounts = getAvailableFacetValues(state, 'subcategory', 'subcategory');
   const parent = state.category
     ? (state.brand ? getCategory(state.brand, state.category) : findCategoryBySlug(state.category))
     : null;
-  const subcategories = (parent?.subs || [])
-    .filter((sub) => isFacetVisible(
-      subCounts[sub.slug] || 0,
-      state.subcategory ? [state.subcategory] : [],
-      sub.slug,
-    ))
-    .map((sub) => ({ id: sub.slug, name: sub.name }));
+  const subcategories = (parent?.subs || []).map((sub) => ({ id: sub.slug, name: sub.name }));
 
   return { brands, categories, subcategories };
 }
