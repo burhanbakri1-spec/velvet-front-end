@@ -189,16 +189,25 @@ test('getShopHierarchyOptions delegates to facet hierarchy', () => {
 test('grid density control renders in filter bar and products page', () => {
   assert.match(filterBar, /shop-grid-density/);
   assert.match(filterBar, /data-shop-grid-density/);
-  assert.match(filterBar, /gridCols/);
+  assert.match(filterBar, /GridDensityControl/);
+  assert.match(filterBar, /shop-grid-density__track/);
+  assert.match(filterBar, /shop-grid-density__bar/);
+  assert.match(filterBar, /\[1,\s*2,\s*3,\s*4\]/);
+  assert.match(filterBar, /isSelectable = bar >= 2/);
+  assert.doesNotMatch(filterBar, /choices\s*=\s*\[2,\s*3,\s*4\]/);
+  assert.match(productsPage, /GridDensityControl/);
   assert.match(productsPage, /useShopGridDensity/);
   assert.match(productsPage, /shop-products--pref-/);
   assert.match(productsPage, /data-shop-grid-cols/);
+  assert.match(productsPage, /shop-toolbar--grid/);
 });
 
 test('grid density CSS maps 2, 3, and 4 column preferences', () => {
   assert.match(styles, /\.shop-products--pref-2 \{[\s\S]*?repeat\(2,/);
   assert.match(styles, /\.shop-products--pref-3 \{[\s\S]*?repeat\(3,/);
   assert.match(styles, /\.shop-products--pref-4 \{[\s\S]*?repeat\(4,/);
+  assert.match(styles, /\.shop-grid-density__track/);
+  assert.match(styles, /\.shop-grid-density__bar\.is-filled/);
 });
 
 test('grid density localStorage key and default are defined', () => {

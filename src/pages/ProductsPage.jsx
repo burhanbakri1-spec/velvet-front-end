@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
-import ShopFilterBar from '../components/ShopFilterBar';
+import ShopFilterBar, { GridDensityControl } from '../components/ShopFilterBar';
 import PageNavigation from '../components/PageNavigation';
 import { filterProducts, resolvePath, sortProducts } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
@@ -11,12 +11,10 @@ const MAX_VISIBLE = 48;
 
 export default function ProductsPage() {
   const { copy, locale } = useI18n();
-  const { state, toggle, select, removeFilter, clearFilters, resetAll, setSearch, setSort, clearGroup } = useShopState();
+  const { state, toggle, select, removeFilter, clearFilters, resetAll, setSort, clearGroup } = useShopState();
   const { gridCols, setGridCols } = useShopGridDensity();
   const [limit, setLimit] = useState(MAX_VISIBLE);
-  const [queryInput, setQueryInput] = useState(state.search);
 
-  useEffect(() => setQueryInput(state.search), [state.search]);
   useEffect(() => setLimit(MAX_VISIBLE), [state]);
 
   const results = useMemo(
@@ -25,14 +23,6 @@ export default function ProductsPage() {
   );
   const path = useMemo(() => resolvePath(state), [state]);
   const shown = results.slice(0, limit);
-
-  const handleSearchSubmit = (event) => {
-    event.preventDefault();
-    const next = queryInput.trim();
-    if (next === state.search) return;
-    setSearch(next);
-  };
-
   const showAllNote = results.length > shown.length;
 
   const breadcrumbs = [{ label: copy.meta.home, to: '/' }];
@@ -60,23 +50,20 @@ export default function ProductsPage() {
         onClearGroup={clearGroup}
         onClearAll={clearFilters}
         onSortChange={setSort}
-        gridCols={gridCols}
-        onGridColsChange={setGridCols}
       />
 
       <main className="shop-content">
-        <div className="shop-toolbar">
-          <form className="shop-search" onSubmit={handleSearchSubmit} role="search">
-            <label className="sr-only" htmlFor="shop-search-input">{copy.products.search}</label>
-            <input
-              id="shop-search-input"
-              value={queryInput}
-              onChange={(event) => setQueryInput(event.target.value)}
-              placeholder={copy.products.placeholder}
-              type="search"
-            />
-            <i aria-hidden="true" />
-          </form>
+        <div className="shop-toolbar shop-toolbar--grid">
+          <GridDensityControl
+            gridCols={gridCols}
+            onGridColsChange={setGridCols}
+            labels={{
+              view: copy.shop.gridView,
+              cols2: copy.shop.gridCols2,
+              cols3: copy.shop.gridCols3,
+              cols4: copy.shop.gridCols4,
+            }}
+          />
         </div>
 
         {results.length > 0 ? (

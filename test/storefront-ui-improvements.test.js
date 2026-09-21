@@ -252,9 +252,11 @@ test('storefront pages expose sticky VELVET Home context navigation', () => {
   const brandCategory = fs.readFileSync(new URL('../src/pages/BrandCategoryPage.jsx', import.meta.url), 'utf8');
   assert.match(navSource, /page-nav--sticky/);
   assert.match(navSource, /copy\.meta\.velvetHome/);
+  assert.match(navSource, /page-nav__home-btn/);
+  assert.match(navSource, /isHome \? \(/);
   assert.match(navSource, /to="\/"/);
   assert.doesNotMatch(navSource, /history\.back/);
-  assert.match(translations, /velvetHome:\s*'VELVET Home'/);
+  assert.match(translations, /velvetHome:\s*'Home'/);
   assert.match(css, /\.page-nav--sticky[\s\S]*position:\s*sticky/);
   assert.match(css, /\.page-nav--sticky[\s\S]*top:\s*var\(--header-height\)/);
   assert.match(css, /\.product-detail-page\s*\{[^}]*overflow:\s*visible/);

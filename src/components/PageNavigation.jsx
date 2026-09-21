@@ -2,7 +2,7 @@ import { Link } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
- * Sticky storefront context bar with an explicit VELVET Home return path.
+ * Sticky storefront context bar with an explicit Home return path.
  * Props:
  *   fallbackPath – unused for primary return (kept for call-site compatibility)
  *   breadcrumbs  – array of { label, to } (to is unlocalized; last item may omit to)
@@ -17,7 +17,7 @@ export default function PageNavigation({ fallbackPath = '/', breadcrumbs = [] })
   const contextualCrumbs = (breadcrumbs || []).filter((crumb) => {
     if (!crumb?.label) return false;
     const label = String(crumb.label).trim().toLowerCase();
-    const homeAliases = [copy.meta.home, homeLabel, 'home', 'الرئيسية']
+    const homeAliases = [copy.meta.home, homeLabel, 'home', 'الرئيسية', 'velvet home']
       .map((value) => String(value || '').trim().toLowerCase())
       .filter(Boolean);
     if (crumb.to === '/' && homeAliases.includes(label)) return false;
@@ -30,8 +30,8 @@ export default function PageNavigation({ fallbackPath = '/', breadcrumbs = [] })
   return (
     <nav className="page-nav page-nav--sticky" aria-label={homeLabel}>
       <div className="page-nav__mobile">
-        <Link className="page-nav__velvet-home" to="/" aria-label={homeLabel}>
-          <span className="page-nav__velvet-home-arrow" aria-hidden="true">{homeArrow}</span>
+        <Link className="page-nav__home-btn" to="/" aria-label={homeLabel}>
+          <span className="page-nav__home-btn-arrow" aria-hidden="true">{homeArrow}</span>
           <span>{homeLabel}</span>
         </Link>
         {current?.to !== '/' && current?.label ? (
@@ -42,10 +42,20 @@ export default function PageNavigation({ fallbackPath = '/', breadcrumbs = [] })
       <ol className="page-nav__breadcrumb page-nav__breadcrumb--desktop">
         {trail.map((crumb, index) => {
           const isLast = index === trail.length - 1;
+          const isHome = index === 0;
           return (
             <li key={`${crumb.label}-${index}`}>
               {index > 0 && <span className="page-nav__sep" aria-hidden="true">{separator}</span>}
-              {isLast || !crumb.to ? (
+              {isHome ? (
+                <Link
+                  className="page-nav__home-btn"
+                  to={crumb.to || '/'}
+                  aria-current={isLast ? 'page' : undefined}
+                >
+                  <span className="page-nav__home-btn-arrow" aria-hidden="true">{homeArrow}</span>
+                  <span>{crumb.label}</span>
+                </Link>
+              ) : isLast || !crumb.to ? (
                 <span aria-current={isLast ? 'page' : undefined}>{crumb.label}</span>
               ) : (
                 <Link to={crumb.to}>{crumb.label}</Link>
