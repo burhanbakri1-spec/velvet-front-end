@@ -85,28 +85,48 @@ function FilterColumn({ column, selected, options, emptyHint, onReset, onToggle,
 }
 
 function GridDensityControl({ gridCols, onGridColsChange, labels }) {
-  const choices = [2, 3, 4];
+  const activeCols = Math.min(4, Math.max(2, Number(gridCols) || 2));
   return (
-    <div className="shop-grid-density" data-shop-grid-density aria-label={labels.view}>
-      <span className="shop-grid-density__label">{labels.view}</span>
-      <div className="shop-grid-density__choices">
-        {choices.map((cols) => (
-          <button
-            type="button"
-            key={cols}
-            className={`shop-grid-density__btn${gridCols === cols ? ' is-active' : ''}`}
-            aria-pressed={gridCols === cols}
-            aria-label={labels[`cols${cols}`]}
-            onClick={() => onGridColsChange(cols)}
-          >
-            <span className="shop-grid-density__icon" aria-hidden="true" data-cols={cols} />
-            <span className="shop-grid-density__text">{cols}</span>
-          </button>
-        ))}
+    <div
+      className="shop-grid-density"
+      data-shop-grid-density
+      data-cols={activeCols}
+      role="group"
+      aria-label={labels.view}
+    >
+      <div className="shop-grid-density__track">
+        {[1, 2, 3, 4].map((bar) => {
+          const isSelectable = bar >= 2;
+          const isFilled = bar <= activeCols;
+          const label = isSelectable ? labels[`cols${bar}`] : labels.view;
+          if (!isSelectable) {
+            return (
+              <span
+                key={bar}
+                className={`shop-grid-density__bar${isFilled ? ' is-filled' : ''}`}
+                aria-hidden="true"
+                data-bar={bar}
+              />
+            );
+          }
+          return (
+            <button
+              type="button"
+              key={bar}
+              className={`shop-grid-density__bar${isFilled ? ' is-filled' : ''}${activeCols === bar ? ' is-active' : ''}`}
+              aria-label={label}
+              aria-pressed={activeCols === bar}
+              data-bar={bar}
+              onClick={() => onGridColsChange(bar)}
+            />
+          );
+        })}
       </div>
     </div>
   );
 }
+
+export { GridDensityControl };
 
 export default function ShopFilterBar({
   state,
@@ -117,8 +137,6 @@ export default function ShopFilterBar({
   onClearGroup,
   onClearAll,
   onSortChange,
-  gridCols,
-  onGridColsChange,
 }) {
   const { copy, locale } = useI18n();
   const s = copy.shop;
@@ -138,6 +156,13 @@ export default function ShopFilterBar({
   }), [state, locale]);
   const countLabel = resultCount === 1 ? copy.products.countOne : copy.products.count;
   const currentSort = state.sort || 'featured';
+  const sortOptions = {
+    featured: s.sortFeatured,
+    newest: s.sortNewest,
+    'price-asc': s.sortPriceAsc,
+    'price-desc': s.sortPriceDesc,
+    name: s.sortName,
+  };
 
   const hierarchyOptions = (key) => (hierarchy[key] || []).map((item) => ({
     id: item.id,
@@ -149,7 +174,7 @@ export default function ShopFilterBar({
       <div className="shop-filter-bar__row">
         <button
           type="button"
-          className="shop-filter-bar__toggle"
+          className={`shop-filter-bar__toggle${open ? ' is-active' : ''}`}
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
         >
@@ -176,24 +201,11 @@ export default function ShopFilterBar({
           ))}
         </div>
 
-        {onGridColsChange && (
-          <GridDensityControl
-            gridCols={gridCols}
-            onGridColsChange={onGridColsChange}
-            labels={{
-              view: s.gridView,
-              cols2: s.gridCols2,
-              cols3: s.gridCols3,
-              cols4: s.gridCols4,
-            }}
-          />
-        )}
-
         <label className="shop-filter-bar__sort">
-          <span>{s.sort}</span>
+          <span className="shop-filter-bar__sort-label">{s.sort}:</span>
           <select
             value={currentSort}
-            aria-label={s.sort}
+            aria-label={`${s.sort}: ${sortOptions[currentSort] || s.sortFeatured}`}
             onChange={(event) => onSortChange(event.target.value)}
           >
             <option value="featured">{s.sortFeatured}</option>

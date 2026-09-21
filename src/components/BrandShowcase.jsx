@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { getBrandLogo, hasUploadedBrandLogo } from '../data/velvetCatalog';
+import { getBrandLogoScale } from '../data/brandLogoScale';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 
@@ -20,6 +21,7 @@ export default function BrandShowcase({
   const isFullBanner = variant === 'full-banner';
   const brandLogoSrc = showBrandLogo ? getBrandLogo(brand.slug, locale) : '';
   const managedBrandLogo = showBrandLogo && hasUploadedBrandLogo(brand.slug, locale);
+  const logoScale = getBrandLogoScale(brand.slug);
 
   const moveViewCursor = (event) => {
     if (event.pointerType !== 'mouse' || window.innerWidth <= 760 || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -50,14 +52,19 @@ export default function BrandShowcase({
       <div className="brand-showcase__tint" aria-hidden="true" />
       <Link className="brand-showcase__link" to={brandPath} aria-label={`${copy.home.view} ${name}`} />
       {brandLogoSrc ? (
-        <img
-          className={`brand-showcase__brand-logo${managedBrandLogo ? ' brand-showcase__brand-logo--managed' : ''}`}
-          src={brandLogoSrc}
-          alt=""
-          aria-hidden="true"
-          loading={mediaLoading === 'eager' ? 'eager' : 'lazy'}
-          decoding="async"
-        />
+        <span
+          className={`brand-logo-frame brand-showcase__brand-logo-frame${managedBrandLogo ? ' brand-logo-frame--managed' : ''}`}
+          style={{ '--brand-logo-scale': logoScale }}
+        >
+          <img
+            className={`brand-logo brand-showcase__brand-logo${managedBrandLogo ? ' brand-showcase__brand-logo--managed' : ''}`}
+            src={brandLogoSrc}
+            alt=""
+            aria-hidden="true"
+            loading={mediaLoading === 'eager' ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+        </span>
       ) : null}
       <div className="brand-showcase__content">
         <span className="brand-showcase__logo" aria-hidden="true">{logo}</span>

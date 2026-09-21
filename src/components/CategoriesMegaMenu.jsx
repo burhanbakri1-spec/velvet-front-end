@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getBrandLogo, hasUploadedBrandLogo, velvetBrands } from '../data/velvetCatalog';
+import { getBrandLogoScale } from '../data/brandLogoScale';
 import { getBrandMenuMedia } from '../data/platformContent';
 import { useI18n } from '../i18n/I18nContext';
 import { localizePath, useRouter } from '../routing/Router';
@@ -19,6 +20,7 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
   const preview = brand ? getBrandMenuMedia(brand.slug) : { poster: '' };
   const brandLogo = brand ? getBrandLogo(brand.slug, locale) : '';
   const managedLogo = brand ? hasUploadedBrandLogo(brand.slug, locale) : false;
+  const logoScale = brand ? getBrandLogoScale(brand.slug) : 1;
 
   const selectBrand = (slug) => setActiveBrand(slug);
   const goBrand = (slug) => {
@@ -72,11 +74,16 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
             <span className="mega-menu__preview-fallback" aria-hidden="true" />
           )}
           {brandLogo ? (
-            <img
-              className={`mega-menu__preview-logo${managedLogo ? ' mega-menu__preview-logo--managed' : ''}`}
-              src={brandLogo}
-              alt={brand.name[locale]}
-            />
+            <span
+              className={`brand-logo-frame mega-menu__preview-logo-frame${managedLogo ? ' brand-logo-frame--managed' : ''}`}
+              style={{ '--brand-logo-scale': logoScale }}
+            >
+              <img
+                className={`brand-logo mega-menu__preview-logo${managedLogo ? ' mega-menu__preview-logo--managed' : ''}`}
+                src={brandLogo}
+                alt={brand.name[locale]}
+              />
+            </span>
           ) : null}
           <span className="mega-menu__preview-shade" aria-hidden="true" />
         </button>

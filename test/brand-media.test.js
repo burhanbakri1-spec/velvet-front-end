@@ -124,10 +124,11 @@ test('homepage brand banners overlay managed brand logos without affecting Brand
   assert.match(showcase, /getBrandLogo/);
   assert.match(showcase, /hasUploadedBrandLogo/);
   assert.match(showcase, /brand-showcase__brand-logo/);
+  assert.match(showcase, /brand-showcase__brand-logo-frame|brand-logo-frame/);
   assert.match(showcase, /showBrandLogo = false/);
   assert.doesNotMatch(brandPage, /showBrandLogo/);
-  assert.match(styles, /\.brand-showcase__brand-logo[\s\S]{0,400}?position:\s*absolute/);
-  assert.match(styles, /\.brand-showcase__brand-logo[\s\S]{0,400}?pointer-events:\s*none/);
+  assert.match(styles, /\.brand-showcase__brand-logo-frame[\s\S]{0,400}?position:\s*absolute/);
+  assert.match(styles, /\.brand-logo-frame[\s\S]{0,400}?pointer-events:\s*none/);
   assert.match(styles, /\.brand-showcase__brand-logo[\s\S]{0,400}?object-fit:\s*contain/);
   assert.doesNotMatch(styles, /\.brand-showcase__brand-logo[^}]*background:\s*#/);
 });
