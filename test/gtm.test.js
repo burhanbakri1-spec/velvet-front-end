@@ -12,8 +12,11 @@ import {
 } from '../src/analytics/gtm.js';
 import {
   sanitizeGtmIdForHtml,
+  buildGtmHeadSnippet,
   buildGtmNoscriptSnippet,
+  applyGtmHeadSnippet,
   applyGtmNoscript,
+  applyGtmHtml,
 } from '../src/analytics/gtmNoscript.js';
 
 /* ------------------------------------------------------------------ */
@@ -29,6 +32,14 @@ function createStubDocument() {
     get title() { return _title; },
     set title(v) { _title = v; },
     getElementById(id) { return elements[id] || null; },
+    querySelector(sel) {
+      const source = String(sel || '');
+      if (source.startsWith('#')) return elements[source.slice(1)] || null;
+      if (source.includes('googletagmanager.com/gtm.js')) {
+        return [...headChildren, ...bodyChildren].find((el) => String(el.src || '').includes('googletagmanager.com/gtm.js')) || null;
+      }
+      return null;
+    },
     createElement(tag) {
       return {
         tagName: tag.toUpperCase(),
@@ -264,6 +275,18 @@ test('initGtm is idempotent — second call is a no-op', () => {
   removeGlobals();
 });
 
+test('initGtm skips script inject when official head snippet already loaded gtm.js', () => {
+  installGlobals();
+  _resetInitGuard();
+  const existing = { id: '', src: 'https://www.googletagmanager.com/gtm.js?id=GTM-ABC' };
+  document._headChildren.push(existing);
+  const result = initGtm({ VITE_GTM_ID: 'GTM-ABC' });
+  assert.equal(result, true);
+  assert.equal(document._headChildren.length, 1, 'must not inject a second gtm.js');
+  assert.equal(window.dataLayer.length, 0, 'must not re-push gtm.start');
+  removeGlobals();
+});
+
 /* ================================================================== */
 /*  Build-time noscript (real no-JS fallback)                         */
 /* ================================================================== */
@@ -297,4 +320,24 @@ test('applyGtmNoscript is idempotent and rejects unsafe ids', () => {
   const twice = applyGtmNoscript(once, 'GTM-OK');
   assert.equal(once, twice);
   assert.equal(applyGtmNoscript(html, 'not-a-gtm-id'), html);
+});
+
+test('applyGtmHeadSnippet injects official head bootstrap when ID is valid', () => {
+  const html = '<html><head><title>t</title></head><body><div id="root"></div></body></html>';
+  const next = applyGtmHeadSnippet(html, 'GTM-NZBJHJ8D');
+  assert.match(next, /googletagmanager\.com\/gtm\.js\?id='\+i/);
+  assert.match(next, /GTM-NZBJHJ8D/);
+  assert.match(next, /<!-- End Google Tag Manager -->\s*<\/head>/);
+  assert.equal(buildGtmHeadSnippet(''), '');
+  assert.equal(applyGtmHeadSnippet(html, ''), html);
+});
+
+test('applyGtmHtml injects head + noscript once for VELVET container', () => {
+  const html = '<html><head></head><body><div id="root"></div></body></html>';
+  const next = applyGtmHtml(html, 'GTM-NZBJHJ8D');
+  assert.match(next, /GTM-NZBJHJ8D/);
+  assert.match(next, /googletagmanager\.com\/gtm\.js/);
+  assert.match(next, /googletagmanager\.com\/ns\.html\?id=GTM-NZBJHJ8D/);
+  const again = applyGtmHtml(next, 'GTM-NZBJHJ8D');
+  assert.equal(next, again);
 });
