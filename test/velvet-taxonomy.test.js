@@ -206,5 +206,9 @@ test('taxonomy-mapped platform products keep live commerce fields', () => {
     categoryId: 'baby-development',
     subcategoryId: 'sensory-toys',
   });
-  assert.ok(getBrand('baby').categories.some((category) => category.slug === 'rattles-and-teethers'));
+  assert.deepEqual(
+    getBrand('baby').categories.map((category) => category.slug),
+    ['baby-development'],
+    'platform mains are the navigation source when content is applied',
+  );
 });

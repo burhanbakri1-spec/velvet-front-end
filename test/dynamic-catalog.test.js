@@ -50,14 +50,15 @@ function canonicalPayload({ withBrands = true } = {}) {
   };
 }
 
-test('dynamic catalog keeps workbook taxonomy and remaps platform brand media/products', () => {
+test('dynamic catalog uses platform Main Categories as navigation and remaps brand media/products', () => {
   applyPlatformContent(canonicalPayload(), API);
 
   const brand = getBrand('baby');
   assert.ok(brand, 'workbook brand slug remains canonical');
   assert.equal(getBrand('velvet-baby'), null);
   assert.equal(brand.name.en, 'VELVET BABY');
-  assert.ok(brand.categories.length >= 10, 'full workbook mains remain available');
+  assert.equal(brand.categories.length, 2, 'platform mains replace workbook navigation');
+  assert.deepEqual(brand.categories.map((category) => category.slug), ['baby-development', 'bath-toys']);
   assert.ok(getCategory('baby', 'baby-development'));
   assert.ok(getCategory('baby', 'bath-toys'));
   assert.deepEqual(

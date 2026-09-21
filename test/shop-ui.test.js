@@ -5,6 +5,7 @@ import {
   filterGroups,
   filterProducts,
   getActiveFilterTags,
+  getBrand,
   getBrandLogo,
   getBrandMedia,
   getShopHierarchyOptions,
@@ -119,7 +120,8 @@ test('selecting Brand updates URL and scopes Main Category options', () => {
   const options = getShopHierarchyOptions(next);
   assert.ok(options.brands.some((brand) => brand.id === 'collect'));
   assert.ok(options.categories.some((category) => category.id === 'blind-boxes'));
-  assert.ok(options.categories.every((category) => category.id !== 'collectible-figures'));
+  assert.ok(options.categories.some((category) => category.id === 'collectible-figures'));
+  assert.equal(options.categories.length, getBrand('collect').categories.length);
   assert.equal(options.subcategories.length, 0);
 });
 
