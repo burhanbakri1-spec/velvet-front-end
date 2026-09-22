@@ -1711,10 +1711,16 @@ html[dir="rtl"] .brand-showcase__brand-logo {
   .brand-showcase { height: min(82vw, 520px); min-height: 360px; max-height: 540px; }
   .brand-showcase.brand-showcase--full-banner {
     height: auto;
-    min-height: min(68svh, 520px);
+    min-height: 0;
     max-height: none;
     overflow: visible;
-    background: #1a1518;
+    background: transparent;
+    /* Soft presence: extend wrapper below media (~+11% of width ≈ +10–15% of
+       typical landscape banner height). Shade/overlays cover the band — not a
+       tall empty min-height frame. */
+    padding-block: 0;
+    padding-block-end: 5.5%;
+    box-sizing: border-box;
   }
   .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
     position: relative;
@@ -1751,7 +1757,8 @@ html[dir="rtl"] .brand-showcase__brand-logo {
     top: auto;
     left: 20px !important;
     right: 20px !important;
-    bottom: 22px !important;
+    /* Keep copy on the media, above the presence band */
+    bottom: calc(22px + 5.5vw) !important;
     width: auto;
     max-width: none;
     transform: none;
@@ -1772,7 +1779,7 @@ html[dir="rtl"] .brand-showcase__brand-logo {
     font-size: clamp(22px, 6.2vw, 29px);
     letter-spacing: 0;
   }
-  .showcase-more { inset-inline-end: 20px; bottom: 22px; font-size: clamp(11px, 2.9vw, 12px); }
+  .showcase-more { inset-inline-end: 20px; bottom: calc(22px + 5.5vw); font-size: clamp(11px, 2.9vw, 12px); }
   .careers-section { min-height: 0; padding: 52px 20px; display: block; }
   .careers-section h2 { font-size: clamp(36px, 10vw, 48px); line-height: 1.12; max-width: 100%; }
   .careers-section p { margin: 22px 0 28px; font-size: 16px; line-height: 1.55; max-width: 100%; }
@@ -2007,10 +2014,10 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
 
 @media (max-width: 760px) {
   /*
-   * Mobile banner presence: keep full uploaded composition (width 100%,
-   * height auto, object-fit contain) but raise a soft min-height so short
-   * landscape assets feel closer to reference vertical presence without
-   * crop, stretch, or desktop changes. Taller assets still grow the section.
+   * Mobile banners: same composition (width 100%, height auto, contain).
+   * No min-height letterbox / cover / stretch. Soft wrapper presence via
+   * padding-block-end: 5.5% (~+10–15% for typical landscape banners).
+   * Bottom overlays stay on the media; shade covers the presence band.
    */
   .brand-showcase.brand-showcase--full-banner,
   .category-hero,
@@ -2018,10 +2025,13 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
   .product-path-hero {
     width: 100%;
     height: auto;
-    min-height: min(68svh, 520px);
+    min-height: 0;
     max-height: none;
     overflow: visible;
-    background: #1a1518;
+    background: transparent;
+    padding-block: 0;
+    padding-block-end: 5.5%;
+    box-sizing: border-box;
   }
   .brand-showcase.brand-showcase--full-banner .brand-showcase__image,
   .category-hero__media,
@@ -2052,15 +2062,23 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
     inset-inline: 20px;
     width: auto;
     max-width: calc(100% - 40px);
-    bottom: 24px;
+    bottom: calc(24px + 5.5vw);
     text-align: start;
   }
-  .category-hero__title { bottom: 24px; }
+  .category-hero__title { bottom: calc(24px + 5.5vw); }
   .category-hero__title h1 { font-size: clamp(32px, 10vw, 44px); line-height: 1.05; overflow-wrap: anywhere; }
   html[lang="ar"] .category-hero__title span { font-size: 12px; }
   html[lang="ar"] .category-hero__title h1 { font-size: clamp(30px, 9.5vw, 42px); }
   html[lang="ar"] .category-hero__description { font-size: 15px; }
-  .category-hero__description { bottom: 24px; font-size: 13px; line-height: 1.45; display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .category-hero__description {
+    bottom: calc(24px + 5.5vw);
+    font-size: 13px;
+    line-height: 1.45;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
   .category-product-showcase { min-height: 860px; padding: 25px 20px 90px; }
   .category-product-showcase.category-product-showcase--detail {
     min-height: 0;
@@ -2941,6 +2959,20 @@ body:has(.site-header.is-hidden) .page-nav--sticky {
 .product-path-hero__shade {
   display: none;
 }
+.product-path-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.52) 0%,
+    rgba(0, 0, 0, 0.26) 26%,
+    rgba(0, 0, 0, 0.08) 46%,
+    rgba(0, 0, 0, 0) 68%
+  );
+}
 .product-path-hero__copy {
   position: absolute;
   z-index: 2;
@@ -2981,8 +3013,11 @@ html[dir="rtl"] .product-path-hero__copy {
 
 @media (max-width: 760px) {
   .product-path-hero {
-    min-height: min(68svh, 520px);
-    background: #1a1518;
+    min-height: 0;
+    background: transparent;
+    padding-block: 0;
+    padding-block-end: 5.5%;
+    box-sizing: border-box;
   }
   .product-path-hero__copy,
   html[dir="rtl"] .product-path-hero__copy {
@@ -2991,7 +3026,7 @@ html[dir="rtl"] .product-path-hero__copy {
     inset-inline: 20px;
     width: auto;
     max-width: calc(100% - 40px);
-    bottom: 24px;
+    bottom: calc(24px + 5.5vw);
     text-align: start;
   }
 }
@@ -3419,8 +3454,6 @@ html[dir="rtl"] .product-path-hero__copy {
 html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
 
 @media (max-width: 768px) {
-  .product-path-hero { height: 200px; max-height: 220px; }
-  .product-path-hero__copy { padding: 20px 20px 22px; }
   .product-path-hero__copy h1 { font-size: clamp(24px, 7vw, 34px); }
   .product-detail-focal { width: min(100%, 520px); }
   .same-subcategory-products { padding: 16px 0 36px; }
@@ -3431,8 +3464,6 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
 }
 
 @media (max-width: 390px) {
-  .product-path-hero { height: 180px; }
-  .product-path-hero__copy { padding: 16px; }
   .product-card__gallery-btn { width: 28px; height: 28px; font-size: 12px; }
   .same-subcategory-products__viewport { padding: 0 12px; }
   .same-subcategory-products { padding: 12px 0 32px; }
