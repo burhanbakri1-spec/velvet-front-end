@@ -6,13 +6,13 @@ import { buildSiteManifest } from '../src/data/siteManifest.js';
 
 const walkElements = (manifest) => manifest.pages.flatMap((page) => page.sections.flatMap((section) => section.elements));
 
-test('manifest exposes the verified i-play tenant identity and concrete routes', () => {
+test('manifest exposes the verified VELVET storefront identity and concrete routes', () => {
   const manifest = buildSiteManifest({ generatedAt: '2026-08-09T00:00:00.000Z' });
   assert.equal(manifest.schemaVersion, '1.0');
   assert.equal(manifest.companyId, 'kids-velvet');
   assert.equal(manifest.siteId, 'kids-velvet-storefront');
-  assert.equal(manifest.siteName, 'i-play');
-  assert.equal(manifest.baseUrl, 'https://i-play.vercel.app');
+  assert.equal(manifest.siteName, 'VELVET');
+  assert.equal(manifest.baseUrl, 'https://mintcream-mink-816924.hostingersite.com');
   assert.equal(manifest.defaultLocale, 'ar');
   assert.deepEqual(manifest.supportedLocales, ['ar', 'en']);
   assert.deepEqual(manifest.pages.map((page) => page.route), ['/', '/products', '/about', '/news', '/vlogs', '/contact', '/cart']);
@@ -30,9 +30,10 @@ test('manifest identifiers are unique and contain no unrelated tenant identity',
   ];
   assert.equal(new Set(ids).size, ids.length);
   const serialized = JSON.stringify(manifest).toLowerCase();
-  for (const forbidden of ['icare', 'eb chemical', 'velvet kids', 'iplay-web.vercel.app']) {
+  for (const forbidden of ['icare', 'eb chemical', 'velvet kids', 'iplay-web.vercel.app', 'i-play.vercel.app']) {
     assert.equal(serialized.includes(forbidden), false, `unexpected identity: ${forbidden}`);
   }
+  assert.equal(serialized.includes('i-play'), false, 'siteName must not remain legacy i-play');
 });
 
 test('product, category, news, contact-form and cart runtime data remain read-only', () => {
