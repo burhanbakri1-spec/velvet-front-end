@@ -20,7 +20,7 @@ if (platformApi && typeof document !== 'undefined') {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-root.render(<main className="platform-content-loading" role="status"><span aria-hidden="true" /><strong>Loading i-play…</strong></main>);
+root.render(<main className="platform-content-loading" role="status"><span aria-hidden="true" /><strong>Loading VELVET…</strong></main>);
 
 bootstrapPlatformContent().then(() => {
   root.render(<React.StrictMode><App /></React.StrictMode>);

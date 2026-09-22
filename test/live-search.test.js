@@ -91,9 +91,9 @@ test('product-path-hero matches category banner no-crop framing', () => {
 
 test('mobile storefront banners raise presence without cropping media', () => {
   assert.doesNotMatch(styles, /min-height:\s*min\(68svh/);
+  assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?#showcases \.brand-showcase\.brand-showcase--full-banner[\s\S]*?padding-block-end:\s*22%/);
   assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.product-path-hero[\s\S]*?padding-block-end:\s*5\.5%/);
   assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.category-hero[\s\S]*?padding-block-end:\s*5\.5%/);
-  assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.brand-showcase\.brand-showcase--full-banner[\s\S]*?padding-block-end:\s*5\.5%/);
   assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.category-hero__media[\s\S]*?object-fit:\s*contain/);
   assert.doesNotMatch(styles, /@media \(max-width:\s*768px\)[\s\S]*?\.product-path-hero\s*\{\s*height:\s*200px/);
   assert.doesNotMatch(styles, /@media \(max-width:\s*390px\)[\s\S]*?\.product-path-hero\s*\{\s*height:\s*180px/);
@@ -127,14 +127,14 @@ test('mega menu logo scales the img, not the frame, and frame stays absolute cor
   assert.match(megaMenu, /className=\{`brand-logo mega-menu__preview-logo/);
   const frameSpan = megaMenu.match(/className=\{`brand-logo-frame mega-menu__preview-logo-frame[^`]*`\}[\s\S]{0,200}?style=/);
   assert.equal(frameSpan, null, 'scale style must not remain on the frame span');
-  assert.match(styles, /\.mega-menu__preview-logo\s*\{[\s\S]*?transform:\s*scale\(var\(--brand-logo-scale/);
-  assert.match(styles, /\.mega-menu__preview-logo-frame\s*\{[\s\S]*?position:\s*absolute/);
-  assert.match(styles, /\.mega-menu__preview-logo-frame\s*\{[\s\S]*?top:\s*24px/);
+  assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?position:\s*absolute/);
+  assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?top:\s*24px/);
+  assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?transform:\s*none/);
+  assert.match(styles, /\.brand-logo\.mega-menu__preview-logo\s*\{[\s\S]*?transform:\s*scale\(var\(--brand-logo-scale/);
   assert.match(styles, /\.brand-logo-frame::before\s*\{/);
   assert.match(styles, /backdrop-filter:\s*blur\(8px\)/);
-  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?transform:\s*scale\(var\(--brand-logo-scale\)\)/);
-  assert.match(styles, /html\[dir="rtl"\] \.mega-menu__preview-logo/);
-  assert.match(styles, /html\[dir="rtl"\] \.mega-menu__preview-logo-frame/);
+  assert.match(styles, /html\[dir="rtl"\] \.brand-logo-frame\.mega-menu__preview-logo-frame/);
+  assert.match(styles, /html\[dir="rtl"\] \.brand-logo\.mega-menu__preview-logo/);
 });
 
 test('live search i18n keys exist in en and ar', () => {

@@ -1383,6 +1383,79 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 .contact-form__actions button i { font-style: normal; }
 .contact-form__actions p { margin: 0; color: #267b47; font-size: 13px; }
 
+.auth-page {
+  min-height: calc(100svh - var(--header-height, 88px));
+  display: grid;
+  place-items: center;
+  padding: clamp(48px, 8vw, 96px) 20px;
+  background: #fff;
+  color: var(--ink);
+}
+.auth-panel {
+  width: min(520px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.auth-panel h1 {
+  margin: 0;
+  font-size: clamp(36px, 6vw, 52px);
+  line-height: 1.05;
+  letter-spacing: -.04em;
+}
+.auth-panel__intro,
+.auth-panel__note,
+.auth-panel__status,
+.auth-panel__footer {
+  margin: 0;
+  color: #5f5f63;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.auth-panel__status--info { color: #7a5b12; }
+.auth-panel__status--error { color: #9c321f; }
+.auth-panel__note {
+  padding: 14px 16px;
+  border: 1px solid #eadfd4;
+  background: #fff9f2;
+  color: #5a4636;
+}
+.auth-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 8px;
+}
+.auth-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.auth-form input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d6d7d9;
+  border-radius: 14px;
+  padding: 14px 16px;
+  font: inherit;
+  background: #fff;
+}
+.auth-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.auth-form__actions .store-primary-button {
+  gap: 28px;
+}
+.auth-form__actions .store-primary-button i {
+  font-style: normal;
+}
+.auth-panel__footer a {
+  color: inherit;
+  font-weight: 700;
+}
+
 @media (max-width: 1024px) {
   .editorial-split, .editorial-split__media { min-height: 620px; }
   .editorial-split__copy { padding: 70px 50px; }
@@ -1604,6 +1677,37 @@ html[dir="rtl"] .brand-showcase__brand-logo {
 .brand-logo.mega-menu__preview-logo--managed {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
 }
+/* Mega Menu corner lock: later .brand-logo-frame { position:relative; transform:scale } must not win */
+.brand-logo-frame.mega-menu__preview-logo-frame {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+  right: auto;
+  bottom: auto;
+  z-index: 2;
+  display: block;
+  width: fit-content;
+  max-width: min(240px, 42vw);
+  height: auto;
+  margin: 0;
+  padding: 0;
+  transform: none;
+  transform-origin: top left;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+html[dir="rtl"] .brand-logo-frame.mega-menu__preview-logo-frame {
+  left: auto;
+  right: 28px;
+  transform-origin: top right;
+}
+.brand-logo.mega-menu__preview-logo {
+  transform: scale(var(--brand-logo-scale, 1));
+  transform-origin: top left;
+}
+html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
+  transform-origin: top right;
+}
 .brand-showcase__content { z-index: 2; left: 64px; bottom: 73px; text-shadow: 0 1px 12px rgba(0,0,0,.28); }
 .brand-showcase__content h2 { font-family: Arial, Helvetica, sans-serif; font-size: 55px; line-height: 1.05; text-transform: none; letter-spacing: -.05em; }
 .showcase-more { z-index: 3; right: 64px; bottom: 64px; }
@@ -1715,12 +1819,19 @@ html[dir="rtl"] .brand-showcase__brand-logo {
     max-height: none;
     overflow: visible;
     background: transparent;
-    /* Soft presence: extend wrapper below media (~+11% of width ≈ +10–15% of
-       typical landscape banner height). Shade/overlays cover the band — not a
-       tall empty min-height frame. */
     padding-block: 0;
     padding-block-end: 5.5%;
     box-sizing: border-box;
+  }
+  /* Homepage stacked banners only: stronger presence ≈ 3 per phone viewport */
+  #showcases .brand-showcase.brand-showcase--full-banner {
+    padding-block-end: 22%;
+  }
+  #showcases .brand-showcase__content {
+    bottom: calc(22px + 22vw) !important;
+  }
+  #showcases .showcase-more {
+    bottom: calc(22px + 22vw);
   }
   .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
     position: relative;
@@ -2032,6 +2143,16 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
     padding-block: 0;
     padding-block-end: 5.5%;
     box-sizing: border-box;
+  }
+  /* Homepage density: ~3 brand banners per mobile viewport (not Brand/Category/PDP) */
+  #showcases .brand-showcase.brand-showcase--full-banner {
+    padding-block-end: 22%;
+  }
+  #showcases .brand-showcase__content {
+    bottom: calc(22px + 22vw) !important;
+  }
+  #showcases .showcase-more {
+    bottom: calc(22px + 22vw);
   }
   .brand-showcase.brand-showcase--full-banner .brand-showcase__image,
   .category-hero__media,
