@@ -1,11 +1,15 @@
 import { getSiteLogo, hasUploadedSiteLogo } from '../data/velvetCatalog';
+import { socialLinkOrder, socialLinks } from '../data/socialLinks';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 
 const groups = [
   { title: 'explore', links: [{ key: 'home', to: '/' }, { key: 'products', to: '/products' }, { key: 'news', to: '/news' }] },
   { title: 'company', links: [{ key: 'about', to: '/about' }, { key: 'contact', to: '/contact' }] },
-  { title: 'follow', links: [{ key: 'instagram' }, { key: 'linkedin' }, { key: 'tiktok' }, { key: 'youtube' }] },
+  {
+    title: 'follow',
+    links: socialLinkOrder.map((key) => ({ key, href: socialLinks[key] })),
+  },
   { title: 'policies', links: [{ key: 'terms' }, { key: 'privacy' }, { key: 'cookies' }, { key: 'accessibility' }] },
 ];
 
@@ -37,9 +41,24 @@ export default function Footer() {
           {groups.map((group) => (
             <div key={group.title}>
               <h3>{copy.footer[group.title]}</h3>
-              {group.links.map((link) => link.to
-                ? <Link to={link.to} key={link.key}>{copy.footer[link.key]}</Link>
-                : <a href="#top" key={link.key}>{copy.footer[link.key]}</a>)}
+              {group.links.map((link) => {
+                if (link.to) {
+                  return <Link to={link.to} key={link.key}>{copy.footer[link.key]}</Link>;
+                }
+                if (link.href) {
+                  return (
+                    <a
+                      href={link.href}
+                      key={link.key}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {copy.footer[link.key]}
+                    </a>
+                  );
+                }
+                return <a href="#top" key={link.key}>{copy.footer[link.key]}</a>;
+              })}
             </div>
           ))}
         </div>

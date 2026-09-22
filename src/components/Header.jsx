@@ -3,6 +3,7 @@ import CategoriesMegaMenu from './CategoriesMegaMenu';
 import CartDrawer from './CartDrawer';
 import { Link, localizePath, useRouter } from '../routing/Router';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import AboutSubnav from './AboutSubnav';
 import { useI18n } from '../i18n/I18nContext';
 import { getBrand, getBrandLogo, getProductBySlug, getSiteLogo, hasUploadedBrandLogo, hasUploadedSiteLogo, velvetBrands } from '../data/velvetCatalog';
@@ -38,9 +39,11 @@ export default function Header({ introActive, solid = false }) {
   const lastY = useRef(0);
   const closeTimer = useRef(null);
   const { itemCount } = useCart();
+  const { isAuthenticated } = useAuth();
   const { copy, locale } = useI18n();
   const { location, navigate, routePath } = useRouter();
   const [search, setSearch] = useState('');
+  const accountPath = isAuthenticated ? '/account' : '/login';
 
   const contextBrand = useMemo(() => {
     const brandRoute = routePath.match(/^\/brands\/([^/]+)/);
@@ -116,6 +119,11 @@ export default function Header({ introActive, solid = false }) {
   };
 
   const closeMobile = () => setMobileOpen(false);
+
+  const goAccount = () => {
+    navigate(localizePath(accountPath, locale));
+    closeMobile();
+  };
 
   const goBrand = (slug) => {
     navigate(localizePath(`/brands/${slug}`, locale));
@@ -211,7 +219,12 @@ export default function Header({ introActive, solid = false }) {
             </svg>
             {itemCount > 0 && <span className="header-cart-count">{itemCount > 99 ? '99+' : itemCount}</span>}
           </button>
-          <button className="header-icon-button header-icon-button--account" type="button" aria-label={copy.header.account}>
+          <button
+            className="header-icon-button header-icon-button--account"
+            type="button"
+            aria-label={copy.header.account}
+            onClick={goAccount}
+          >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <circle cx="12" cy="8" r="3.6" />
               <path d="M5.2 20c.6-4 3-6.1 6.8-6.1s6.2 2.1 6.8 6.1" />
@@ -270,7 +283,7 @@ export default function Header({ introActive, solid = false }) {
             {copy.header.cart}
             {itemCount > 0 ? ` (${itemCount})` : ''}
           </button>
-          <button type="button" className="mobile-drawer__action" aria-label={copy.header.account}>
+          <button type="button" className="mobile-drawer__action" aria-label={copy.header.account} onClick={goAccount}>
             {copy.header.account}
           </button>
         </div>

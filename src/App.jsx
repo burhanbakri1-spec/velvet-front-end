@@ -15,7 +15,10 @@ import VlogsPage from './pages/VlogsPage';
 import CategoryPage from './pages/CategoryPage';
 import BrandPage from './pages/BrandPage';
 import BrandCategoryPage from './pages/BrandCategoryPage';
+import LoginPage from './pages/LoginPage';
+import AccountPage from './pages/AccountPage';
 import StoreLayout from './components/StoreLayout';
+import { AuthProvider } from './context/AuthContext';
 
 function RouteView() {
   const { routePath } = useRouter();
@@ -73,13 +76,25 @@ function RouteView() {
   else if (routePath === '/news') page = <NewsPage />;
   else if (routePath === '/contact') page = <ContactPage />;
   else if (routePath === '/vlogs') page = <VlogsPage />;
+  else if (routePath === '/login') page = <LoginPage />;
+  else if (routePath === '/account') page = <AccountPage />;
   else page = <section className="store-not-found"><h1>404</h1><p>{copy.detail.missing}</p></section>;
 
   return (
-    <StoreLayout company={routePath.startsWith('/categories/') || ['/about', '/news', '/contact', '/vlogs'].includes(routePath)}>{page}</StoreLayout>
+    <StoreLayout company={routePath.startsWith('/categories/') || ['/about', '/news', '/contact', '/vlogs', '/login', '/account'].includes(routePath)}>{page}</StoreLayout>
   );
 }
 
 export default function App() {
-  return <RouterProvider><I18nProvider><CartProvider><RouteView /></CartProvider></I18nProvider></RouterProvider>;
+  return (
+    <RouterProvider>
+      <I18nProvider>
+        <AuthProvider>
+          <CartProvider>
+            <RouteView />
+          </CartProvider>
+        </AuthProvider>
+      </I18nProvider>
+    </RouterProvider>
+  );
 }
