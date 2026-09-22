@@ -1813,6 +1813,16 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
   .intro-section__body { margin-top: 0; max-width: 100%; }
   .intro-section__body p { max-width: 100%; font-size: 16px; line-height: 1.55; }
   .brand-showcase { height: min(82vw, 520px); min-height: 360px; max-height: 540px; }
+  /* Homepage / full-banner stack: wrapper height = image height (no presence pad / gray band). */
+  #showcases {
+    display: block;
+    margin-block: 0;
+    padding-block: 0;
+    gap: 0;
+  }
+  #showcases .brand-showcase.brand-showcase--full-banner {
+    margin-block: 0;
+  }
   .brand-showcase.brand-showcase--full-banner {
     height: auto;
     min-height: 0;
@@ -1820,7 +1830,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     overflow: visible;
     background: transparent;
     padding-block: 0;
-    padding-block-end: 5.5%;
+    padding-block-end: 0;
     box-sizing: border-box;
   }
   .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
@@ -1858,8 +1868,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     top: auto;
     left: 20px !important;
     right: 20px !important;
-    /* Keep copy on the media, above the presence band */
-    bottom: calc(22px + 5.5vw) !important;
+    bottom: 22px !important;
     width: auto;
     max-width: none;
     transform: none;
@@ -1880,7 +1889,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     font-size: clamp(22px, 6.2vw, 29px);
     letter-spacing: 0;
   }
-  .showcase-more { inset-inline-end: 20px; bottom: calc(22px + 5.5vw); font-size: clamp(11px, 2.9vw, 12px); }
+  .showcase-more { inset-inline-end: 20px; bottom: 22px; font-size: clamp(11px, 2.9vw, 12px); }
   .careers-section { min-height: 0; padding: 52px 20px; display: block; }
   .careers-section h2 { font-size: clamp(36px, 10vw, 48px); line-height: 1.12; max-width: 100%; }
   .careers-section p { margin: 22px 0 28px; font-size: 16px; line-height: 1.55; max-width: 100%; }
@@ -2115,12 +2124,21 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
 
 @media (max-width: 760px) {
   /*
-   * Mobile banners: same composition (width 100%, height auto, contain).
-   * No min-height letterbox / cover / stretch. Soft wrapper presence via
-   * padding-block-end: 5.5% (~+10–15% for typical landscape banners).
-   * Bottom overlays stay on the media; shade covers the presence band.
+   * Mobile banners: width 100%, height auto, contain — no crop/stretch.
+   * Homepage full-banner wrappers match image height (no presence pad).
+   * Brand / category / PDP heroes keep soft 5.5% presence padding.
    */
-  .brand-showcase.brand-showcase--full-banner,
+  .brand-showcase.brand-showcase--full-banner {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    background: transparent;
+    padding-block: 0;
+    padding-block-end: 0;
+    box-sizing: border-box;
+  }
   .category-hero,
   .brand-hero,
   .product-path-hero {
