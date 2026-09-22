@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext';
 import AboutSubnav from './AboutSubnav';
 import { useI18n } from '../i18n/I18nContext';
 import { getBrand, getBrandLogo, getProductBySlug, getSiteLogo, hasUploadedBrandLogo, hasUploadedSiteLogo, velvetBrands } from '../data/velvetCatalog';
+import SearchDropdown from './SearchDropdown';
 
 function LanguageControl({ className = '', onSwitch }) {
   const { copy, switchLanguage } = useI18n();
@@ -188,11 +189,14 @@ export default function Header({ introActive, solid = false }) {
         </nav>
 
         <div className="header-actions">
-          <form className="search-pill" onSubmit={submitSearch}>
-            <span>{copy.header.search}</span>
-            <input value={search} onChange={(event) => setSearch(event.target.value)} aria-label={copy.header.searchLabel} />
-            <button className="search-pill__submit" type="submit" aria-label={copy.header.searchLabel}><i /></button>
-          </form>
+          <div className="header-search">
+            <form className="search-pill" onSubmit={submitSearch}>
+              <span>{copy.header.search}</span>
+              <input value={search} onChange={(event) => setSearch(event.target.value)} aria-label={copy.header.searchLabel} />
+              <button className="search-pill__submit" type="submit" aria-label={copy.header.searchLabel}><i /></button>
+            </form>
+            <SearchDropdown query={search} setQuery={setSearch} />
+          </div>
           <LanguageControl className="language-control--header" />
           <button
             className="header-icon-button header-cart-link"
@@ -227,17 +231,20 @@ export default function Header({ introActive, solid = false }) {
       </div>
 
       <div className={`mobile-drawer${mobileOpen ? ' is-open' : ''}`} aria-hidden={!mobileOpen}>
-        <form className="mobile-drawer__search" onSubmit={submitSearch} role="search">
-          <label className="sr-only" htmlFor="mobile-header-search">{copy.header.searchLabel}</label>
-          <input
-            id="mobile-header-search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder={copy.header.search}
-            type="search"
-          />
-          <button type="submit" aria-label={copy.header.searchLabel}>{copy.header.search}</button>
-        </form>
+        <div className="header-search header-search--mobile">
+          <form className="mobile-drawer__search" onSubmit={submitSearch} role="search">
+            <label className="sr-only" htmlFor="mobile-header-search">{copy.header.searchLabel}</label>
+            <input
+              id="mobile-header-search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={copy.header.search}
+              type="search"
+            />
+            <button type="submit" aria-label={copy.header.searchLabel}>{copy.header.search}</button>
+          </form>
+          <SearchDropdown query={search} setQuery={setSearch} />
+        </div>
 
         <div className="mobile-drawer__section">
           <p className="mobile-drawer__label">{copy.header.brands || copy.header.categories}</p>
