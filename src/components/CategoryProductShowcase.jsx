@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 import ProductShowcaseNavigation from './ProductShowcaseNavigation';
 import { productStock } from '../data/inventory';
+import { formatPrice } from '../data/currency';
 
 export default function CategoryProductShowcase({ category, products, onAddToCart, addToCartLabel }) {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -58,8 +59,8 @@ export default function CategoryProductShowcase({ category, products, onAddToCar
           <p>{getProductDescription(product, locale)}</p>
           <div className="category-product-showcase__commerce">
             <div className="category-product-showcase__price">
-              <strong>${product.price.toFixed(2)}</strong>
-              {product.originalPrice && <del>${product.originalPrice.toFixed(2)}</del>}
+              <strong>{formatPrice(product.price)}</strong>
+              {product.originalPrice && <del>{formatPrice(product.originalPrice)}</del>}
             </div>
             <span className={`category-product-showcase__availability ${unavailable ? 'is-unavailable' : ''}`}>{getAvailability(product, locale)}</span>
             {optionSummary && <span className="category-product-showcase__variants">{copy.category.variants}: {optionSummary}</span>}

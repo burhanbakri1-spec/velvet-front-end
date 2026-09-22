@@ -2,16 +2,16 @@ import { useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
 import { velvetProducts } from '../data/velvetCatalog';
+import { formatPrice } from '../data/currency';
+import { buildWhatsAppOrderMessage, buildWhatsAppOrderUrl, openWhatsAppOrder } from '../data/whatsappOrder';
 import { Link } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
-
-const formatPrice = (value) => `$${Number(value).toFixed(2)}`;
 
 export default function CheckoutPage() {
   const { items, subtotal, addItem } = useCart();
   const { copy, locale } = useI18n();
   const [form, setForm] = useState({ name: '', phone: '', email: '', city: '', address: '', notes: '' });
-  const [placed, setPlaced] = useState(false);
+  const [prepared, setPrepared] = useState(null);
 
   const setField = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
 
@@ -20,10 +20,19 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = (event) => {
     event.preventDefault();
-    setPlaced(true);
+    const message = buildWhatsAppOrderMessage({
+      customer: form,
+      items,
+      subtotal,
+      shippingLabel: 'مجاني',
+    });
+    const url = buildWhatsAppOrderUrl(message);
+    const opened = openWhatsAppOrder(url);
+    // Keep cart intact — WhatsApp send is customer-driven; no backend confirmation exists.
+    setPrepared({ message, url, opened });
   };
 
-  if (items.length === 0 && !placed) {
+  if (items.length === 0 && !prepared) {
     return (
       <section className="checkout-page">
         <div className="checkout-empty">
@@ -45,12 +54,23 @@ export default function CheckoutPage() {
           <span>{copy.checkout.title}</span>
         </nav>
 
-        {placed ? (
+        {prepared ? (
           <section className="checkout-placed">
             <div className="checkout-placed__icon" aria-hidden="true">✓</div>
             <h2>{copy.checkout.successTitle}</h2>
             <p>{copy.checkout.successBody}</p>
-            <Link className="store-primary-button" to="/products">{copy.checkout.browse}</Link>
+            {!prepared.opened && (
+              <p className="checkout-panel__note">{copy.checkout.whatsappFallbackHint}</p>
+            )}
+            <a
+              className="store-primary-button"
+              href={prepared.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {copy.checkout.whatsappSend}
+            </a>
+            <Link className="store-secondary-button" to="/products">{copy.checkout.browse}</Link>
           </section>
         ) : (
           <form className="checkout-main" onSubmit={handlePlaceOrder}>
