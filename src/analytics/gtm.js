@@ -131,6 +131,9 @@ export function _resetInitGuard() {
  * Bootstrap GTM: push the standard gtm.start object and inject the
  * container <script> once when VITE_GTM_ID is set.
  *
+ * When Vite already injected the official head snippet (gtmNoscript.js),
+ * this function only marks init complete and skips a second bootstrap.
+ *
  * The noscript iframe is NOT injected here — Vite adds it statically when
  * the ID exists (gtmNoscript.js / vite.config.js).
  *
@@ -149,22 +152,27 @@ export function initGtm(env) {
   ensureDataLayer();
   _gtmInitialised = true;
 
+  // Official HTML head snippet (or a prior init) already owns the container.
+  if (typeof document !== 'undefined') {
+    const existing =
+      document.getElementById('gtm-script')
+      || document.querySelector('script[src*="googletagmanager.com/gtm.js"]');
+    if (existing) return true;
+  }
+
   // Standard GTM bootstrap object (matches the official snippet).
   window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
 
   // --- <script id="gtm-script"> -----------------------------------
   if (typeof document !== 'undefined') {
-    const scriptId = 'gtm-script';
-    if (!document.getElementById(scriptId)) {
-      try {
-        const script = document.createElement('script');
-        script.id = scriptId;
-        script.async = true;
-        script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(id)}`;
-        document.head.appendChild(script);
-      } catch {
-        // Never throw from analytics init.
-      }
+    try {
+      const script = document.createElement('script');
+      script.id = 'gtm-script';
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(id)}`;
+      document.head.appendChild(script);
+    } catch {
+      // Never throw from analytics init.
     }
   }
 
