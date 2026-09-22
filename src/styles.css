@@ -448,22 +448,30 @@ button { color: inherit; }
   display: none;
 }
 .mega-menu__preview-logo {
-  position: static;
-  max-width: 100%;
-  max-height: 100%;
+  position: relative;
+  z-index: 1;
+  display: block;
+  /* Definite height breaks abspos flex/fit-content × replaced-element collapse */
   width: auto;
-  height: auto;
+  height: clamp(40px, 6vw, 56px);
+  max-width: min(200px, 36vw);
   object-fit: contain;
+  object-position: center;
   pointer-events: none;
-  filter: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.14));
 }
 .mega-menu__preview-logo-frame {
   position: absolute;
   top: 24px;
   left: 28px;
   z-index: 2;
+  width: fit-content;
+  max-width: min(240px, 42vw);
+  height: auto;
 }
-.mega-menu__preview-logo--managed { filter: none; }
+.mega-menu__preview-logo--managed {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
+}
 html[dir="rtl"] .mega-menu__preview-logo-frame {
   left: auto;
   right: 28px;
@@ -1425,31 +1433,62 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   object-position: center;
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
-/* Shared brand logo normalization + local readability halo */
+/* Shared brand logo plate: wrapper hugs logo; ::before expands ~16–20% around it */
 .brand-logo-frame {
   --brand-logo-scale: 1;
+  position: relative;
   pointer-events: none;
-  display: inline-grid;
-  place-items: center;
-  width: min(220px, 34vw);
-  height: clamp(48px, 8vw, 78px);
-  padding: 10px 14px;
-  border-radius: 16px;
-  background: radial-gradient(circle at center, rgba(255,255,255,.34) 0%, rgba(255,255,255,.12) 55%, rgba(255,255,255,0) 78%);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: min(280px, 48vw);
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  overflow: visible;
   transform: scale(var(--brand-logo-scale));
-  transform-origin: center center;
+  transform-origin: top left;
+}
+html[dir="rtl"] .brand-logo-frame {
+  transform-origin: top right;
+}
+.brand-logo-frame::before {
+  content: '';
+  position: absolute;
+  /* ~16% taller / ~20% wider than the rendered logo box */
+  inset: -8% -10%;
+  z-index: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  -webkit-backdrop-filter: blur(8px) saturate(1.08);
+  backdrop-filter: blur(8px) saturate(1.08);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.3) inset,
+    0 6px 18px rgba(0, 0, 0, 0.16);
+  pointer-events: none;
+}
+.brand-logo-frame--managed::before {
+  border-radius: 14px;
 }
 .brand-logo {
+  position: relative;
+  z-index: 1;
+  display: block;
+  /* Definite height breaks abspos flex/fit-content × replaced-element collapse;
+     width follows intrinsic aspect; max-width caps wide wordmarks */
   width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 100%;
+  height: clamp(44px, 7vw, 72px);
+  max-width: min(240px, 42vw);
   object-fit: contain;
   object-position: center;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .22));
+  flex: 0 0 auto;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.16));
 }
 .brand-showcase__brand-logo-frame {
   position: absolute;
@@ -1462,20 +1501,33 @@ html[dir="rtl"] .brand-showcase__brand-logo-frame {
   right: clamp(14px, 3.5vw, 56px);
 }
 .brand-showcase__brand-logo {
-  position: static;
-  max-width: 100%;
-  max-height: 100%;
+  position: relative;
+  z-index: 1;
   width: auto;
-  height: auto;
+  height: clamp(44px, 7vw, 72px);
+  max-width: min(240px, 42vw);
   object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .22));
+  object-position: center;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.16));
   background: none;
   border: 0;
   box-shadow: none;
 }
-.brand-showcase__brand-logo--managed { filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .22)); }
+.brand-showcase__brand-logo--managed {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.14));
+}
 html[dir="rtl"] .brand-showcase__brand-logo {
   object-position: center;
+}
+/* Mega-menu sizes must win over shared .brand-logo (same specificity, later cascade) */
+.brand-logo.mega-menu__preview-logo {
+  width: auto;
+  height: clamp(40px, 6vw, 56px);
+  max-width: min(200px, 36vw);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.14));
+}
+.brand-logo.mega-menu__preview-logo--managed {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
 }
 .brand-showcase__content { z-index: 2; left: 64px; bottom: 73px; text-shadow: 0 1px 12px rgba(0,0,0,.28); }
 .brand-showcase__content h2 { font-family: Arial, Helvetica, sans-serif; font-size: 55px; line-height: 1.05; text-transform: none; letter-spacing: -.05em; }
@@ -1549,8 +1601,14 @@ html[dir="rtl"] .brand-showcase__brand-logo {
   .brand-showcase__brand-logo-frame {
     top: 22px;
     left: 40px;
-    width: min(200px, 32vw);
-    height: 64px;
+    width: fit-content;
+    max-width: min(260px, 46vw);
+    height: auto;
+  }
+  .brand-showcase__brand-logo {
+    width: auto;
+    height: 60px;
+    max-width: min(220px, 40vw);
   }
   html[dir="rtl"] .brand-showcase__brand-logo-frame { right: 40px; left: auto; }
   .showcase-more { right: 40px; }
@@ -1597,10 +1655,15 @@ html[dir="rtl"] .brand-showcase__brand-logo {
     left: auto;
     right: auto;
     inset-inline-start: 20px;
-    width: min(132px, 36vw);
-    height: 42px;
-    padding: 6px 8px;
-    border-radius: 12px;
+    width: fit-content;
+    max-width: min(200px, 56vw);
+    height: auto;
+    padding: 0;
+  }
+  .brand-showcase__brand-logo {
+    width: auto;
+    height: 46px;
+    max-width: min(170px, 48vw);
   }
   html[dir="rtl"] .brand-showcase__brand-logo-frame {
     left: auto;
@@ -3303,8 +3366,9 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
     left: auto;
     right: auto;
     inset-inline-start: var(--mobile-gutter);
-    width: min(132px, 36vw);
-    height: 42px;
+    width: fit-content;
+    max-width: min(200px, 56vw);
+    height: auto;
   }
   .intro-section {
     padding-inline: var(--mobile-gutter);
