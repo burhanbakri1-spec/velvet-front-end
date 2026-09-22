@@ -96,20 +96,21 @@ test('WhatsApp order message is Arabic and includes customer, items, totals, and
   assert.match(message, /العنوان: شارع الإرسال، عمارة 3/);
   assert.match(message, /1\. برج التكديس/);
   assert.match(message, /الكمية: 2/);
-  assert.match(message, /السعر: \$24\.50/);
+  assert.match(message, /السعر: ₪24\.50/);
   assert.match(message, /الخيارات: اللون: Blue، المقاس: M/);
-  assert.match(message, /الإجمالي: \$49\.00/);
+  assert.match(message, /الإجمالي: ₪49\.00/);
   assert.match(message, /2\. Soft Bunny/);
   assert.match(message, /الخيارات: اللون: أزرق/);
   assert.match(message, /الكمية: 1/);
-  assert.match(message, /السعر: \$15\.00/);
-  assert.match(message, /الإجمالي: \$15\.00/);
-  assert.match(message, /المجموع الفرعي: \$64\.00/);
+  assert.match(message, /السعر: ₪15\.00/);
+  assert.match(message, /الإجمالي: ₪15\.00/);
+  assert.match(message, /المجموع الفرعي: ₪64\.00/);
   assert.match(message, /التوصيل: مجاني/);
-  assert.match(message, /الإجمالي النهائي: \$64\.00/);
+  assert.match(message, /الإجمالي النهائي: ₪64\.00/);
   assert.match(message, /ملاحظات العميل:\nالتوصيل بعد الظهر/);
   assert.doesNotMatch(message, /undefined|null/);
   assert.doesNotMatch(message, /الخيارات: Color:/);
+  assert.doesNotMatch(message, /\$\d/);
 });
 
 test('empty notes are omitted cleanly from the Arabic message', () => {

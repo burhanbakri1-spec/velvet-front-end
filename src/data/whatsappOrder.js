@@ -1,12 +1,11 @@
 import { socialLinks } from './socialLinks.js';
+import { formatPrice } from './currency.js';
 
 const WHATSAPP_PHONE_FALLBACK = '970598431743';
 
-/** Format a money amount the same way checkout UI does. */
+/** Format money the same way as storefront UI (₪, 2 decimals). */
 export function formatOrderPrice(value) {
-  const amount = Number(value);
-  const safe = Number.isFinite(amount) ? amount : 0;
-  return `$${safe.toFixed(2)}`;
+  return formatPrice(value);
 }
 
 /** Prefer Arabic product name; fall back to the default name. */

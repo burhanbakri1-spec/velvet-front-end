@@ -4,8 +4,7 @@ import { getOptionName, getOptionValue } from '../data/products';
 import { getProductBySlug } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
-
-const formatPrice = (value) => `$${Number(value).toFixed(2)}`;
+import { formatPrice } from '../data/currency';
 
 // Slide-in cart drawer from the physical right edge. Reuses CartContext
 // (items, quantity, remove, subtotal) shared with CartPage/ProductDetailsPage;

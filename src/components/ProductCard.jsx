@@ -4,8 +4,7 @@ import { collectProductImages, getCategoryLabel, getProductBadge, getProductDesc
 import { getVelvetPathLabel } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { productStock } from '../data/inventory';
-
-const formatPrice = (value) => `$${Number(value).toFixed(2)}`;
+import { formatPrice } from '../data/currency';
 
 export default function ProductCard({ product, onAddToCart, onSelect, active = false }) {
   const { copy, locale } = useI18n();

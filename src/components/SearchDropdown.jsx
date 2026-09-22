@@ -2,10 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { localizePath, useRouter } from '../routing/Router';
 import { filterProducts, getProductBySlug } from '../data/velvetCatalog';
+import { formatPrice } from '../data/currency';
 
 const MAX_RESULTS = 8;
-
-const formatPrice = (value) => `$${Number(value).toFixed(2)}`;
 
 export default function SearchDropdown({ query, setQuery }) {
   const { copy, locale } = useI18n();

@@ -10,8 +10,7 @@ import {
 } from '../data/products';
 import { optionValueUnavailable, coerceSelectionsToValidVariant } from '../data/inventory';
 import { Link } from '../routing/Router';
-
-const formatPrice = (value) => `$${Number(value).toFixed(2)}`;
+import { formatPrice } from '../data/currency';
 
 export default function ProductDetailSlide({
   product,
