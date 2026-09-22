@@ -448,12 +448,13 @@ button { color: inherit; }
   display: none;
 }
 .mega-menu__preview-logo {
-  position: static;
+  position: relative;
+  z-index: 1;
   display: block;
+  /* Definite height breaks abspos flex/fit-content × replaced-element collapse */
   width: auto;
-  height: auto;
+  height: clamp(40px, 6vw, 56px);
   max-width: min(200px, 36vw);
-  max-height: clamp(40px, 6vw, 56px);
   object-fit: contain;
   object-position: center;
   pointer-events: none;
@@ -467,8 +468,6 @@ button { color: inherit; }
   width: fit-content;
   max-width: min(240px, 42vw);
   height: auto;
-  padding: 12px 14px;
-  border-radius: 14px;
 }
 .mega-menu__preview-logo--managed {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
@@ -1434,23 +1433,37 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   object-position: center;
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
-/* Shared brand logo plate: fit-content wrapper + padding wraps the full mark */
+/* Shared brand logo plate: wrapper hugs logo; ::before expands ~16–20% around it */
 .brand-logo-frame {
   --brand-logo-scale: 1;
-  --brand-logo-pad-y: 14px;
-  --brand-logo-pad-x: 18px;
+  position: relative;
   pointer-events: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   width: fit-content;
-  max-width: min(320px, 54vw);
+  max-width: min(280px, 48vw);
   height: auto;
-  max-height: none;
-  padding: var(--brand-logo-pad-y) var(--brand-logo-pad-x);
-  border-radius: 14px;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
   overflow: visible;
+  transform: scale(var(--brand-logo-scale));
+  transform-origin: top left;
+}
+html[dir="rtl"] .brand-logo-frame {
+  transform-origin: top right;
+}
+.brand-logo-frame::before {
+  content: '';
+  position: absolute;
+  /* ~16% taller / ~20% wider than the rendered logo box */
+  inset: -8% -10%;
+  z-index: 0;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.28);
   -webkit-backdrop-filter: blur(8px) saturate(1.08);
@@ -1458,23 +1471,20 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.3) inset,
     0 6px 18px rgba(0, 0, 0, 0.16);
-  transform: scale(var(--brand-logo-scale));
-  transform-origin: top left;
+  pointer-events: none;
 }
-html[dir="rtl"] .brand-logo-frame {
-  transform-origin: top right;
-}
-.brand-logo-frame--managed {
-  --brand-logo-pad-y: 14px;
-  --brand-logo-pad-x: 18px;
+.brand-logo-frame--managed::before {
   border-radius: 14px;
 }
 .brand-logo {
+  position: relative;
+  z-index: 1;
   display: block;
+  /* Definite height breaks abspos flex/fit-content × replaced-element collapse;
+     width follows intrinsic aspect; max-width caps wide wordmarks */
   width: auto;
-  height: auto;
-  max-width: min(280px, 48vw);
-  max-height: clamp(44px, 7.2vw, 72px);
+  height: clamp(44px, 7vw, 72px);
+  max-width: min(240px, 42vw);
   object-fit: contain;
   object-position: center;
   flex: 0 0 auto;
@@ -1491,11 +1501,11 @@ html[dir="rtl"] .brand-showcase__brand-logo-frame {
   right: clamp(14px, 3.5vw, 56px);
 }
 .brand-showcase__brand-logo {
-  position: static;
+  position: relative;
+  z-index: 1;
   width: auto;
-  height: auto;
-  max-width: min(280px, 48vw);
-  max-height: clamp(44px, 7.2vw, 72px);
+  height: clamp(44px, 7vw, 72px);
+  max-width: min(240px, 42vw);
   object-fit: contain;
   object-position: center;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.16));
@@ -1508,6 +1518,16 @@ html[dir="rtl"] .brand-showcase__brand-logo-frame {
 }
 html[dir="rtl"] .brand-showcase__brand-logo {
   object-position: center;
+}
+/* Mega-menu sizes must win over shared .brand-logo (same specificity, later cascade) */
+.brand-logo.mega-menu__preview-logo {
+  width: auto;
+  height: clamp(40px, 6vw, 56px);
+  max-width: min(200px, 36vw);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.14));
+}
+.brand-logo.mega-menu__preview-logo--managed {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
 }
 .brand-showcase__content { z-index: 2; left: 64px; bottom: 73px; text-shadow: 0 1px 12px rgba(0,0,0,.28); }
 .brand-showcase__content h2 { font-family: Arial, Helvetica, sans-serif; font-size: 55px; line-height: 1.05; text-transform: none; letter-spacing: -.05em; }
@@ -1582,17 +1602,13 @@ html[dir="rtl"] .brand-showcase__brand-logo {
     top: 22px;
     left: 40px;
     width: fit-content;
-    max-width: min(280px, 48vw);
+    max-width: min(260px, 46vw);
     height: auto;
-    --brand-logo-pad-y: 11px;
-    --brand-logo-pad-x: 14px;
-    padding: var(--brand-logo-pad-y) var(--brand-logo-pad-x);
   }
   .brand-showcase__brand-logo {
     width: auto;
-    height: auto;
-    max-height: 60px;
-    max-width: min(240px, 42vw);
+    height: 60px;
+    max-width: min(220px, 40vw);
   }
   html[dir="rtl"] .brand-showcase__brand-logo-frame { right: 40px; left: auto; }
   .showcase-more { right: 40px; }
@@ -1640,18 +1656,14 @@ html[dir="rtl"] .brand-showcase__brand-logo {
     right: auto;
     inset-inline-start: 20px;
     width: fit-content;
-    max-width: min(220px, 58vw);
+    max-width: min(200px, 56vw);
     height: auto;
-    --brand-logo-pad-y: 10px;
-    --brand-logo-pad-x: 12px;
-    padding: var(--brand-logo-pad-y) var(--brand-logo-pad-x);
-    border-radius: 12px;
+    padding: 0;
   }
   .brand-showcase__brand-logo {
     width: auto;
-    height: auto;
-    max-height: 46px;
-    max-width: min(190px, 52vw);
+    height: 46px;
+    max-width: min(170px, 48vw);
   }
   html[dir="rtl"] .brand-showcase__brand-logo-frame {
     left: auto;
@@ -3355,7 +3367,7 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
     right: auto;
     inset-inline-start: var(--mobile-gutter);
     width: fit-content;
-    max-width: min(220px, 58vw);
+    max-width: min(200px, 56vw);
     height: auto;
   }
   .intro-section {
