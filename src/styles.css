@@ -1823,16 +1823,6 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     padding-block-end: 5.5%;
     box-sizing: border-box;
   }
-  /* Homepage stacked banners only: stronger presence ≈ 3 per phone viewport */
-  #showcases .brand-showcase.brand-showcase--full-banner {
-    padding-block-end: 22%;
-  }
-  #showcases .brand-showcase__content {
-    bottom: calc(22px + 22vw) !important;
-  }
-  #showcases .showcase-more {
-    bottom: calc(22px + 22vw);
-  }
   .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
     position: relative;
     inset: auto;
@@ -2143,16 +2133,6 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
     padding-block: 0;
     padding-block-end: 5.5%;
     box-sizing: border-box;
-  }
-  /* Homepage density: ~3 brand banners per mobile viewport (not Brand/Category/PDP) */
-  #showcases .brand-showcase.brand-showcase--full-banner {
-    padding-block-end: 22%;
-  }
-  #showcases .brand-showcase__content {
-    bottom: calc(22px + 22vw) !important;
-  }
-  #showcases .showcase-more {
-    bottom: calc(22px + 22vw);
   }
   .brand-showcase.brand-showcase--full-banner .brand-showcase__image,
   .category-hero__media,
@@ -2887,6 +2867,9 @@ html[dir="rtl"] .checkout-gallery__link img { direction: ltr; }
 .checkout-placed__icon { width: 74px; aspect-ratio: 1; margin: 0 auto 22px; border-radius: 50%; color: #fff; background: var(--red); font-size: 30px; display: grid; place-items: center; transform: rotate(-5deg); }
 .checkout-placed h2 { margin: 0 0 14px; font-family: Impact,'Arial Narrow',sans-serif; font-size: clamp(34px,4vw,54px); font-weight: 900; line-height: .95; letter-spacing: -.02em; text-transform: uppercase; }
 .checkout-placed p { margin: 0 0 28px; color: #69696c; }
+.checkout-placed .store-primary-button { display: inline-flex; margin: 0 8px; }
+.checkout-placed .store-secondary-button { display: inline-flex; margin: 16px 8px 0; padding: 14px 22px; border: 1.5px solid #1a1a1a; border-radius: 999px; color: #1a1a1a; background: transparent; text-decoration: none; font-weight: 700; }
+.checkout-placed .checkout-panel__note { margin: 0 0 18px; }
 
 .checkout-related { max-width: 1080px; margin: 76px auto 0; }
 .checkout-related__head { margin-bottom: 24px; }

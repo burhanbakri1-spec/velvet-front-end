@@ -91,10 +91,15 @@ test('product-path-hero matches category banner no-crop framing', () => {
 
 test('mobile storefront banners raise presence without cropping media', () => {
   assert.doesNotMatch(styles, /min-height:\s*min\(68svh/);
-  assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?#showcases \.brand-showcase\.brand-showcase--full-banner[\s\S]*?padding-block-end:\s*22%/);
+  assert.doesNotMatch(styles, /#showcases \.brand-showcase\.brand-showcase--full-banner[\s\S]{0,120}?padding-block-end:\s*22%/);
+  assert.doesNotMatch(styles, /#showcases \.brand-showcase__content[\s\S]{0,80}?22vw/);
+  assert.doesNotMatch(styles, /#showcases \.showcase-more[\s\S]{0,80}?22vw/);
+  assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.brand-showcase\.brand-showcase--full-banner[\s\S]*?padding-block-end:\s*5\.5%/);
   assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.product-path-hero[\s\S]*?padding-block-end:\s*5\.5%/);
   assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.category-hero[\s\S]*?padding-block-end:\s*5\.5%/);
   assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.category-hero__media[\s\S]*?object-fit:\s*contain/);
+  assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.brand-showcase__content[\s\S]*?bottom:\s*calc\(22px \+ 5\.5vw\)/);
+  assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.showcase-more[\s\S]*?bottom:\s*calc\(22px \+ 5\.5vw\)/);
   assert.doesNotMatch(styles, /@media \(max-width:\s*768px\)[\s\S]*?\.product-path-hero\s*\{\s*height:\s*200px/);
   assert.doesNotMatch(styles, /@media \(max-width:\s*390px\)[\s\S]*?\.product-path-hero\s*\{\s*height:\s*180px/);
 });

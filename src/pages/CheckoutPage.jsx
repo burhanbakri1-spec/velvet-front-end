@@ -2,16 +2,15 @@ import { useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
 import { velvetProducts } from '../data/velvetCatalog';
+import { buildWhatsAppOrderMessage, buildWhatsAppOrderUrl, formatOrderPrice, openWhatsAppOrder } from '../data/whatsappOrder';
 import { Link } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
-
-const formatPrice = (value) => `$${Number(value).toFixed(2)}`;
 
 export default function CheckoutPage() {
   const { items, subtotal, addItem } = useCart();
   const { copy, locale } = useI18n();
   const [form, setForm] = useState({ name: '', phone: '', email: '', city: '', address: '', notes: '' });
-  const [placed, setPlaced] = useState(false);
+  const [prepared, setPrepared] = useState(null);
 
   const setField = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
 
@@ -20,10 +19,19 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = (event) => {
     event.preventDefault();
-    setPlaced(true);
+    const message = buildWhatsAppOrderMessage({
+      customer: form,
+      items,
+      subtotal,
+      shippingLabel: 'مجاني',
+    });
+    const url = buildWhatsAppOrderUrl(message);
+    const opened = openWhatsAppOrder(url);
+    // Keep cart intact — WhatsApp send is customer-driven; no backend confirmation exists.
+    setPrepared({ message, url, opened });
   };
 
-  if (items.length === 0 && !placed) {
+  if (items.length === 0 && !prepared) {
     return (
       <section className="checkout-page">
         <div className="checkout-empty">
@@ -45,12 +53,23 @@ export default function CheckoutPage() {
           <span>{copy.checkout.title}</span>
         </nav>
 
-        {placed ? (
+        {prepared ? (
           <section className="checkout-placed">
             <div className="checkout-placed__icon" aria-hidden="true">✓</div>
             <h2>{copy.checkout.successTitle}</h2>
             <p>{copy.checkout.successBody}</p>
-            <Link className="store-primary-button" to="/products">{copy.checkout.browse}</Link>
+            {!prepared.opened && (
+              <p className="checkout-panel__note">{copy.checkout.whatsappFallbackHint}</p>
+            )}
+            <a
+              className="store-primary-button"
+              href={prepared.url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {copy.checkout.whatsappSend}
+            </a>
+            <Link className="store-secondary-button" to="/products">{copy.checkout.browse}</Link>
           </section>
         ) : (
           <form className="checkout-main" onSubmit={handlePlaceOrder}>
@@ -68,17 +87,17 @@ export default function CheckoutPage() {
                       <div className="checkout-gallery__caption">
                         <Link to={`/products/${item.slug}`}><h3>{item.name}</h3></Link>
                         {variants && <p className="checkout-gallery__variants">{variants}</p>}
-                        <span className="checkout-gallery__meta">{item.quantity} × {formatPrice(item.price)}</span>
+                        <span className="checkout-gallery__meta">{item.quantity} × {formatOrderPrice(item.price)}</span>
                       </div>
-                      <strong className="checkout-gallery__total">{formatPrice(item.price * item.quantity)}</strong>
+                      <strong className="checkout-gallery__total">{formatOrderPrice(item.price * item.quantity)}</strong>
                     </li>
                   );
                 })}
               </ul>
               <dl className="checkout-summary">
-                <div><dt>{copy.checkout.subtotal}</dt><dd>{formatPrice(subtotal)}</dd></div>
+                <div><dt>{copy.checkout.subtotal}</dt><dd>{formatOrderPrice(subtotal)}</dd></div>
                 <div><dt>{copy.checkout.shipping}</dt><dd>{copy.checkout.free}</dd></div>
-                <div className="checkout-summary__grand"><dt>{copy.checkout.total}</dt><dd>{formatPrice(subtotal)}</dd></div>
+                <div className="checkout-summary__grand"><dt>{copy.checkout.total}</dt><dd>{formatOrderPrice(subtotal)}</dd></div>
               </dl>
             </section>
 
