@@ -76,12 +76,12 @@ export default function CategoriesMegaMenu({ open, onClose, brand: contextBrand 
           {brandLogo ? (
             <span
               className={`brand-logo-frame mega-menu__preview-logo-frame${managedLogo ? ' brand-logo-frame--managed' : ''}`}
-              style={{ '--brand-logo-scale': logoScale }}
             >
               <img
                 className={`brand-logo mega-menu__preview-logo${managedLogo ? ' mega-menu__preview-logo--managed' : ''}`}
                 src={brandLogo}
                 alt={brand.name[locale]}
+                style={{ '--brand-logo-scale': logoScale }}
               />
             </span>
           ) : null}

@@ -18,6 +18,7 @@ import {
   getBrand,
   getCategory,
   getFilterGroup,
+  getPathHeroMedia,
   getProductBySlug,
   getProductMedia,
   getSubcategory,
@@ -294,6 +295,9 @@ export default function ProductDetailsPage({ slug }) {
     : null;
   const eyebrow = resolveEyebrow(routeProduct);
   const productName = getProductName(routeProduct, locale);
+  const pathHero = getPathHeroMedia(routeProduct);
+  const heroTitle = pathHero.name?.[locale] || '';
+  const showPathHero = Boolean(pathHero.image || pathHero.video || heroTitle);
 
   const metres = {
     age: getFilterGroup('age').find((item) => item.id === routeProduct.age)
@@ -360,6 +364,31 @@ export default function ProductDetailsPage({ slug }) {
 
   return (
     <div className="product-detail-page">
+      {showPathHero ? (
+        <section className="product-path-hero" aria-label={heroTitle || productName}>
+          {pathHero.video ? (
+            <video
+              className="product-path-hero__media"
+              src={pathHero.video}
+              poster={pathHero.image || undefined}
+              autoPlay
+              muted
+              loop
+              playsInline
+            />
+          ) : pathHero.image ? (
+            <img className="product-path-hero__media" src={pathHero.image} alt="" />
+          ) : (
+            <div className="product-path-hero__fallback" aria-hidden="true" />
+          )}
+          {heroTitle ? (
+            <div className="product-path-hero__copy">
+              <h1>{heroTitle}</h1>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       <PageNavigation fallbackPath={detailFallback} breadcrumbs={detailBreadcrumbs} />
 
       <section
