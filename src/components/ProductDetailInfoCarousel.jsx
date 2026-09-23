@@ -14,15 +14,24 @@ function PolicyList({ points = [] }) {
 }
 
 /**
- * Centered PDP info card carousel: active card in the middle with peek of neighbors.
- * Order: Details & Specs → Product Details → Delivery → Exchange → Cancellation.
- * Supports swipe/drag and click-to-center on peek cards.
+ * Centered PDP info card carousel.
+ * Click side cards OR swipe to change active index. Dots also navigate.
+ *
+ * Click root-cause fix: setPointerCapture on the track diverted click events
+ * away from cards, so onClick never flipped state. Activation is now decided
+ * in pointerup from the card index captured on pointerdown.
  */
 export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow = '' }) {
   const { copy, locale } = useI18n();
   const isRtl = locale === 'ar';
   const trackRef = useRef(null);
-  const drag = useRef({ active: false, startX: 0, delta: 0, moved: false });
+  const drag = useRef({
+    active: false,
+    startX: 0,
+    delta: 0,
+    moved: false,
+    cardIndex: null,
+  });
   const [index, setIndex] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [cardSpan, setCardSpan] = useState(58);
@@ -71,6 +80,7 @@ export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow
 
   const goTo = useCallback((next) => {
     const len = cards.length;
+    if (!len) return;
     const wrapped = ((next % len) + len) % len;
     setIndex(wrapped);
     setDragOffset(0);
@@ -90,37 +100,65 @@ export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow
     return () => media.removeEventListener?.('change', sync);
   }, []);
 
+  const resolveCardIndex = (target) => {
+    const node = target?.closest?.('[data-carousel-index]');
+    if (!node) return null;
+    const value = Number(node.getAttribute('data-carousel-index'));
+    return Number.isFinite(value) ? value : null;
+  };
+
   const onPointerDown = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    drag.current = { active: true, startX: event.clientX, delta: 0, moved: false };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    drag.current = {
+      active: true,
+      startX: event.clientX,
+      delta: 0,
+      moved: false,
+      cardIndex: resolveCardIndex(event.target),
+      pointerId: event.pointerId,
+    };
+    // Do NOT capture yet — early capture steals click from peek cards.
+    // Capture only after the gesture becomes a drag (see onPointerMove).
   };
 
   const onPointerMove = (event) => {
     if (!drag.current.active) return;
     const delta = event.clientX - drag.current.startX;
     drag.current.delta = delta;
-    if (Math.abs(delta) > 6) drag.current.moved = true;
-    setDragOffset(delta);
+    if (Math.abs(delta) > 8) {
+      if (!drag.current.moved) {
+        drag.current.moved = true;
+        try {
+          event.currentTarget.setPointerCapture?.(drag.current.pointerId ?? event.pointerId);
+        } catch {
+          /* Synthetic / non-primary pointers cannot capture — swipe still works via move handlers. */
+        }
+      }
+      setDragOffset(delta);
+    }
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (event) => {
     if (!drag.current.active) return;
-    const threshold = 56;
-    const delta = drag.current.delta;
-    const moved = drag.current.moved;
+    const { delta, moved, cardIndex } = drag.current;
     drag.current.active = false;
+
+    if (moved && event.currentTarget?.hasPointerCapture?.(drag.current.pointerId ?? event.pointerId)) {
+      event.currentTarget.releasePointerCapture?.(drag.current.pointerId ?? event.pointerId);
+    }
+
+    // Tap / click a side card → center it.
+    if (!moved && cardIndex != null && cardIndex !== index) {
+      goTo(cardIndex);
+      return;
+    }
+
+    const threshold = 56;
     const forward = isRtl ? delta > threshold : delta < -threshold;
     const backward = isRtl ? delta < -threshold : delta > threshold;
     if (moved && forward) goTo(index + 1);
     else if (moved && backward) goTo(index - 1);
     else setDragOffset(0);
-  };
-
-  const onCardActivate = (cardIndex) => {
-    if (cardIndex === index) return;
-    if (drag.current.moved || Math.abs(drag.current.delta) >= 8) return;
-    goTo(cardIndex);
   };
 
   const sidePeek = (100 - cardSpan) / 2;
@@ -151,18 +189,16 @@ export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow
             return (
               <article
                 key={card.id}
+                data-carousel-index={cardIndex}
                 className={`product-detail-carousel__card${isActive ? ' is-active' : ''}`}
-                aria-hidden={!isActive}
+                aria-current={isActive ? 'true' : undefined}
                 role="group"
                 aria-roledescription="slide"
                 aria-label={card.title}
-                tabIndex={isActive ? 0 : -1}
-                onClick={() => onCardActivate(cardIndex)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    onCardActivate(cardIndex);
-                  }
+                onClick={() => {
+                  // Fallback when pointerup path is skipped; ignore after drag.
+                  if (drag.current.moved) return;
+                  if (cardIndex !== index) goTo(cardIndex);
                 }}
               >
                 <div className="product-detail-section-head">

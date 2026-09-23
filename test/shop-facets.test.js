@@ -192,7 +192,8 @@ test('grid density control renders in filter bar and products page', () => {
   assert.match(filterBar, /shop-grid-density__choices/);
   assert.match(filterBar, /shop-grid-density__btn/);
   assert.match(filterBar, /shop-grid-density__svg/);
-  assert.match(filterBar, /\[2,\s*3,\s*4\]\.map/);
+  assert.match(filterBar, /\[2,\s*3\]\.map/);
+  assert.doesNotMatch(filterBar, /\[2,\s*3,\s*4\]/);
   assert.doesNotMatch(filterBar, /shop-grid-density__track/);
   assert.doesNotMatch(filterBar, /shop-grid-density__bar/);
   assert.doesNotMatch(filterBar, /shop-grid-density__btn-label/);
@@ -203,40 +204,45 @@ test('grid density control renders in filter bar and products page', () => {
   assert.match(productsPage, /data-shop-grid-cols/);
 });
 
-test('grid density CSS maps 2, 3, and 4 column preferences', () => {
+test('grid density CSS maps 2 and 3 column preferences only', () => {
   assert.match(styles, /\.shop-products--pref-2 \{[\s\S]*?repeat\(2,/);
   assert.match(styles, /\.shop-products--pref-3 \{[\s\S]*?repeat\(3,/);
-  assert.match(styles, /\.shop-products--pref-4 \{[\s\S]*?repeat\(4,/);
+  assert.doesNotMatch(styles, /\.shop-products--pref-4/);
   assert.match(styles, /\.shop-grid-density__choices/);
   assert.match(styles, /\.shop-grid-density__btn\.is-active/);
   assert.match(styles, /\.shop-grid-density__svg/);
+  assert.match(styles, /\.shop-grid-density__btn[\s\S]{0,200}?border:\s*0/);
+  assert.match(styles, /\.shop-grid-density__btn[\s\S]{0,200}?background:\s*transparent/);
 });
 
 test('grid density localStorage key and default are defined', () => {
   assert.equal(SHOP_GRID_DENSITY_KEY, 'velvet-shop-grid-cols');
-  assert.equal(SHOP_GRID_DEFAULT_COLS, 4);
+  assert.equal(SHOP_GRID_DEFAULT_COLS, 3);
   const hookSource = fs.readFileSync(new URL('../src/hooks/useShopGridDensity.js', import.meta.url), 'utf8');
   assert.match(hookSource, /localStorage/);
 });
 
-test('mobile grid clamps to two columns while keeping density control', () => {
-  assert.match(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-4[\s\S]*?repeat\(2,/);
+test('mobile density keeps 2 and 3 column prefs (no clamp to 2)', () => {
+  assert.match(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-2 \{[\s\S]*?repeat\(2,/);
+  assert.match(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-3 \{[\s\S]*?repeat\(3,/);
   assert.doesNotMatch(styles, /\.shop-grid-density \{ display: none; \}/);
 });
 
-test('shop filter layout separates filter, tools, and quick chips', () => {
+test('shop filter layout keeps FILTER alone in bordered bar', () => {
+  assert.match(filterBar, /className=\{`shop-filters/);
+  assert.match(filterBar, /className="shop-filter-bar"/);
   assert.match(filterBar, /shop-filter-bar__row--filter/);
-  assert.match(filterBar, /shop-filter-bar__row--tools/);
-  assert.match(filterBar, /shop-filter-bar__row--quick/);
-  assert.match(styles, /\.shop-filter-bar__row--tools[\s\S]{0,120}?justify-content:\s*space-between/);
-  assert.match(styles, /\.shop-filter-bar__row--quick[\s\S]{0,120}?justify-content:\s*center/);
+  assert.match(filterBar, /shop-filter-tools/);
+  assert.match(filterBar, /shop-filter-quick-row/);
+  assert.match(styles, /\.shop-filter-tools[\s\S]{0,120}?justify-content:\s*space-between/);
+  assert.match(styles, /\.shop-filter-quick-row[\s\S]{0,120}?justify-content:\s*center/);
 });
 
-test('grid density never exceeds four columns', () => {
-  assert.match(styles, /\.shop-products--pref-4 \{[\s\S]*?repeat\(4,/);
+test('grid density never exceeds three columns', () => {
+  assert.doesNotMatch(styles, /\.shop-products--pref-4/);
   assert.doesNotMatch(styles, /\.shop-products--pref-5/);
   const hookSource = fs.readFileSync(new URL('../src/hooks/useShopGridDensity.js', import.meta.url), 'utf8');
-  assert.match(hookSource, /MAX_COLS = 4/);
+  assert.match(hookSource, /MAX_COLS = 3/);
 });
 
 test('main filter surfaces use pure white backgrounds', () => {
@@ -252,8 +258,14 @@ test('filter inactive siblings no longer use gray chip surfaces', () => {
   assert.doesNotMatch(styles, /\.shop-filter-column[\s\S]*?#fafafa/);
 });
 
-test('filter bar avoids gray cast from heavy shadow', () => {
-  assert.match(styles, /\.shop-filter-bar \{[\s\S]*?box-shadow:\s*none/);
+test('FILTER card keeps light elevation; tools/chips have no parent card', () => {
+  assert.match(styles, /\.shop-filter-bar \{[\s\S]*?box-shadow:\s*0 10px 28px/);
+  assert.match(styles, /\.shop-filters \{[\s\S]*?background:\s*transparent/);
+  assert.match(styles, /\.shop-filters \{[\s\S]*?border:\s*0/);
+  assert.match(styles, /\.shop-filter-tools \{[\s\S]*?background:\s*transparent/);
+  assert.match(styles, /\.shop-filter-tools \{[\s\S]*?border:\s*0/);
+  assert.match(styles, /\.shop-filter-quick-row \{[\s\S]*?background:\s*transparent/);
+  assert.match(styles, /\.shop-filter-quick-row \{[\s\S]*?border:\s*0/);
 });
 
 test('grid density translations exist in EN and AR', () => {

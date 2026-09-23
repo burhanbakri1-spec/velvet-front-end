@@ -1,14 +1,16 @@
 import { useCallback, useState } from 'react';
 
 const STORAGE_KEY = 'velvet-shop-grid-cols';
-const DEFAULT_COLS = 4;
+const DEFAULT_COLS = 3;
 const MIN_COLS = 2;
-const MAX_COLS = 4;
+const MAX_COLS = 3;
 
 function readStoredCols() {
   try {
     const value = parseInt(localStorage.getItem(STORAGE_KEY), 10);
     if (value >= MIN_COLS && value <= MAX_COLS) return value;
+    // Migrate legacy 4-column preference to 3.
+    if (value === 4) return 3;
   } catch {
     /* ignore */
   }

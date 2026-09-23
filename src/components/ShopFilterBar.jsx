@@ -85,8 +85,8 @@ function FilterColumn({ column, selected, options, emptyHint, onReset, onToggle,
 }
 
 function DensityIcon({ cols }) {
-  const size = 18;
-  const gap = 2;
+  const size = 22;
+  const gap = 2.5;
   const rows = 2;
   const cellW = (size - gap * (cols - 1)) / cols;
   const cellH = (size - gap) / rows;
@@ -109,8 +109,8 @@ function DensityIcon({ cols }) {
             y={row * (cellH + gap)}
             width={cellW}
             height={cellH}
-            rx="1.6"
-            ry="1.6"
+            rx="1.8"
+            ry="1.8"
             fill="currentColor"
           />
         );
@@ -120,7 +120,7 @@ function DensityIcon({ cols }) {
 }
 
 function GridDensityControl({ gridCols, onGridColsChange, labels }) {
-  const activeCols = Math.min(4, Math.max(2, Number(gridCols) || 2));
+  const activeCols = Math.min(3, Math.max(2, Number(gridCols) || 2));
   return (
     <div
       className="shop-grid-density"
@@ -130,7 +130,7 @@ function GridDensityControl({ gridCols, onGridColsChange, labels }) {
       aria-label={labels.view}
     >
       <div className="shop-grid-density__choices">
-        {[2, 3, 4].map((cols) => (
+        {[2, 3].map((cols) => (
           <button
             type="button"
             key={cols}
@@ -197,30 +197,32 @@ export default function ShopFilterBar({
   const showDensity = typeof onGridColsChange === 'function';
 
   return (
-    <section className={`shop-filter-bar ${open ? 'is-open' : ''}`} data-shop-filter-bar aria-label={s.filters}>
-      <div className="shop-filter-bar__row shop-filter-bar__row--filter">
-        <button
-          type="button"
-          className={`shop-filter-bar__toggle${open ? ' is-active' : ''}`}
-          aria-expanded={open}
-          onClick={() => setOpen((value) => !value)}
-        >
-          {open ? (
-            <>
-              <span className="shop-filter-bar__icon" aria-hidden="true">×</span>
-              <span>{s.collapseFilters}</span>
-            </>
-          ) : (
-            <>
-              <span className="shop-filter-bar__icon shop-filter-bar__icon--filter" aria-hidden="true" />
-              <span className="shop-filter-bar__toggle-label">{s.filterBar}</span>
-              <span className="shop-filter-bar__count">({resultCount} {countLabel})</span>
-            </>
-          )}
-        </button>
+    <section className={`shop-filters ${open ? 'is-open' : ''}`} data-shop-filter-bar aria-label={s.filters}>
+      <div className="shop-filter-bar">
+        <div className="shop-filter-bar__row shop-filter-bar__row--filter">
+          <button
+            type="button"
+            className={`shop-filter-bar__toggle${open ? ' is-active' : ''}`}
+            aria-expanded={open}
+            onClick={() => setOpen((value) => !value)}
+          >
+            {open ? (
+              <>
+                <span className="shop-filter-bar__icon" aria-hidden="true">×</span>
+                <span>{s.collapseFilters}</span>
+              </>
+            ) : (
+              <>
+                <span className="shop-filter-bar__icon shop-filter-bar__icon--filter" aria-hidden="true" />
+                <span className="shop-filter-bar__toggle-label">{s.filterBar}</span>
+                <span className="shop-filter-bar__count">({resultCount} {countLabel})</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
-      <div className="shop-filter-bar__row shop-filter-bar__row--tools">
+      <div className="shop-filter-tools">
         {showDensity ? (
           <GridDensityControl
             gridCols={gridCols}
@@ -229,7 +231,6 @@ export default function ShopFilterBar({
               view: s.gridView,
               cols2: s.gridCols2,
               cols3: s.gridCols3,
-              cols4: s.gridCols4,
             }}
           />
         ) : <span />}
@@ -250,7 +251,7 @@ export default function ShopFilterBar({
       </div>
 
       {quickCategories.length > 0 && (
-        <div className="shop-filter-bar__row shop-filter-bar__row--quick" aria-label={s.mainCategory}>
+        <div className="shop-filter-quick-row" aria-label={s.mainCategory}>
           <div className="shop-filter-bar__quick">
             {quickCategories.map((option) => {
               const active = state.category === option.id;

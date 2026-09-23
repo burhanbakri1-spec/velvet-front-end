@@ -19,11 +19,11 @@
 html[lang="ar"] body { font-family: "IBM Plex Sans Arabic", "Inter", system-ui, sans-serif; }
 html[lang="ar"] :is(.intro-section h2, .careers-section h2, .footer__callout h2, .page-video-hero__title h1, .page-title-hero h1, .editorial-split__copy h2, .company-careers-cta h2, .news-card h2, .contact-form-intro h2, .store-hero h1, .product-browser__head h2, .related-products h2, .cart-page__head h1, .cart-empty h1, .store-not-found h1, .product-purchase-panel h1, .product-detail-page .category-product-showcase__copy h1, .checkout-panel h1, .product-detail-section-head h2, .checkout-summary-panel__head h2, .mega-menu__feature strong, .about-subnav a span) { font-family: "IBM Plex Sans Arabic", "Inter", system-ui, sans-serif; letter-spacing: 0; text-transform: none; line-height: 1.08; }
 html[lang="ar"] :is(.store-eyebrow, .eyebrow, .brand-showcase__content p, .mega-menu__eyebrow, .footer__groups h3, .contact-form label > span) { letter-spacing: 0; }
-/* Arabic banner type only — ~8–10% larger titles; EN sizes unchanged */
+/* Arabic banner type only â€” ~8â€“10% larger titles; EN sizes unchanged */
 html[lang="ar"] .brand-showcase__content p { font-size: 13px; }
 html[lang="ar"] .category-hero__title span { font-size: 12px; }
 html[lang="ar"] .category-hero__description { font-size: 18px; }
-/* Desktop-only Arabic brand/hero display sizes — mobile uses composition overrides below */
+/* Desktop-only Arabic brand/hero display sizes â€” mobile uses composition overrides below */
 @media (min-width: 901px) {
   html[lang="ar"] .brand-showcase__content h2 { font-size: 60px; }
   html[lang="ar"] .category-hero__title h1 { font-size: clamp(60px, 5.45vw, 78px); }
@@ -155,7 +155,9 @@ button { color: inherit; }
 .site-header.is-open .nav-bar { background: #fff; }
 
 .language-control {
-  display: inline-flex;
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   align-items: center;
   gap: 8px;
   min-height: 40px;
@@ -169,15 +171,24 @@ button { color: inherit; }
   font-weight: 500;
   letter-spacing: 0;
   cursor: pointer;
-  transition: border-color .2s ease, background .2s ease;
+  transition: border-color .2s ease, background .2s ease, color .2s ease;
+  flex: 0 0 auto;
 }
 .language-control:hover,
 .language-control:focus-visible { border-color: var(--ink); }
 .language-control__icon { width: 16px; height: 16px; flex: 0 0 auto; }
-.site-header:not(.is-open) .language-control--header {
+/* Dark / image heroes: white language chrome */
+.site-header:not(.site-header--solid):not(.is-open) .language-control--header {
   border-color: rgba(255, 255, 255, .35);
   background: rgba(255, 255, 255, .14);
   color: #fff;
+}
+/* Light / solid storefront pages (Shop, PDP, cart, â€¦): dark language chrome */
+.site-header.site-header--solid .language-control--header,
+.site-header.is-open .language-control--header {
+  border-color: rgba(18, 18, 20, .14);
+  background: rgba(255, 255, 255, .92);
+  color: var(--ink);
 }
 
 .mobile-drawer {
@@ -215,7 +226,7 @@ button { color: inherit; }
   transform: none;
   box-shadow: none;
 }
-/* Main VELVET site.logo — uploaded artwork already includes plate + shadow.
+/* Main VELVET site.logo â€” uploaded artwork already includes plate + shadow.
    No CSS-generated plate, cast-shadow, or drop-shadow on the main logo. */
 .logo--velvet-badge,
 .logo--velvet-badge.logo--managed,
@@ -302,9 +313,9 @@ button { color: inherit; }
 .logo--velvet-badge.logo--managed .logo__img.logo__img--managed-site {
   width: auto;
   height: auto;
-  /* +9% vs prior 148×56 header logo for stronger ZURU-like presence */
-  max-width: 161px;
-  max-height: 61px;
+  /* +9% vs prior 161أ—61 header logo */
+  max-width: 176px;
+  max-height: 67px;
   object-fit: contain;
   object-position: center;
   display: block;
@@ -462,7 +473,7 @@ button { color: inherit; }
   position: relative;
   z-index: 1;
   display: block;
-  /* Definite height breaks abspos flex/fit-content × replaced-element collapse */
+  /* Definite height breaks abspos flex/fit-content أ— replaced-element collapse */
   width: auto;
   height: clamp(40px, 6vw, 56px);
   max-width: min(200px, 36vw);
@@ -641,8 +652,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--velvet-badge .logo__img--managed-site,
   .logo--velvet-badge.logo--managed .logo__img.logo__img--managed-site {
     width: auto;
-    max-width: 144px;
-    max-height: 55px;
+    max-width: 157px;
+    max-height: 60px;
     transform: none;
     background: transparent;
   }
@@ -699,8 +710,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--velvet-badge .logo__img--managed-site,
   .logo--velvet-badge.logo--managed .logo__img.logo__img--managed-site {
     width: auto;
-    max-width: 129px;
-    max-height: 48px;
+    max-width: 141px;
+    max-height: 52px;
     transform: none;
     background: transparent;
   }
@@ -940,10 +951,11 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
 .site-header--solid .nav-link,
 .site-header--solid .header-icon-button,
 .site-header--solid .menu-toggle { color: var(--ink); }
-.site-header--solid .language-control--header {
-  border-color: rgba(18, 18, 20, .14);
-  background: rgba(255, 255, 255, .92);
-  color: var(--ink);
+.site-header--solid .language-control--header,
+.site-header.site-header--solid:not(.is-open) .language-control--header {
+  border-color: rgba(18, 18, 20, .14) !important;
+  background: rgba(255, 255, 255, .92) !important;
+  color: var(--ink) !important;
 }
 .site-header--solid .menu-toggle span { background: var(--ink); }
 .header-cart-link { position: relative; }
@@ -1008,7 +1020,7 @@ html[dir="rtl"] .product-card__gallery-btn span { transform: scaleX(-1); }
 /* Keep overflow visible so sticky PageNavigation uses the viewport, not this page as a scroll CB. */
 .product-detail-page { padding: 0 0 130px; background: #fdfdfd; overflow: visible; }
 
-/* Editorial showcase — mirrors BrandCategoryPage / CategoryProductShowcase */
+/* Editorial showcase â€” mirrors BrandCategoryPage / CategoryProductShowcase */
 .category-product-showcase.category-product-showcase--detail {
   min-height: 0;
   height: auto;
@@ -1076,7 +1088,7 @@ html[dir="rtl"] .product-detail-gallery__preview img, html[dir="rtl"] .product-d
 .product-detail-specs__list dt { color: #77777a; font-size: 13px; }
 .product-detail-specs__list dd { margin: 0; font-weight: 800; text-align: end; }
 
-/* How to use — responsive large editorial video (hidden when no usageVideo) */
+/* How to use â€” responsive large editorial video (hidden when no usageVideo) */
 .product-usage-video { margin: 90px 0 0; }
 .product-usage-video__player { width: 100%; aspect-ratio: 16 / 9; border-radius: 28px; background: #151225; display: block; object-fit: cover; }
 
@@ -1124,8 +1136,8 @@ html[dir="rtl"] .product-detail-gallery__preview img, html[dir="rtl"] .product-d
 .cart-empty p { max-width: 520px; margin: 25px 0 32px; color: #69696c; font-size: 17px; line-height: 1.55; }
 
 /* Cart drawer: fixed slide-in panel. MUST NOT be a horizontal scrollport while
-   closed — overflow:hidden still allows scrollLeft/touch pan when the off-canvas
-   panel makes scrollWidth ≈ 2× viewport (documentElement.scrollWidth misses this
+   closed â€” overflow:hidden still allows scrollLeft/touch pan when the off-canvas
+   panel makes scrollWidth â‰ˆ 2أ— viewport (documentElement.scrollWidth misses this
    because the drawer is position:fixed). Use overflow:clip + paint containment. */
 .cart-drawer {
   position: fixed;
@@ -1566,12 +1578,12 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   height: auto;
   max-width: none;
   max-height: none;
-  /* height:auto sizes the box to the image — contain only overrides cover, no letterbox frame */
+  /* height:auto sizes the box to the image â€” contain only overrides cover, no letterbox frame */
   object-fit: contain;
   object-position: center;
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
-/* Shared brand logo plate: wrapper hugs logo; ::before expands ~16–20% around it */
+/* Shared brand logo plate: wrapper hugs logo; ::before expands ~16â€“20% around it */
 .brand-logo-frame {
   --brand-logo-scale: 1;
   position: relative;
@@ -1618,7 +1630,7 @@ html[dir="rtl"] .brand-logo-frame {
   position: relative;
   z-index: 1;
   display: block;
-  /* Definite height breaks abspos flex/fit-content × replaced-element collapse;
+  /* Definite height breaks abspos flex/fit-content أ— replaced-element collapse;
      width follows intrinsic aspect; max-width caps wide wordmarks */
   width: auto;
   height: clamp(44px, 7vw, 72px);
@@ -1940,7 +1952,7 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
 /* Category discovery pages */
 .brand-showcase__link { position: absolute; inset: 0; z-index: 1; }
 .category-page { background: #fff; color: var(--ink); overflow: visible; }
-/* Category / Brand / Subcategory banners: image IS the banner — full width, intrinsic height. */
+/* Category / Brand / Subcategory banners: image IS the banner â€” full width, intrinsic height. */
 .category-hero {
   width: 100%;
   height: auto;
@@ -1962,7 +1974,7 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
   height: auto;
   max-width: none;
   max-height: none;
-  /* height:auto sizes the box to the image — contain only overrides cover, no letterbox frame */
+  /* height:auto sizes the box to the image â€” contain only overrides cover, no letterbox frame */
   object-fit: contain;
   object-position: center;
   transition: none;
@@ -2302,11 +2314,26 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
 /* Desktop: filter bar above full-width results */
 .shop-page__grid { display: block; }
 
-.shop-filter-bar {
+/* Stack: FILTER card → bare tools row → bare chips. No outer card on .shop-filters. */
+.shop-filters {
   margin: 0 0 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: static;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  max-height: none;
+  overflow: visible;
+}
+.shop-filter-bar {
+  margin: 0;
   border: 1px solid #e7e6e2;
   border-radius: 20px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
+  background: #FFFFFF;
   box-shadow: 0 10px 28px rgba(18, 18, 20, .04);
   overflow: hidden;
 }
@@ -2316,24 +2343,37 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
   gap: 12px;
   min-height: 0;
   padding: 10px 14px;
-  background: transparent;
+  background: #FFFFFF;
   flex-wrap: wrap;
 }
 .shop-filter-bar__row--filter {
   justify-content: flex-start;
-  padding-bottom: 4px;
+  padding: 12px 14px;
 }
-.shop-filter-bar__row--tools {
-  justify-content: space-between;
+/* Density + Sort — directly on page background, no parent card/bar */
+.shop-filter-tools {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  padding-top: 4px;
-  padding-bottom: 8px;
+  padding: 4px 0;
+  margin: 0;
+  flex-wrap: wrap;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
-.shop-filter-bar__row--quick {
+/* Quick category chips — centered, no parent card/bar */
+.shop-filter-quick-row {
+  display: flex;
   justify-content: center;
-  padding-top: 2px;
-  padding-bottom: 12px;
+  padding: 2px 0 6px;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 .shop-filter-bar__quick {
   display: flex;
@@ -2639,13 +2679,7 @@ html[dir="rtl"] .shop-filter-column__head h3 { letter-spacing: 0; text-transform
 }
 .shop-filter-panel__apply:hover { background: #000; }
 
-/* Sticky sidebar with internal scroll (like reference) */
-.shop-filters {
-  position: sticky; top: calc(var(--header-height) + 18px);
-  background: #fff; border: 1px solid #e7e6e2; border-radius: 16px; padding: 1.1rem;
-  box-shadow: 0 10px 28px rgba(18,18,20,.06);
-  max-height: calc(100vh - var(--header-height) - 36px); overflow-y: auto;
-}
+/* Legacy sidebar sticky styles removed — FILTER chrome lives on .shop-filter-bar only. */
 .product-filters__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .4rem; }
 .product-filters__head h2 { font-size: 1.05rem; }
 .product-filters__clear { border: 0; background: transparent; color: var(--red); font: inherit; font-size: .78rem; font-weight: 600; cursor: pointer; padding: 0; }
@@ -2658,7 +2692,7 @@ html[dir="rtl"] .shop-filter-column__head h3 { letter-spacing: 0; text-transform
 }
 .filter-group__head::-webkit-details-marker { display: none; }
 .filter-group__head::after { content: "+"; color: #9a9a9e; font-weight: 400; }
-.filter-group[open] .filter-group__head::after { content: "−"; }
+.filter-group[open] .filter-group__head::after { content: "âˆ’"; }
 .filter-group__opts { display: flex; flex-direction: column; gap: .4rem; margin-top: .7rem; }
 .filter-option { display: flex; align-items: center; gap: .5rem; font-size: .83rem; color: #3f3f43; cursor: pointer; }
 .filter-option input { position: absolute; opacity: 0; pointer-events: none; }
@@ -2749,11 +2783,10 @@ html[dir="rtl"] .shop-filter-column__head h3 { letter-spacing: 0; text-transform
 .shop-products { display: grid; gap: .9rem; }
 .shop-products--pref-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .shop-products--pref-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.shop-products--pref-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .shop-grid-density {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
   flex-shrink: 0;
   margin-inline-start: 0;
 }
@@ -2765,37 +2798,44 @@ html[dir="rtl"] .shop-filter-column__head h3 { letter-spacing: 0; text-transform
 .shop-grid-density__choices {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
 }
+/* Icon-only density controls â€” no border/pill/card chrome */
 .shop-grid-density__btn {
   display: inline-grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
   padding: 0;
-  border: 1px solid #e4e4e7;
-  border-radius: 14px;
-  background: #fff;
-  color: #8a8a8e;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #9a9a9e;
   font: inherit;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(18, 18, 20, .04);
-  transition: border-color .16s ease, background .16s ease, color .16s ease, box-shadow .16s ease;
+  transition: color .16s ease, opacity .16s ease;
 }
 .shop-grid-density__btn:hover {
-  border-color: rgba(228, 7, 33, .35);
   color: var(--red);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 .shop-grid-density__btn.is-active {
-  border-color: var(--red);
-  background: #fff5f6;
   color: var(--red);
-  box-shadow: 0 8px 18px rgba(228, 7, 33, .12);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 .shop-grid-density__svg {
   display: block;
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
 }
 .shop-grid-density__icon {
   display: none;
@@ -2857,11 +2897,9 @@ html[dir="rtl"] .mega-cascade__col a:hover, html[dir="rtl"] .mega-cascade__col b
 
 @media (max-width: 980px) {
   .shop-page__grid { grid-template-columns: 1fr; }
-  .shop-products--pref-4 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .shop-filter-panel__groups--hierarchy,
   .shop-filter-panel__groups--attrs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .shop-filter-bar__row { flex-wrap: wrap; }
-  .shop-filter-bar__chips { order: 3; flex-basis: 100%; max-height: 72px; overflow-x: auto; flex-wrap: nowrap; }
+  .shop-filter-bar__chips { max-height: 72px; overflow-x: auto; flex-wrap: nowrap; }
   .shop-filter-bar__chips .tag { flex: 0 0 auto; }
   .cascade-dd { flex: 1 1 calc(50% - .3rem); min-width: 0; }
   .mega-cascade { grid-template-columns: 1fr; gap: 22px; max-height: calc(100svh - var(--header-height) - 40px); overflow: auto; }
@@ -2873,15 +2911,27 @@ html[dir="rtl"] .mega-cascade__col a:hover, html[dir="rtl"] .mega-cascade__col b
   .shop-hero { padding: 1.1rem 1.2rem; }
   .shop-toolbar__right { width: 100%; justify-content: space-between; }
   .shop-search { width: auto; flex: 1; }
-  .shop-products--pref-2,
-  .shop-products--pref-3,
-  .shop-products--pref-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .shop-grid-density__text { display: none; }
+  /* Density prefs stay truthful on phone: 2â†’2 cols, 3â†’3 cols (no mobile clamp). */
+  .shop-products--pref-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shop-products--pref-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .shop-filter-panel__groups--hierarchy,
   .shop-filter-panel__groups--attrs { grid-template-columns: 1fr; }
   .shop-filter-panel__groups--attrs { margin-top: 18px; padding-top: 16px; }
   .shop-filter-column .filter-option { min-height: 44px; }
-  .shop-filter-bar__sort { width: 100%; justify-content: space-between; }
+  .shop-filter-tools {
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+  .shop-filter-bar__sort {
+    width: auto;
+    min-width: 0;
+    flex: 0 1 auto;
+    justify-content: flex-end;
+  }
+  .shop-filter-bar__sort select {
+    min-width: 0;
+    max-width: min(52vw, 180px);
+  }
 }
 
 /* Product card quick add (recommendations) */
@@ -2969,7 +3019,7 @@ html[dir="rtl"] .checkout-gallery__link img { direction: ltr; }
 
 html[dir="rtl"] .product-media__main img, html[dir="rtl"] .product-media__thumbs button img { direction: ltr; }
 
-/* PageNavigation — sticky VELVET Home context bar (in-flow; reserves height) */
+/* PageNavigation â€” sticky VELVET Home context bar (in-flow; reserves height) */
 .page-nav {
   position: relative;
   display: flex;
@@ -3353,6 +3403,9 @@ html[dir="rtl"] .product-path-hero__copy {
   opacity: .55;
   transform: scale(.92);
   transition: opacity .35s ease, transform .45s cubic-bezier(.22, 1, .36, 1), box-shadow .35s ease;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .product-detail-carousel__card.is-active {
   opacity: 1;
@@ -3844,7 +3897,7 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
 }
 
 
-/* Mobile composition system � final cascade win for 320�900px (ZURU-aligned). Desktop unchanged. */
+/* Mobile composition system ï؟½ final cascade win for 320ï؟½900px (ZURU-aligned). Desktop unchanged. */
 @media (max-width: 900px) {
   :root { --mobile-gutter: 22px; }
   html, body { overflow-x: clip; }
@@ -3976,7 +4029,7 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
     overscroll-behavior-x: none;
   }
 
-  /* Page chrome: vertical pan only — intentional carousels opt back into pan-x */
+  /* Page chrome: vertical pan only â€” intentional carousels opt back into pan-x */
   #root,
   main,
   .store-main,
@@ -4050,7 +4103,7 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
     text-overflow: ellipsis;
   }
 
-  /* Horizontal scroller containment — do not chain to page */
+  /* Horizontal scroller containment â€” do not chain to page */
   .same-subcategory-products__viewport,
   .related-products__track,
   .checkout-related__track,

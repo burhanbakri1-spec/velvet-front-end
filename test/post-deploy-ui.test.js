@@ -18,6 +18,14 @@ test('language switch preserves path, search, and hash without scrolling home', 
   assert.doesNotMatch(i18n, /navigate\(\s*['"`]\/['"`]/);
 });
 
+test('solid header language uses dark ink (visible on Shop)', () => {
+  assert.match(styles, /\.site-header\.site-header--solid[\s\S]{0,220}?\.language-control--header/);
+  assert.match(styles, /\.site-header--solid[\s\S]{0,280}?color:\s*var\(--ink\)\s*!important/);
+  assert.match(styles, /\.site-header:not\(\.site-header--solid\):not\(\.is-open\)[\s\S]{0,180}?color:\s*#fff/);
+  assert.match(header, /language-control--header/);
+  assert.match(styles, /\.language-control\s*\{[\s\S]{0,120}?display:\s*inline-flex\s*!important/);
+});
+
 test('router helpers strip and re-prefix locales for the same route', () => {
   assert.match(router, /export function stripLocalePrefix/);
   assert.match(router, /export function localizePath/);
@@ -30,29 +38,32 @@ test('mobile header uses logo | controls | hamburger edges for LTR/RTL', () => {
   assert.match(header, /menu-toggle/);
   assert.match(header, /language-control--header/);
   assert.match(header, /nav-link--shop/);
-  assert.match(header, /copy\.header\.shop/);
 });
 
 test('main logo is +9% larger without CSS plate clipping', () => {
-  assert.match(styles, /max-width:\s*161px/);
-  assert.match(styles, /max-height:\s*61px/);
+  assert.match(styles, /max-width:\s*176px/);
+  assert.match(styles, /max-height:\s*67px/);
   assert.doesNotMatch(styles, /\.logo--velvet-badge::before/);
   assert.doesNotMatch(styles, /\.logo--velvet-badge::after/);
   assert.doesNotMatch(styles, /\.logo--velvet-badge[\s\S]{0,80}?overflow:\s*clip/);
 });
 
-test('PDP carousel supports click-to-center and swipe', () => {
-  assert.match(carousel, /onCardActivate/);
+test('PDP carousel click activates side cards via pointerup card index', () => {
+  assert.match(carousel, /data-carousel-index/);
+  assert.match(carousel, /resolveCardIndex/);
+  assert.match(carousel, /!moved && cardIndex != null && cardIndex !== index/);
   assert.match(carousel, /goTo\(cardIndex\)/);
   assert.match(carousel, /onPointerDown/);
-  assert.match(carousel, /onPointerMove/);
+  assert.match(carousel, /onPointerUp/);
   assert.match(carousel, /product-detail-carousel__dot/);
+  assert.doesNotMatch(carousel, /aria-hidden=\{!isActive\}/);
 });
 
-test('density icons use 2x2 / 3x2 / 4x2 SVG squares', () => {
+test('density icons are icon-only 2x2 and 3x2', () => {
   assert.match(filterBar, /function DensityIcon/);
-  assert.match(filterBar, /cols \* rows/);
+  assert.match(filterBar, /\[2,\s*3\]\.map/);
+  assert.doesNotMatch(filterBar, /\[2,\s*3,\s*4\]/);
   assert.match(filterBar, /fill="currentColor"/);
-  assert.doesNotMatch(filterBar, /shop-grid-density__btn-label/);
-  assert.doesNotMatch(filterBar, /shop-grid-density__text/);
+  assert.match(styles, /\.shop-grid-density__btn[\s\S]{0,160}?border:\s*0/);
+  assert.match(styles, /\.shop-grid-density__btn\.is-active[\s\S]{0,120}?color:\s*var\(--red\)/);
 });
