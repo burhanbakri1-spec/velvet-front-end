@@ -473,9 +473,9 @@ button { color: inherit; }
   position: relative;
   z-index: 1;
   display: block;
-  width: 100%;
+  width: auto;
   height: 100%;
-  max-width: none;
+  max-width: min(420px, 88vw);
   object-fit: contain;
   object-position: center;
   pointer-events: none;
@@ -490,9 +490,9 @@ html[dir="rtl"] .mega-menu__preview-logo {
   top: 24px;
   left: 28px;
   z-index: 2;
-  width: var(--brand-logo-box-w, 323px);
-  height: var(--brand-logo-box-h, 68px);
-  max-width: none;
+  width: fit-content;
+  height: var(--brand-logo-h, 80px);
+  max-width: min(420px, 88vw);
   transform: none;
 }
 .mega-menu__preview-logo--managed {
@@ -1581,22 +1581,22 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   object-position: center;
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
-/* Unified sub-brand logo system: one shared box + compact +2% mirror for every brand.
-   Box height matches typical wordmark paint (not the old tall layout clamp) so the
-   frosted plate does not float as a large empty card above/below the ink.
-   Desktop: keep prior +20% width (323); height tracks ~300×63 contain → 68.
+/* Unified sub-brand logo system:
+   ONE shared HEIGHT rule; width follows natural aspect (width:auto).
+   Frame shrink-wraps the rendered logo; frosted mirror is exactly +2% of that frame.
+   Do NOT force a fixed shared width — that left empty frosted space beside narrower logos.
    Main VELVET header logo (.logo--velvet*) is intentionally not part of this system. */
 .brand-logo-frame {
-  --brand-logo-box-w: 323px;
-  --brand-logo-box-h: 68px;
+  --brand-logo-h: 80px;
   position: relative;
   pointer-events: none;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
-  width: var(--brand-logo-box-w);
-  height: var(--brand-logo-box-h);
-  max-width: none;
+  width: fit-content;
+  height: var(--brand-logo-h);
+  max-width: min(420px, 88vw);
   margin: 0;
   padding: 0;
   border-radius: 0;
@@ -1612,9 +1612,9 @@ html[dir="rtl"] .brand-logo-frame {
 .brand-logo-frame::before {
   content: '';
   position: absolute;
-  /* Shared mirror: exactly +2% beyond the shared logo box, centered on the same frame */
-  width: calc(var(--brand-logo-box-w) * 1.02);
-  height: calc(var(--brand-logo-box-h) * 1.02);
+  /* +2% beyond the shrink-wrapped logo frame on both axes */
+  width: 102%;
+  height: 102%;
   inset: auto;
   left: 50%;
   top: 50%;
@@ -1639,14 +1639,14 @@ html[dir="rtl"] .brand-logo-frame {
   position: relative;
   z-index: 1;
   display: block;
-  width: 100%;
+  width: auto;
   height: 100%;
-  max-width: none;
+  max-width: min(420px, 88vw);
   margin: 0;
   padding: 0;
   object-fit: contain;
   object-position: center;
-  flex: none;
+  flex: 0 0 auto;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.16));
   transform: none;
 }
@@ -1655,9 +1655,9 @@ html[dir="rtl"] .brand-logo-frame {
   top: clamp(14px, 2.8vw, 34px);
   left: clamp(14px, 3.5vw, 56px);
   z-index: 2;
-  width: var(--brand-logo-box-w);
-  height: var(--brand-logo-box-h);
-  max-width: none;
+  width: fit-content;
+  height: var(--brand-logo-h);
+  max-width: min(420px, 88vw);
 }
 html[dir="rtl"] .brand-showcase__brand-logo-frame {
   left: auto;
@@ -1666,9 +1666,9 @@ html[dir="rtl"] .brand-showcase__brand-logo-frame {
 .brand-showcase__brand-logo {
   position: relative;
   z-index: 1;
-  width: 100%;
+  width: auto;
   height: 100%;
-  max-width: none;
+  max-width: min(420px, 88vw);
   object-fit: contain;
   object-position: center;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.16));
@@ -1683,11 +1683,11 @@ html[dir="rtl"] .brand-showcase__brand-logo-frame {
 html[dir="rtl"] .brand-showcase__brand-logo {
   object-position: center;
 }
-/* Mega-menu uses the same shared box; corner lock keeps transform:none on the frame */
+/* Mega-menu: same shared-height / shrink-wrap system */
 .brand-logo.mega-menu__preview-logo {
-  width: 100%;
+  width: auto;
   height: 100%;
-  max-width: none;
+  max-width: min(420px, 88vw);
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.14));
   transform: none;
 }
@@ -1701,11 +1701,12 @@ html[dir="rtl"] .brand-showcase__brand-logo {
   right: auto;
   bottom: auto;
   z-index: 2;
-  display: grid;
-  place-items: center;
-  width: var(--brand-logo-box-w);
-  height: var(--brand-logo-box-h);
-  max-width: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  height: var(--brand-logo-h);
+  max-width: min(420px, 88vw);
   margin: 0;
   padding: 0;
   transform: none;
@@ -1792,20 +1793,19 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
   .brand-showcase__brand-logo-frame {
     top: 22px;
     left: 40px;
-    --brand-logo-box-w: 296px;
-    --brand-logo-box-h: 62px;
-    width: var(--brand-logo-box-w);
-    height: var(--brand-logo-box-h);
-    max-width: none;
+    --brand-logo-h: 70px;
+    width: fit-content;
+    height: var(--brand-logo-h);
+    max-width: min(380px, 86vw);
   }
   .brand-showcase__brand-logo {
-    width: 100%;
+    width: auto;
     height: 100%;
-    max-width: none;
+    max-width: min(380px, 86vw);
   }
   .brand-logo-frame {
-    --brand-logo-box-w: 296px;
-    --brand-logo-box-h: 62px;
+    --brand-logo-h: 70px;
+    max-width: min(380px, 86vw);
   }
   html[dir="rtl"] .brand-showcase__brand-logo-frame { right: 40px; left: auto; }
   .showcase-more { right: 40px; }
@@ -1867,21 +1867,20 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     left: auto;
     right: auto;
     inset-inline-start: 20px;
-    --brand-logo-box-w: 229px;
-    --brand-logo-box-h: 48px;
-    width: var(--brand-logo-box-w);
-    height: var(--brand-logo-box-h);
-    max-width: none;
+    --brand-logo-h: 52px;
+    width: fit-content;
+    height: var(--brand-logo-h);
+    max-width: min(300px, 78vw);
     padding: 0;
   }
   .brand-showcase__brand-logo {
-    width: 100%;
+    width: auto;
     height: 100%;
-    max-width: none;
+    max-width: min(300px, 78vw);
   }
   .brand-logo-frame {
-    --brand-logo-box-w: 229px;
-    --brand-logo-box-h: 48px;
+    --brand-logo-h: 52px;
+    max-width: min(300px, 78vw);
   }
   html[dir="rtl"] .brand-showcase__brand-logo-frame {
     left: auto;
@@ -3973,9 +3972,9 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
     left: auto;
     right: auto;
     inset-inline-start: var(--mobile-gutter);
-    width: var(--brand-logo-box-w);
-    height: var(--brand-logo-box-h);
-    max-width: none;
+    width: fit-content;
+    height: var(--brand-logo-h);
+    max-width: min(300px, 78vw);
   }
   .intro-section {
     padding-inline: var(--mobile-gutter);
