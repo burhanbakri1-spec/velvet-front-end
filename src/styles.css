@@ -473,14 +473,15 @@ button { color: inherit; }
   position: relative;
   z-index: 1;
   display: block;
-  /* Definite height breaks abspos flex/fit-content أ— replaced-element collapse */
+  /* Definite height breaks abspos flex/fit-content — replaced-element collapse */
   width: auto;
-  height: clamp(40px, 6vw, 56px);
-  max-width: min(200px, 36vw);
+  /* +6% vs prior clamp(40px, 6vw, 56px) / min(200px, 36vw) */
+  height: clamp(42px, 6.36vw, 59px);
+  max-width: min(212px, 38vw);
   object-fit: contain;
   object-position: center;
   pointer-events: none;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.14));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.14));
   transform: scale(var(--brand-logo-scale, 1));
   transform-origin: top left;
 }
@@ -493,12 +494,12 @@ html[dir="rtl"] .mega-menu__preview-logo {
   left: 28px;
   z-index: 2;
   width: fit-content;
-  max-width: min(240px, 42vw);
+  max-width: min(254px, 44.5vw);
   height: auto;
   transform: none;
 }
 .mega-menu__preview-logo--managed {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.12));
 }
 html[dir="rtl"] .mega-menu__preview-logo-frame {
   left: auto;
@@ -1583,7 +1584,7 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   object-position: center;
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
-/* Shared brand logo plate: wrapper hugs logo; ::before expands ~16â€“20% around it */
+/* Shared brand logo plate: wrapper hugs logo; ::before soft frosted plate (~+4% vs prior inset) */
 .brand-logo-frame {
   --brand-logo-scale: 1;
   position: relative;
@@ -1593,7 +1594,8 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   justify-content: center;
   box-sizing: border-box;
   width: fit-content;
-  max-width: min(280px, 48vw);
+  /* +6% vs prior min(280px, 48vw) */
+  max-width: min(297px, 51vw);
   height: auto;
   padding: 0;
   border-radius: 0;
@@ -1610,8 +1612,8 @@ html[dir="rtl"] .brand-logo-frame {
 .brand-logo-frame::before {
   content: '';
   position: absolute;
-  /* ~16% taller / ~20% wider than the rendered logo box */
-  inset: -8% -10%;
+  /* Prior -8% / -10%; +~4% extent → soft plate slightly beyond previous footprint */
+  inset: -8.3% -10.4%;
   z-index: 0;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.28);
@@ -1620,7 +1622,8 @@ html[dir="rtl"] .brand-logo-frame {
   backdrop-filter: blur(8px) saturate(1.08);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.3) inset,
-    0 6px 18px rgba(0, 0, 0, 0.16);
+    /* blur 18→19 (+~4%), light 1px spread; opacity unchanged */
+    0 6px 19px 1px rgba(0, 0, 0, 0.16);
   pointer-events: none;
 }
 .brand-logo-frame--managed::before {
@@ -1630,15 +1633,16 @@ html[dir="rtl"] .brand-logo-frame {
   position: relative;
   z-index: 1;
   display: block;
-  /* Definite height breaks abspos flex/fit-content أ— replaced-element collapse;
+  /* Definite height breaks abspos flex/fit-content — replaced-element collapse;
      width follows intrinsic aspect; max-width caps wide wordmarks */
   width: auto;
-  height: clamp(44px, 7vw, 72px);
-  max-width: min(240px, 42vw);
+  /* +6% vs prior clamp(44px, 7vw, 72px) / min(240px, 42vw) */
+  height: clamp(47px, 7.42vw, 76px);
+  max-width: min(254px, 44.5vw);
   object-fit: contain;
   object-position: center;
   flex: 0 0 auto;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.16));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.16));
 }
 .brand-showcase__brand-logo-frame {
   position: absolute;
@@ -1654,17 +1658,17 @@ html[dir="rtl"] .brand-showcase__brand-logo-frame {
   position: relative;
   z-index: 1;
   width: auto;
-  height: clamp(44px, 7vw, 72px);
-  max-width: min(240px, 42vw);
+  height: clamp(47px, 7.42vw, 76px);
+  max-width: min(254px, 44.5vw);
   object-fit: contain;
   object-position: center;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.16));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.16));
   background: none;
   border: 0;
   box-shadow: none;
 }
 .brand-showcase__brand-logo--managed {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.14));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.14));
 }
 html[dir="rtl"] .brand-showcase__brand-logo {
   object-position: center;
@@ -1672,12 +1676,12 @@ html[dir="rtl"] .brand-showcase__brand-logo {
 /* Mega-menu sizes must win over shared .brand-logo (same specificity, later cascade) */
 .brand-logo.mega-menu__preview-logo {
   width: auto;
-  height: clamp(40px, 6vw, 56px);
-  max-width: min(200px, 36vw);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.14));
+  height: clamp(42px, 6.36vw, 59px);
+  max-width: min(212px, 38vw);
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.14));
 }
 .brand-logo.mega-menu__preview-logo--managed {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.12));
 }
 /* Mega Menu corner lock: later .brand-logo-frame { position:relative; transform:scale } must not win */
 .brand-logo-frame.mega-menu__preview-logo-frame {
@@ -1689,7 +1693,7 @@ html[dir="rtl"] .brand-showcase__brand-logo {
   z-index: 2;
   display: block;
   width: fit-content;
-  max-width: min(240px, 42vw);
+  max-width: min(254px, 44.5vw);
   height: auto;
   margin: 0;
   padding: 0;
@@ -1783,13 +1787,13 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     top: 22px;
     left: 40px;
     width: fit-content;
-    max-width: min(260px, 46vw);
+    max-width: min(276px, 48.8vw);
     height: auto;
   }
   .brand-showcase__brand-logo {
     width: auto;
-    height: 60px;
-    max-width: min(220px, 40vw);
+    height: 64px;
+    max-width: min(233px, 42.4vw);
   }
   html[dir="rtl"] .brand-showcase__brand-logo-frame { right: 40px; left: auto; }
   .showcase-more { right: 40px; }
@@ -1852,14 +1856,14 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     right: auto;
     inset-inline-start: 20px;
     width: fit-content;
-    max-width: min(200px, 56vw);
+    max-width: min(212px, 59vw);
     height: auto;
     padding: 0;
   }
   .brand-showcase__brand-logo {
     width: auto;
-    height: 46px;
-    max-width: min(170px, 48vw);
+    height: 49px;
+    max-width: min(180px, 51vw);
   }
   html[dir="rtl"] .brand-showcase__brand-logo-frame {
     left: auto;
@@ -3952,7 +3956,7 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
     right: auto;
     inset-inline-start: var(--mobile-gutter);
     width: fit-content;
-    max-width: min(200px, 56vw);
+    max-width: min(212px, 59vw);
     height: auto;
   }
   .intro-section {
