@@ -475,14 +475,15 @@ button { color: inherit; }
   display: block;
   /* Definite height breaks abspos flex/fit-content — replaced-element collapse */
   width: auto;
-  /* +6% vs prior clamp(40px, 6vw, 56px) / min(200px, 36vw) */
   height: clamp(42px, 6.36vw, 59px);
   max-width: min(212px, 38vw);
   object-fit: contain;
   object-position: center;
   pointer-events: none;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.14));
-  transform: scale(var(--brand-logo-scale, 1));
+  /* Mega menu: scale the img (frame stays transform:none for corner lock).
+     +6% visible boost via --brand-logo-boost (do not also bump layout clamps). */
+  transform: scale(calc(var(--brand-logo-scale, 1) * var(--brand-logo-boost, 1.06)));
   transform-origin: top left;
 }
 html[dir="rtl"] .mega-menu__preview-logo {
@@ -1584,8 +1585,11 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   object-position: center;
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
-/* Shared brand logo plate: wrapper hugs logo; ::before soft frosted plate (~+4% vs prior inset) */
+/* Shared brand logo plate: wrapper hugs logo; ::before soft frosted plate */
 .brand-logo-frame {
+  /* Visible +6%: scale only. Prior max-width bumps were ineffective for
+     wide wordmarks already at the cap; stacking size+scale would be ~+12%. */
+  --brand-logo-boost: 1.06;
   --brand-logo-scale: 1;
   position: relative;
   pointer-events: none;
@@ -1594,7 +1598,6 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   justify-content: center;
   box-sizing: border-box;
   width: fit-content;
-  /* +6% vs prior min(280px, 48vw) */
   max-width: min(297px, 51vw);
   height: auto;
   padding: 0;
@@ -1603,7 +1606,7 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   border: 0;
   box-shadow: none;
   overflow: visible;
-  transform: scale(var(--brand-logo-scale));
+  transform: scale(calc(var(--brand-logo-scale) * var(--brand-logo-boost)));
   transform-origin: top left;
 }
 html[dir="rtl"] .brand-logo-frame {
@@ -1612,8 +1615,8 @@ html[dir="rtl"] .brand-logo-frame {
 .brand-logo-frame::before {
   content: '';
   position: absolute;
-  /* Prior -8% / -10%; +~4% extent → soft plate slightly beyond previous footprint */
-  inset: -8.3% -10.4%;
+  /* ~4%+ larger footprint than logo; keep soft frosted look, do not shrink vs prior plate */
+  inset: -9% -11.5%;
   z-index: 0;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.28);
@@ -1622,8 +1625,8 @@ html[dir="rtl"] .brand-logo-frame {
   backdrop-filter: blur(8px) saturate(1.08);
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.3) inset,
-    /* blur 18→19 (+~4%), light 1px spread; opacity unchanged */
-    0 6px 19px 1px rgba(0, 0, 0, 0.16);
+    /* Same opacity; larger blur/spread for a visibly bigger soft shadow */
+    0 7px 22px 2px rgba(0, 0, 0, 0.16);
   pointer-events: none;
 }
 .brand-logo-frame--managed::before {
@@ -1636,7 +1639,6 @@ html[dir="rtl"] .brand-logo-frame {
   /* Definite height breaks abspos flex/fit-content — replaced-element collapse;
      width follows intrinsic aspect; max-width caps wide wordmarks */
   width: auto;
-  /* +6% vs prior clamp(44px, 7vw, 72px) / min(240px, 42vw) */
   height: clamp(47px, 7.42vw, 76px);
   max-width: min(254px, 44.5vw);
   object-fit: contain;
@@ -1708,7 +1710,7 @@ html[dir="rtl"] .brand-logo-frame.mega-menu__preview-logo-frame {
   transform-origin: top right;
 }
 .brand-logo.mega-menu__preview-logo {
-  transform: scale(var(--brand-logo-scale, 1));
+  transform: scale(calc(var(--brand-logo-scale, 1) * var(--brand-logo-boost, 1.06)));
   transform-origin: top left;
 }
 html[dir="rtl"] .brand-logo.mega-menu__preview-logo {

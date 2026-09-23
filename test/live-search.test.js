@@ -144,7 +144,9 @@ test('mega menu logo scales the img, not the frame, and frame stays absolute cor
   assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?position:\s*absolute/);
   assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?top:\s*24px/);
   assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?transform:\s*none/);
-  assert.match(styles, /\.brand-logo\.mega-menu__preview-logo\s*\{[\s\S]*?transform:\s*scale\(var\(--brand-logo-scale/);
+  assert.match(styles, /\.brand-logo\.mega-menu__preview-logo\s*\{[\s\S]*?transform:\s*scale\(calc\(var\(--brand-logo-scale/);
+  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?--brand-logo-boost:\s*1\.06/);
+  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?transform:\s*scale\(calc\(var\(--brand-logo-scale\)\s*\*\s*var\(--brand-logo-boost\)\)\)/);
   assert.match(styles, /\.brand-logo-frame::before\s*\{/);
   assert.match(styles, /backdrop-filter:\s*blur\(8px\)/);
   assert.match(styles, /html\[dir="rtl"\] \.brand-logo-frame\.mega-menu__preview-logo-frame/);
