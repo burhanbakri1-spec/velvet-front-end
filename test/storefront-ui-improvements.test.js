@@ -156,6 +156,8 @@ test('header main site logo uses uploaded artwork without CSS plate/shadow', () 
   assert.match(css, /\.logo--velvet-badge[\s\S]{0,280}?display:\s*grid/);
   assert.match(css, /\.logo--velvet-badge[\s\S]{0,420}?filter:\s*none/);
   assert.match(css, /\.logo--velvet-badge[\s\S]{0,420}?box-shadow:\s*none/);
+  assert.match(css, /\.logo--velvet-badge \.logo__img--managed-site[\s\S]{0,220}?max-width:\s*161px/);
+  assert.match(css, /\.logo--velvet-badge \.logo__img--managed-site[\s\S]{0,220}?max-height:\s*61px/);
   assert.doesNotMatch(css, /\.logo--velvet-badge::before/);
   assert.doesNotMatch(css, /\.logo--velvet-badge::after/);
   assert.doesNotMatch(css, /\.logo--velvet-badge \.logo__badge/);

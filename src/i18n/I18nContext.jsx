@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo } from 'react';
 import { translations } from './translations';
 import { localizePath, stripLocalePrefix, useRouter } from '../routing/Router';
 
@@ -15,13 +15,18 @@ export function I18nProvider({ children }) {
     document.querySelector('meta[name="description"]')?.setAttribute('content', copy.meta.description);
   }, [copy.meta.description, locale]);
 
-  const switchLanguage = (nextLocale = locale === 'ar' ? 'en' : 'ar') => {
-    window.localStorage.setItem('play-language', nextLocale);
+  const switchLanguage = useCallback((nextLocale = locale === 'ar' ? 'en' : 'ar') => {
+    try { window.localStorage.setItem('play-language', nextLocale); } catch { /* Storage may be unavailable. */ }
+    // Preserve the exact current route (path + query + hash). Never bounce to home.
     const basePath = stripLocalePrefix(location.pathname);
-    navigate(`${localizePath(basePath, nextLocale)}${location.search}${location.hash}`);
-  };
+    const nextPath = localizePath(basePath, nextLocale);
+    navigate(`${nextPath}${location.search || ''}${location.hash || ''}`, { scroll: false });
+  }, [locale, location.hash, location.pathname, location.search, navigate]);
 
-  const value = useMemo(() => ({ locale, dir: locale === 'ar' ? 'rtl' : 'ltr', copy, switchLanguage }), [copy, locale]);
+  const value = useMemo(
+    () => ({ locale, dir: locale === 'ar' ? 'rtl' : 'ltr', copy, switchLanguage }),
+    [copy, locale, switchLanguage],
+  );
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
