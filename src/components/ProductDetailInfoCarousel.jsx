@@ -16,12 +16,13 @@ function PolicyList({ points = [] }) {
 /**
  * Centered PDP info card carousel: active card in the middle with peek of neighbors.
  * Order: Details & Specs → Product Details → Delivery → Exchange → Cancellation.
+ * Supports swipe/drag and click-to-center on peek cards.
  */
 export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow = '' }) {
   const { copy, locale } = useI18n();
   const isRtl = locale === 'ar';
   const trackRef = useRef(null);
-  const drag = useRef({ active: false, startX: 0, delta: 0 });
+  const drag = useRef({ active: false, startX: 0, delta: 0, moved: false });
   const [index, setIndex] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [cardSpan, setCardSpan] = useState(58);
@@ -91,7 +92,7 @@ export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow
 
   const onPointerDown = (event) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    drag.current = { active: true, startX: event.clientX, delta: 0 };
+    drag.current = { active: true, startX: event.clientX, delta: 0, moved: false };
     event.currentTarget.setPointerCapture?.(event.pointerId);
   };
 
@@ -99,6 +100,7 @@ export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow
     if (!drag.current.active) return;
     const delta = event.clientX - drag.current.startX;
     drag.current.delta = delta;
+    if (Math.abs(delta) > 6) drag.current.moved = true;
     setDragOffset(delta);
   };
 
@@ -106,12 +108,19 @@ export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow
     if (!drag.current.active) return;
     const threshold = 56;
     const delta = drag.current.delta;
+    const moved = drag.current.moved;
     drag.current.active = false;
     const forward = isRtl ? delta > threshold : delta < -threshold;
     const backward = isRtl ? delta < -threshold : delta > threshold;
-    if (forward) goTo(index + 1);
-    else if (backward) goTo(index - 1);
+    if (moved && forward) goTo(index + 1);
+    else if (moved && backward) goTo(index - 1);
     else setDragOffset(0);
+  };
+
+  const onCardActivate = (cardIndex) => {
+    if (cardIndex === index) return;
+    if (drag.current.moved || Math.abs(drag.current.delta) >= 8) return;
+    goTo(cardIndex);
   };
 
   const sidePeek = (100 - cardSpan) / 2;
@@ -144,8 +153,16 @@ export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow
                 key={card.id}
                 className={`product-detail-carousel__card${isActive ? ' is-active' : ''}`}
                 aria-hidden={!isActive}
-                onClick={() => {
-                  if (!isActive && Math.abs(drag.current.delta) < 8) goTo(cardIndex);
+                role="group"
+                aria-roledescription="slide"
+                aria-label={card.title}
+                tabIndex={isActive ? 0 : -1}
+                onClick={() => onCardActivate(cardIndex)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onCardActivate(cardIndex);
+                  }
                 }}
               >
                 <div className="product-detail-section-head">
