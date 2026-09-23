@@ -12,9 +12,11 @@ export default function LoginPage() {
   const [status, setStatus] = useState(null);
   const [pending, setPending] = useState(false);
 
+  const returnPath = new URLSearchParams(window.location.search).get('return') || '';
+
   useEffect(() => {
-    if (isAuthenticated) navigate(localizePath('/account', locale));
-  }, [isAuthenticated, locale, navigate]);
+    if (isAuthenticated) navigate(localizePath(returnPath || '/account', locale));
+  }, [isAuthenticated, locale, navigate, returnPath]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -23,7 +25,7 @@ export default function LoginPage() {
     try {
       const result = await login({ email, password });
       if (result.ok) {
-        navigate(localizePath('/account', locale));
+        navigate(localizePath(returnPath || '/account', locale));
         return;
       }
       setStatus({
@@ -92,6 +94,8 @@ export default function LoginPage() {
         ) : null}
 
         <p className="auth-panel__footer">
+          <Link to="/register">{copy.login.createAccount}</Link>
+          {' · '}
           <Link to="/">{copy.login.backHome}</Link>
         </p>
       </section>

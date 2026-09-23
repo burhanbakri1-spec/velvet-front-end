@@ -148,9 +148,13 @@ test('checkout page wires WhatsApp order flow without fake backend success', () 
   assert.match(checkoutPage, /buildWhatsAppOrderUrl/);
   assert.match(checkoutPage, /openWhatsAppOrder/);
   assert.match(checkoutPage, /setPrepared/);
+  // Real order creation is wired first (POST /api/orders via createOrder);
+  // the WhatsApp message then carries the real orderNumber + status.
+  assert.match(checkoutPage, /createOrder/);
+  assert.match(checkoutPage, /orderNumber/);
+  assert.match(checkoutPage, /orderStatus/);
   assert.doesNotMatch(checkoutPage, /clearCart/);
   assert.doesNotMatch(checkoutPage, /Order placed!/);
-  assert.doesNotMatch(checkoutPage, /order number|orderId|\/api\/orders/i);
 });
 
 test('checkout success copy is honest in EN and AR', () => {

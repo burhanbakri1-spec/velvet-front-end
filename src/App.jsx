@@ -16,6 +16,7 @@ import CategoryPage from './pages/CategoryPage';
 import BrandPage from './pages/BrandPage';
 import BrandCategoryPage from './pages/BrandCategoryPage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import AccountPage from './pages/AccountPage';
 import StoreLayout from './components/StoreLayout';
 import { AuthProvider } from './context/AuthContext';
@@ -77,11 +78,12 @@ function RouteView() {
   else if (routePath === '/contact') page = <ContactPage />;
   else if (routePath === '/vlogs') page = <VlogsPage />;
   else if (routePath === '/login') page = <LoginPage />;
+  else if (routePath === '/register') page = <RegisterPage />;
   else if (routePath === '/account') page = <AccountPage />;
   else page = <section className="store-not-found"><h1>404</h1><p>{copy.detail.missing}</p></section>;
 
   const companyPage = routePath.startsWith('/categories/')
-    || ['/about', '/news', '/contact', '/vlogs', '/login', '/account'].includes(routePath);
+    || ['/about', '/news', '/contact', '/vlogs', '/login', '/register', '/account'].includes(routePath);
   // Dark/image heroes → translucent white header chrome; light store pages → solid dark chrome.
   const darkImageHeader = routePath.startsWith('/brands') || routePath.startsWith('/categories');
   const solidHeader = !companyPage && !darkImageHeader;

@@ -12,6 +12,7 @@ import { optionValueUnavailable, coerceSelectionsToValidVariant } from '../data/
 import { Link } from '../routing/Router';
 import { formatPrice } from '../data/currency';
 import ProductShareControls from './ProductShareControls';
+import FavoriteButton from './FavoriteButton';
 
 export default function ProductDetailSlide({
   product,
@@ -55,6 +56,7 @@ export default function ProductDetailSlide({
           {product.badge && <span className="product-detail-badge">{getProductBadge(product, locale)}</span>}
         </span>
         <h1>{productName}</h1>
+        <FavoriteButton productId={product.id} className="product-detail-favorite" />
         <p>{getProductDescription(product, locale, true)}</p>
         <div className="category-product-showcase__commerce">
           <div className="category-product-showcase__price">

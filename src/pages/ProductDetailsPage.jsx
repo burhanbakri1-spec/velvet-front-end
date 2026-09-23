@@ -4,6 +4,7 @@ import ProductDetailSlide from '../components/ProductDetailSlide';
 import ProductShowcaseNavigation from '../components/ProductShowcaseNavigation';
 import PageNavigation from '../components/PageNavigation';
 import ProductDetailInfoCarousel from '../components/ProductDetailInfoCarousel';
+import ProductReviewsSection from '../components/ProductReviewsSection';
 import { useCart } from '../context/CartContext';
 import {
   getAvailability,
@@ -521,6 +522,8 @@ export default function ProductDetailsPage({ slug }) {
           </section>
         )}
       </div>
+
+      <ProductReviewsSection productId={routeProduct.id || routeProduct.slug} />
 
       {relatedProducts.length > 0 && (
         <section className="product-related" aria-label={copy.detail.related} data-product-section="related">

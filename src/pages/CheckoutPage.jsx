@@ -1,35 +1,68 @@
 import { useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { velvetProducts } from '../data/velvetCatalog';
 import { formatPrice } from '../data/currency';
 import { buildWhatsAppOrderMessage, buildWhatsAppOrderUrl, openWhatsAppOrder } from '../data/whatsappOrder';
+import { buildOrderPayload, createOrder, persistOrderSnapshot } from '../data/orders';
+import { isStorefrontApiConfigured } from '../data/apiClient';
 import { Link } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
 
 export default function CheckoutPage() {
   const { items, subtotal, addItem } = useCart();
   const { copy, locale } = useI18n();
+  const { token, customer } = useAuth();
   const [form, setForm] = useState({ name: '', phone: '', email: '', city: '', address: '', notes: '' });
   const [prepared, setPrepared] = useState(null);
+  const [placing, setPlacing] = useState(false);
+  const [error, setError] = useState(null);
 
   const setField = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
 
   const inCartSlugs = useMemo(() => new Set(items.map((item) => item.slug)), [items]);
   const recommended = useMemo(() => velvetProducts.filter((item) => !inCartSlugs.has(item.slug)).slice(0, 4), [inCartSlugs]);
 
-  const handlePlaceOrder = (event) => {
+  const handlePlaceOrder = async (event) => {
     event.preventDefault();
-    const message = buildWhatsAppOrderMessage({
-      customer: form,
-      items,
-      subtotal,
-      shippingLabel: 'مجاني',
-    });
-    const url = buildWhatsAppOrderUrl(message);
-    const opened = openWhatsAppOrder(url);
-    // Keep cart intact — WhatsApp send is customer-driven; no backend confirmation exists.
-    setPrepared({ message, url, opened });
+    setError(null);
+    setPlacing(true);
+    try {
+      let order = null;
+      // Real order first when the storefront API is configured. Guest checkout
+      // is allowed (no token); logged-in customers attach their Bearer token so
+      // the server associates the order with their account.
+      if (isStorefrontApiConfigured()) {
+        const payload = buildOrderPayload({ customer: form, items });
+        const result = await createOrder(payload, { token });
+        if (!result.ok) {
+          setError(result.message || copy.checkout.orderError);
+          setPlacing(false);
+          return;
+        }
+        order = result.order;
+        if (customer) persistOrderSnapshot(order, customer);
+      }
+
+      const message = buildWhatsAppOrderMessage({
+        customer: form,
+        items,
+        subtotal,
+        shippingLabel: 'مجاني',
+        orderNumber: order?.orderNumber || order?.id || '',
+        status: order?.status || '',
+      });
+      const url = buildWhatsAppOrderUrl(message);
+      const opened = openWhatsAppOrder(url);
+      // Keep cart intact — WhatsApp send is customer-driven; the order is
+      // already recorded server-side when the API is configured.
+      setPrepared({ message, url, opened, order });
+    } catch {
+      setError(copy.checkout.orderError);
+    } finally {
+      setPlacing(false);
+    }
   };
 
   if (items.length === 0 && !prepared) {
@@ -58,6 +91,13 @@ export default function CheckoutPage() {
           <section className="checkout-placed">
             <div className="checkout-placed__icon" aria-hidden="true">✓</div>
             <h2>{copy.checkout.successTitle}</h2>
+            {prepared.order?.orderNumber ? (
+              <p className="checkout-placed__order">
+                {copy.checkout.orderNumber}: <strong>{prepared.order.orderNumber}</strong>
+                {' · '}
+                {copy.checkout.orderStatus}: <strong>{prepared.order.status || 'Pending'}</strong>
+              </p>
+            ) : null}
             <p>{copy.checkout.successBody}</p>
             {!prepared.opened && (
               <p className="checkout-panel__note">{copy.checkout.whatsappFallbackHint}</p>
@@ -138,7 +178,13 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <button className="store-primary-button checkout-panel__cta" type="submit">{copy.checkout.placeOrder}</button>
+              {error ? (
+                <p className="auth-panel__status auth-panel__status--error" role="status">{error}</p>
+              ) : null}
+
+              <button className="store-primary-button checkout-panel__cta" type="submit" disabled={placing}>
+                {placing ? copy.checkout.placing : copy.checkout.placeOrder}
+              </button>
               <p className="checkout-panel__note">{copy.checkout.note}</p>
             </aside>
           </form>

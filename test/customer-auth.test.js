@@ -27,10 +27,12 @@ test('header account actions navigate to login/account', () => {
   assert.match(header, /localizePath\(accountPath, locale\)/);
 });
 
-test('app exposes localized login and account routes', () => {
+test('app exposes localized login, register, and account routes', () => {
   assert.match(app, /routePath === '\/login'/);
+  assert.match(app, /routePath === '\/register'/);
   assert.match(app, /routePath === '\/account'/);
   assert.match(app, /<LoginPage/);
+  assert.match(app, /<RegisterPage/);
   assert.match(app, /<AccountPage/);
   assert.match(app, /AuthProvider/);
 });
@@ -41,14 +43,23 @@ test('login and account pages avoid hardcoded fake users', () => {
   assert.doesNotMatch(loginPage, /password:\s*['"]admin|demo@|test@velvet/i);
   assert.match(accountPage, /navigate\(localizePath\('\/login', locale\)\)/);
   assert.match(customerAuth, /VITE_CUSTOMER_AUTH_API/);
-  assert.match(customerAuth, /\/api\/customer\/auth\/login/);
+  assert.match(customerAuth, /\/api\/auth\/login/);
+  assert.match(customerAuth, /\/api\/auth\/register/);
+  assert.match(customerAuth, /\/api\/auth\/me/);
+  assert.match(customerAuth, /\/api\/auth\/logout/);
 });
 
-test('login/account copy exists in EN and AR', () => {
+test('login/register/account copy exists in EN and AR', () => {
   assert.equal(translations.en.login.title, 'Sign in');
   assert.equal(translations.ar.login.title, 'تسجيل الدخول');
   assert.ok(translations.en.account.title);
   assert.ok(translations.ar.account.title);
   assert.equal(translations.en.meta.login, 'Login');
   assert.equal(translations.ar.meta.login, 'تسجيل الدخول');
+  assert.equal(translations.en.register.title, 'Create your account');
+  assert.equal(translations.ar.register.title, 'أنشئ حسابك');
+  assert.equal(translations.en.meta.register, 'Register');
+  assert.equal(translations.ar.meta.register, 'إنشاء حساب');
+  assert.ok(translations.en.login.createAccount);
+  assert.ok(translations.ar.login.createAccount);
 });

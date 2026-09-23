@@ -5,6 +5,7 @@ import { getVelvetPathLabel } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { productStock } from '../data/inventory';
 import { formatPrice } from '../data/currency';
+import FavoriteButton from './FavoriteButton';
 
 export default function ProductCard({ product, onAddToCart, onSelect, active = false }) {
   const { copy, locale } = useI18n();
@@ -47,6 +48,7 @@ export default function ProductCard({ product, onAddToCart, onSelect, active = f
           {badge && <span className="product-card__badge">{badge}</span>}
           <img className="product-card__image" src={activeImage} alt={name} loading="lazy" />
         </Link>
+        <FavoriteButton productId={product.id} className="product-card__favorite" />
         {hasGallery && (
           <div className="product-card__gallery-nav" aria-hidden="false">
             <button

@@ -5,6 +5,7 @@ import Hero from '../components/Hero';
 import IntroSection from '../components/IntroSection';
 import BrandShowcase from '../components/BrandShowcase';
 import CareersSection from '../components/CareersSection';
+import StoreReviewsSection from '../components/StoreReviewsSection';
 import Footer from '../components/Footer';
 import { velvetBrands } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
@@ -50,6 +51,7 @@ export default function HomePage() {
             />
           ))}
         </section>
+        <StoreReviewsSection />
         <CareersSection />
       </main>
       <Footer />
