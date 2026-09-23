@@ -136,7 +136,7 @@ test('search-dropdown styles provide absolute panel under search field', () => {
   assert.match(styles, /\.header-search\s*\{\s*position:\s*relative/);
 });
 
-test('mega menu uses unified brand logo box with shared 5% mirror', () => {
+test('mega menu uses unified brand logo box with compact +2% mirror', () => {
   assert.doesNotMatch(megaMenu, /--brand-logo-scale/);
   assert.doesNotMatch(megaMenu, /getBrandLogoScale/);
   assert.match(megaMenu, /className=\{`brand-logo mega-menu__preview-logo/);
@@ -144,14 +144,16 @@ test('mega menu uses unified brand logo box with shared 5% mirror', () => {
   assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?top:\s*24px/);
   assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?transform:\s*none/);
   assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?--brand-logo-box-w:\s*323px/);
-  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?--brand-logo-box-h:\s*97px/);
+  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?--brand-logo-box-h:\s*68px/);
   assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?transform:\s*none/);
-  assert.match(styles, /\.brand-logo-frame::before\s*\{[\s\S]*?width:\s*calc\(var\(--brand-logo-box-w\)\s*\*\s*1\.05\)/);
-  assert.match(styles, /\.brand-logo-frame::before\s*\{[\s\S]*?height:\s*calc\(var\(--brand-logo-box-h\)\s*\*\s*1\.05\)/);
+  assert.match(styles, /\.brand-logo-frame::before\s*\{[\s\S]*?width:\s*calc\(var\(--brand-logo-box-w\)\s*\*\s*1\.02\)/);
+  assert.match(styles, /\.brand-logo-frame::before\s*\{[\s\S]*?height:\s*calc\(var\(--brand-logo-box-h\)\s*\*\s*1\.02\)/);
+  assert.match(styles, /\.brand-logo-frame::before\s*\{[\s\S]*?transform:\s*translate\(-50%,\s*-50%\)/);
   assert.match(styles, /\.brand-logo\s*\{[\s\S]*?object-fit:\s*contain/);
   assert.match(styles, /backdrop-filter:\s*blur\(8px\)/);
   assert.match(styles, /html\[dir="rtl"\] \.brand-logo-frame\.mega-menu__preview-logo-frame/);
   assert.doesNotMatch(styles, /--brand-logo-boost/);
+  assert.doesNotMatch(styles, /\.brand-logo-frame\s*\{[\s\S]*?--brand-logo-box-h:\s*97px/);
 });
 
 test('live search i18n keys exist in en and ar', () => {
