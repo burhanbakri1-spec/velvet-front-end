@@ -94,33 +94,25 @@ function GridDensityControl({ gridCols, onGridColsChange, labels }) {
       role="group"
       aria-label={labels.view}
     >
-      <div className="shop-grid-density__track">
-        {[1, 2, 3, 4].map((bar) => {
-          const isSelectable = bar >= 2;
-          const isFilled = bar <= activeCols;
-          const label = isSelectable ? labels[`cols${bar}`] : labels.view;
-          if (!isSelectable) {
-            return (
-              <span
-                key={bar}
-                className={`shop-grid-density__bar${isFilled ? ' is-filled' : ''}`}
-                aria-hidden="true"
-                data-bar={bar}
-              />
-            );
-          }
-          return (
-            <button
-              type="button"
-              key={bar}
-              className={`shop-grid-density__bar${isFilled ? ' is-filled' : ''}${activeCols === bar ? ' is-active' : ''}`}
-              aria-label={label}
-              aria-pressed={activeCols === bar}
-              data-bar={bar}
-              onClick={() => onGridColsChange(bar)}
-            />
-          );
-        })}
+      <span className="shop-grid-density__text">{labels.view}</span>
+      <div className="shop-grid-density__choices">
+        {[2, 3, 4].map((cols) => (
+          <button
+            type="button"
+            key={cols}
+            className={`shop-grid-density__btn${activeCols === cols ? ' is-active' : ''}`}
+            aria-label={labels[`cols${cols}`]}
+            aria-pressed={activeCols === cols}
+            onClick={() => onGridColsChange(cols)}
+          >
+            <span className="shop-grid-density__icon" aria-hidden="true" data-cols={cols}>
+              {Array.from({ length: cols }, (_, index) => (
+                <i key={index} />
+              ))}
+            </span>
+            <span className="shop-grid-density__btn-label">{cols}</span>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -137,6 +129,8 @@ export default function ShopFilterBar({
   onClearGroup,
   onClearAll,
   onSortChange,
+  gridCols,
+  onGridColsChange,
 }) {
   const { copy, locale } = useI18n();
   const s = copy.shop;
@@ -169,6 +163,9 @@ export default function ShopFilterBar({
     label: item.name[locale],
   }));
 
+  const quickCategories = hierarchyOptions('categories').slice(0, 8);
+  const showDensity = typeof onGridColsChange === 'function';
+
   return (
     <section className={`shop-filter-bar ${open ? 'is-open' : ''}`} data-shop-filter-bar aria-label={s.filters}>
       <div className="shop-filter-bar__row">
@@ -186,20 +183,41 @@ export default function ShopFilterBar({
           ) : (
             <>
               <span className="shop-filter-bar__icon shop-filter-bar__icon--filter" aria-hidden="true" />
-              <span>{s.filterBar}</span>
+              <span className="shop-filter-bar__toggle-label">{s.filterBar}</span>
               <span className="shop-filter-bar__count">({resultCount} {countLabel})</span>
             </>
           )}
         </button>
 
-        <div className="shop-filter-bar__chips" aria-label={s.activeFilters}>
-          {tags.map((tag) => (
-            <span className="tag" key={`${tag.groupKey}:${tag.id}`}>
-              {tag.label}
-              <button type="button" aria-label={`${s.remove} ${tag.label}`} onClick={() => onRemove(tag.groupKey, tag.id)}>×</button>
-            </span>
-          ))}
+        <div className="shop-filter-bar__quick" aria-label={s.mainCategory}>
+          {quickCategories.map((option) => {
+            const active = state.category === option.id;
+            return (
+              <button
+                type="button"
+                key={option.id}
+                className={`shop-filter-bar__quick-chip${active ? ' is-active' : ''}`}
+                aria-pressed={active}
+                onClick={() => onSelect('category', active ? '' : option.id)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
         </div>
+
+        {showDensity ? (
+          <GridDensityControl
+            gridCols={gridCols}
+            onGridColsChange={onGridColsChange}
+            labels={{
+              view: s.gridView,
+              cols2: s.gridCols2,
+              cols3: s.gridCols3,
+              cols4: s.gridCols4,
+            }}
+          />
+        ) : null}
 
         <label className="shop-filter-bar__sort">
           <span className="shop-filter-bar__sort-label">{s.sort}:</span>
@@ -217,8 +235,23 @@ export default function ShopFilterBar({
         </label>
       </div>
 
+      {tags.length > 0 && (
+        <div className="shop-filter-bar__chips" aria-label={s.activeFilters}>
+          {tags.map((tag) => (
+            <span className="tag" key={`${tag.groupKey}:${tag.id}`}>
+              {tag.label}
+              <button type="button" aria-label={`${s.remove} ${tag.label}`} onClick={() => onRemove(tag.groupKey, tag.id)}>×</button>
+            </span>
+          ))}
+        </div>
+      )}
+
       {open && (
         <div className="shop-filter-panel" data-shop-filter-panel>
+          <div className="shop-filter-panel__intro">
+            <h2 className="shop-filter-panel__title">{s.filters}</h2>
+            <p className="shop-filter-panel__subtitle">{s.browseBy}</p>
+          </div>
           <div className="shop-filter-panel__groups shop-filter-panel__groups--hierarchy">
             {HIERARCHY_COLUMNS.map((column) => {
               const selected = state[column.key] ? [state[column.key]] : [];

@@ -11,6 +11,7 @@ import {
 import { optionValueUnavailable, coerceSelectionsToValidVariant } from '../data/inventory';
 import { Link } from '../routing/Router';
 import { formatPrice } from '../data/currency';
+import ProductShareControls from './ProductShareControls';
 
 export default function ProductDetailSlide({
   product,
@@ -115,6 +116,13 @@ export default function ProductDetailSlide({
           <button className="store-primary-button product-detail-buy__secondary" type="button" disabled={unavailable || !interactive} onClick={onBuyNow}>{copy.detail.buyNow}</button>
         </div>
         {added && interactive && <Link className="view-cart-link product-detail-cart-link" to="/cart">{copy.detail.viewCart} {locale === 'ar' ? '←' : '→'}</Link>}
+
+        <aside className="product-payment" aria-label={copy.detail.paymentTitle}>
+          <h3>{copy.detail.paymentTitle}</h3>
+          <p>{copy.detail.paymentBody}</p>
+        </aside>
+
+        {interactive ? <ProductShareControls slug={product.slug} /> : null}
       </div>
     </div>
   );

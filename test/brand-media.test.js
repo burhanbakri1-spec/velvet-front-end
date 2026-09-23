@@ -89,15 +89,14 @@ test('BrandPage hero uses full-width adaptive media without hero logo', () => {
   assert.match(styles, /\.category-hero__media[\s\S]*width:\s*100%/);
   assert.match(styles, /\.category-hero__media[\s\S]*height:\s*auto/);
   assert.match(styles, /\.category-hero__media[\s\S]*object-fit:\s*contain/);
-  assert.doesNotMatch(styles, /\.category-hero__media[^}]*object-fit:\s*cover/);
-  assert.doesNotMatch(styles, /\.category-hero\s*\{[^}]*100vh/);
   assert.match(styles, /\.brand-hero \.category-hero__media[\s\S]*max-height:\s*none/);
   assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner[\s\S]*height:\s*auto/);
   assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]*object-fit:\s*contain/);
-  assert.doesNotMatch(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[^}]*object-fit:\s*cover/);
+  // Mobile may crop with cover; desktop keep contain.
+  assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?object-fit:\s*cover/);
 });
 
-test('homepage BrandShowcase uses full-banner natural media without cover crop', () => {
+test('homepage BrandShowcase uses full-banner natural media on desktop and cover strips on mobile', () => {
   const homePage = fs.readFileSync(new URL('../src/pages/HomePage.jsx', import.meta.url), 'utf8');
   const showcase = fs.readFileSync(new URL('../src/components/BrandShowcase.jsx', import.meta.url), 'utf8');
   const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
@@ -110,8 +109,8 @@ test('homepage BrandShowcase uses full-banner natural media without cover crop',
   assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]{0,280}?width:\s*100%/);
   assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]{0,280}?height:\s*auto/);
   assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[\s\S]{0,280}?object-fit:\s*contain/);
-  assert.doesNotMatch(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[^}]*object-fit:\s*cover/);
-  assert.doesNotMatch(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__image[^}]*position:\s*absolute/);
+  assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]{0,1200}?brand-showcase--full-banner[\s\S]{0,400}?object-fit:\s*cover/);
+  assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]{0,800}?calc\(\(100svh - var\(--header-height/);
 });
 
 test('homepage brand banners overlay managed brand logos without affecting BrandPage', () => {

@@ -80,8 +80,14 @@ function RouteView() {
   else if (routePath === '/account') page = <AccountPage />;
   else page = <section className="store-not-found"><h1>404</h1><p>{copy.detail.missing}</p></section>;
 
+  const companyPage = routePath.startsWith('/categories/')
+    || ['/about', '/news', '/contact', '/vlogs', '/login', '/account'].includes(routePath);
+  // Dark/image heroes → translucent white header chrome; light store pages → solid dark chrome.
+  const darkImageHeader = routePath.startsWith('/brands') || routePath.startsWith('/categories');
+  const solidHeader = !companyPage && !darkImageHeader;
+
   return (
-    <StoreLayout company={routePath.startsWith('/categories/') || ['/about', '/news', '/contact', '/vlogs', '/login', '/account'].includes(routePath)}>{page}</StoreLayout>
+    <StoreLayout company={companyPage} solid={solidHeader}>{page}</StoreLayout>
   );
 }
 

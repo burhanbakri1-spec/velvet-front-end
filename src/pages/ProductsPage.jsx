@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
-import ShopFilterBar, { GridDensityControl } from '../components/ShopFilterBar';
+import ShopFilterBar from '../components/ShopFilterBar';
 import PageNavigation from '../components/PageNavigation';
 import { filterProducts, resolvePath, sortProducts } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
@@ -50,22 +50,11 @@ export default function ProductsPage() {
         onClearGroup={clearGroup}
         onClearAll={clearFilters}
         onSortChange={setSort}
+        gridCols={gridCols}
+        onGridColsChange={setGridCols}
       />
 
       <main className="shop-content">
-        <div className="shop-toolbar shop-toolbar--grid">
-          <GridDensityControl
-            gridCols={gridCols}
-            onGridColsChange={setGridCols}
-            labels={{
-              view: copy.shop.gridView,
-              cols2: copy.shop.gridCols2,
-              cols3: copy.shop.gridCols3,
-              cols4: copy.shop.gridCols4,
-            }}
-          />
-        </div>
-
         {results.length > 0 ? (
           <>
             <div className={`shop-products shop-products--pref-${gridCols}`} data-shop-grid-cols={gridCols}>

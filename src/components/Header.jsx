@@ -63,17 +63,17 @@ export default function Header({ introActive, solid = false }) {
     const brandOnly = routePath.match(/^\/brands\/([^/]+)$/);
     if (brandOnly) {
       const brandSlug = decodeURIComponent(brandOnly[1]);
-      return getBrand(brandSlug) ? `/products?brand=${encodeURIComponent(brandSlug)}` : null;
+      if (getBrand(brandSlug)) return `/products?brand=${encodeURIComponent(brandSlug)}`;
     }
     const categoryOnly = routePath.match(/^\/brands\/([^/]+)\/category\/([^/]+)$/);
     if (categoryOnly) {
       const brandSlug = decodeURIComponent(categoryOnly[1]);
       const categorySlug = decodeURIComponent(categoryOnly[2]);
-      return getBrand(brandSlug)
-        ? `/products?brand=${encodeURIComponent(brandSlug)}&category=${encodeURIComponent(categorySlug)}`
-        : null;
+      if (getBrand(brandSlug)) {
+        return `/products?brand=${encodeURIComponent(brandSlug)}&category=${encodeURIComponent(categorySlug)}`;
+      }
     }
-    return null;
+    return '/products';
   }, [routePath]);
 
   const siteLogo = getSiteLogo();
@@ -162,7 +162,6 @@ export default function Header({ introActive, solid = false }) {
           style={contextBrand && !managedBrandLogo ? { '--brand-accent': contextBrand.accent } : undefined}
           aria-label={contextBrand ? contextBrand.name[locale] : 'VELVET'}
         >
-          {!contextBrand && <span className="logo__badge" aria-hidden="true" />}
           {contextBrand ? (
             contextBrandLogo ? (
               <img className={`logo__img logo__img--brand${managedBrandLogo ? ' logo__img--managed' : ''}`} src={contextBrandLogo} alt={contextBrand.name[locale]} />
@@ -193,7 +192,7 @@ export default function Header({ introActive, solid = false }) {
             {copy.header.about} <i className="chevron" />
           </button>
           <Link className="nav-link" to="/contact">{copy.header.contact}</Link>
-          {shopLink && <Link className="nav-link" to={shopLink}>{copy.header.shop}</Link>}
+          <Link className="nav-link nav-link--shop" to={shopLink}>{copy.header.shop}</Link>
         </nav>
 
         <div className="header-actions">
@@ -273,8 +272,7 @@ export default function Header({ introActive, solid = false }) {
         <nav className="mobile-drawer__links" aria-label={copy.header.nav}>
           <Link to="/about" onClick={closeMobile}>{copy.header.about}</Link>
           <Link to="/contact" onClick={closeMobile}>{copy.header.contact}</Link>
-          {shopLink && <Link to={shopLink} onClick={closeMobile}>{copy.header.shop}</Link>}
-          <Link to="/products" onClick={closeMobile}>{copy.header.products || copy.products.products}</Link>
+          <Link to={shopLink} onClick={closeMobile}>{copy.header.shop}</Link>
         </nav>
 
         <div className="mobile-drawer__footer">
