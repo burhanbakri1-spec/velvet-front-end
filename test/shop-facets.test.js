@@ -188,24 +188,24 @@ test('grid density control renders in filter bar and products page', () => {
   assert.match(filterBar, /shop-grid-density/);
   assert.match(filterBar, /data-shop-grid-density/);
   assert.match(filterBar, /GridDensityControl/);
-  assert.match(filterBar, /shop-grid-density__track/);
-  assert.match(filterBar, /shop-grid-density__bar/);
-  assert.match(filterBar, /\[1,\s*2,\s*3,\s*4\]/);
-  assert.match(filterBar, /isSelectable = bar >= 2/);
-  assert.doesNotMatch(filterBar, /choices\s*=\s*\[2,\s*3,\s*4\]/);
-  assert.match(productsPage, /GridDensityControl/);
+  assert.match(filterBar, /shop-grid-density__choices/);
+  assert.match(filterBar, /shop-grid-density__btn/);
+  assert.match(filterBar, /\[2,\s*3,\s*4\]\.map/);
+  assert.doesNotMatch(filterBar, /shop-grid-density__track/);
+  assert.doesNotMatch(filterBar, /shop-grid-density__bar/);
+  assert.doesNotMatch(productsPage, /GridDensityControl/);
   assert.match(productsPage, /useShopGridDensity/);
+  assert.match(productsPage, /onGridColsChange=\{setGridCols\}/);
   assert.match(productsPage, /shop-products--pref-/);
   assert.match(productsPage, /data-shop-grid-cols/);
-  assert.match(productsPage, /shop-toolbar--grid/);
 });
 
 test('grid density CSS maps 2, 3, and 4 column preferences', () => {
   assert.match(styles, /\.shop-products--pref-2 \{[\s\S]*?repeat\(2,/);
   assert.match(styles, /\.shop-products--pref-3 \{[\s\S]*?repeat\(3,/);
   assert.match(styles, /\.shop-products--pref-4 \{[\s\S]*?repeat\(4,/);
-  assert.match(styles, /\.shop-grid-density__track/);
-  assert.match(styles, /\.shop-grid-density__bar\.is-filled/);
+  assert.match(styles, /\.shop-grid-density__choices/);
+  assert.match(styles, /\.shop-grid-density__btn\.is-active/);
 });
 
 test('grid density localStorage key and default are defined', () => {
@@ -215,9 +215,10 @@ test('grid density localStorage key and default are defined', () => {
   assert.match(hookSource, /localStorage/);
 });
 
-test('mobile grid clamps to two columns while preserving preference class', () => {
+test('mobile grid clamps to two columns while keeping density control', () => {
   assert.match(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-4[\s\S]*?repeat\(2,/);
-  assert.match(styles, /\.shop-grid-density \{ display: none; \}/);
+  assert.doesNotMatch(styles, /\.shop-grid-density \{ display: none; \}/);
+  assert.match(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-grid-density__text \{ display: none; \}/);
 });
 
 test('grid density never exceeds four columns', () => {

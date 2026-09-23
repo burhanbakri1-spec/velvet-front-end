@@ -3,18 +3,17 @@ import ProductCard from '../components/ProductCard';
 import ProductDetailSlide from '../components/ProductDetailSlide';
 import ProductShowcaseNavigation from '../components/ProductShowcaseNavigation';
 import PageNavigation from '../components/PageNavigation';
+import ProductDetailInfoCarousel from '../components/ProductDetailInfoCarousel';
 import { useCart } from '../context/CartContext';
 import {
   getAvailability,
   getCategoryLabel,
   getCustomerFacingSelectionLabels,
   getCustomerFacingVariantLabels,
-  getProductDescription,
   getProductName,
   resolveProductImages,
 } from '../data/products';
 import {
-  filterGroups,
   getBrand,
   getCategory,
   getFilterGroup,
@@ -25,6 +24,7 @@ import {
   getVelvetPathLabel,
   velvetProducts,
 } from '../data/velvetCatalog';
+import { getProductAttributeIds } from '../data/classificationFilter';
 import { Link, localizePath, useRouter } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
 import { availableStock, selectedVariant } from '../data/inventory';
@@ -38,6 +38,16 @@ import {
   normalizeRelatedPageIndex,
   PRODUCT_SWITCH_DURATION_MS,
 } from '../hooks/productSiblings';
+
+function resolveAttributeLabels(product, groupKey, locale) {
+  const ids = getProductAttributeIds(product, groupKey);
+  if (!ids.length) return '';
+  const group = getFilterGroup(groupKey);
+  return ids
+    .map((id) => group.find((item) => item.id === id)?.name?.[locale] || id)
+    .filter(Boolean)
+    .join(' · ');
+}
 
 export default function ProductDetailsPage({ slug }) {
   const routeProduct = getProductBySlug(slug);
@@ -300,18 +310,22 @@ export default function ProductDetailsPage({ slug }) {
   const showPathHero = Boolean(pathHero.image || pathHero.video || heroTitle);
 
   const metres = {
-    age: getFilterGroup('age').find((item) => item.id === routeProduct.age)
-      || filterGroups.age.find((item) => item.id === routeProduct.age),
-    skill: getFilterGroup('skill').find((item) => item.id === routeProduct.skill)
-      || filterGroups.skill.find((item) => item.id === routeProduct.skill),
+    age: resolveAttributeLabels(routeProduct, 'age', locale),
+    skill: resolveAttributeLabels(routeProduct, 'skill', locale),
+    material: resolveAttributeLabels(routeProduct, 'material', locale),
+    productType: resolveAttributeLabels(routeProduct, 'productType', locale),
   };
 
   const specs = [];
+  const sku = routeProduct.sku || routeProduct.productNumber || routeProduct.id;
+  if (sku) specs.push({ label: copy.detail.sku, value: String(sku) });
   if (brand) specs.push({ label: copy.shop.brand, value: brand.name[locale] });
-  if (eyebrow) specs.push({ label: copy.shop.category, value: eyebrow });
-  if (routeProduct.manufacturer) specs.push({ label: copy.shop.manufacturer, value: routeProduct.manufacturer });
-  if (metres.age) specs.push({ label: copy.detail.age, value: metres.age.name[locale] });
-  if (metres.skill) specs.push({ label: copy.detail.skill, value: metres.skill.name[locale] });
+  if (category) specs.push({ label: copy.shop.mainCategory, value: category.name[locale] });
+  if (subcategory) specs.push({ label: copy.shop.subcategory, value: subcategory.name[locale] });
+  if (metres.age) specs.push({ label: copy.detail.age, value: metres.age });
+  if (metres.skill) specs.push({ label: copy.detail.skill, value: metres.skill });
+  if (metres.material) specs.push({ label: copy.shop.material, value: metres.material });
+  if (metres.productType) specs.push({ label: copy.shop.productType, value: metres.productType });
   const selectionLabels = getCustomerFacingSelectionLabels(routeProduct, selections, locale);
   const variantLabels = getCustomerFacingVariantLabels(activeVariant, locale);
   const optionSpecValue = (selectionLabels.length ? selectionLabels : variantLabels).join(' · ');
@@ -483,25 +497,11 @@ export default function ProductDetailsPage({ slug }) {
       )}
 
       <div className="product-detail-content" data-product-section="commerce">
-        <section className="product-detail-extras product-detail-extras--specs-only">
-          <div className="product-detail-specs">
-            <div className="product-detail-section-head">
-              <span className="store-eyebrow">{eyebrow}</span>
-              <h2>{copy.detail.specs}</h2>
-            </div>
-            <div className="product-detail-specs__blocks">
-              <div className="product-detail-specs__about">
-                <h3>{copy.detail.about}</h3>
-                <p>{getProductDescription(routeProduct, locale)}</p>
-              </div>
-              <dl className="product-detail-specs__list">
-                {specs.map((row) => (
-                  <div key={`${row.label}-${row.value}`}><dt>{row.label}</dt><dd>{row.value}</dd></div>
-                ))}
-              </dl>
-            </div>
-          </div>
-        </section>
+        <ProductDetailInfoCarousel
+          product={routeProduct}
+          specs={specs}
+          eyebrow={eyebrow}
+        />
 
         {productMedia.usageVideo && (
           <section className="product-usage-video" aria-label={copy.detail.howToUse} key={`usage-${routeProduct.slug}`}>

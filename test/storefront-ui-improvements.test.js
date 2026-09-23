@@ -148,22 +148,17 @@ test('selected variant drives add-to-cart image and id wiring on the page', () =
   assert.match(pageSource, /showMedia:\s*true/);
 });
 
-test('header restores velvet white plate for the main site logo only', () => {
+test('header main site logo uses uploaded artwork without CSS plate/shadow', () => {
   assert.match(headerSource, /logo--velvet-badge/);
-  assert.match(headerSource, /logo__badge/);
   assert.match(headerSource, /!contextBrand \? ' logo--velvet-badge'/);
-  assert.match(css, /\.logo--velvet-badge \.logo__badge/);
+  assert.doesNotMatch(headerSource, /logo__badge/);
   assert.match(css, /\.logo--velvet-badge/);
-  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,360}?background:\s*#fff/);
-  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,360}?clip-path:\s*polygon\(0%\s*28%,\s*100%\s*0%,\s*88%\s*100%,\s*0%\s*72%\)/);
   assert.match(css, /\.logo--velvet-badge[\s\S]{0,280}?display:\s*grid/);
-  assert.match(css, /\.logo--velvet-badge[\s\S]{0,280}?height:\s*50px/);
-  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,220}?width:\s*124px/);
-  assert.match(css, /\.logo--velvet-badge::before,\s*\.logo--velvet-badge::after[\s\S]{0,280}?clip-path:\s*polygon\(0%\s*28%,\s*100%\s*0%,\s*88%\s*100%,\s*0%\s*72%\)/);
-  assert.match(css, /\.logo--velvet-badge::before\s*\{[\s\S]{0,200}?rgba\(18,\s*18,\s*20,\s*\.20\)[\s\S]{0,80}?translate\(10px,\s*15px\)[\s\S]{0,80}?blur\(6px\)/);
-  assert.match(css, /\.logo--velvet-badge::after\s*\{[\s\S]{0,200}?rgba\(18,\s*18,\s*20,\s*\.34\)[\s\S]{0,80}?translate\(6px,\s*9px\)[\s\S]{0,80}?blur\(2px\)/);
-  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,520}?filter:\s*none/);
-  assert.doesNotMatch(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,220}?background:\s*var\(--red\)/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]{0,420}?filter:\s*none/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]{0,420}?box-shadow:\s*none/);
+  assert.doesNotMatch(css, /\.logo--velvet-badge::before/);
+  assert.doesNotMatch(css, /\.logo--velvet-badge::after/);
+  assert.doesNotMatch(css, /\.logo--velvet-badge \.logo__badge/);
   assert.doesNotMatch(css, /html\[dir="rtl"\]\s+\.logo__badge/);
 });
 
@@ -207,14 +202,15 @@ test('related products render only the current page slice', () => {
   }
 });
 
-test('main site logo plate remains scoped away from brand logos', () => {
+test('main site logo remains scoped away from brand logos without CSS plate', () => {
   assert.match(headerSource, /logo--velvet-badge/);
   assert.match(headerSource, /!contextBrand \? ' logo--velvet-badge'/);
   assert.match(css, /\.logo--velvet-badge/);
   assert.match(css, /\.logo--velvet-badge[\s\S]{0,420}?place-items:\s*center/);
-  assert.match(css, /\.logo--velvet-badge \.logo__badge[\s\S]{0,280}?grid-area:\s*1\s*\/\s*1/);
-  assert.match(css, /\.logo--velvet-badge[\s\S]{0,500}?logo__img--managed-site[\s\S]{0,220}?transform:\s*translate\(1px,\s*0\)/);
+  assert.match(css, /\.logo--velvet-badge[\s\S]{0,500}?logo__img--managed-site[\s\S]{0,220}?object-fit:\s*contain/);
   assert.doesNotMatch(css, /\.logo--velvet-badge \.logo__img--managed-site[\s\S]{0,180}?left:\s*50%/);
+  assert.doesNotMatch(css, /\.logo--velvet-badge::before/);
+  assert.doesNotMatch(headerSource, /logo__badge/);
 });
 
 test('technical Default labels are hidden while real sizes stay dynamic', () => {
