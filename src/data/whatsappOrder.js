@@ -90,8 +90,9 @@ function formatLineItem(item, index) {
 /**
  * Build the complete Arabic WhatsApp order message.
  * Message language is always Arabic regardless of storefront locale.
+ * When a real order was created first, orderNumber + status are included.
  */
-export function buildWhatsAppOrderMessage({ customer = {}, items = [], subtotal = 0, shippingLabel = 'مجاني' } = {}) {
+export function buildWhatsAppOrderMessage({ customer = {}, items = [], subtotal = 0, shippingLabel = 'مجاني', orderNumber = '', status = '' } = {}) {
   const name = String(customer.name ?? '').trim();
   const phone = String(customer.phone ?? '').trim();
   const email = String(customer.email ?? '').trim();
@@ -105,7 +106,8 @@ export function buildWhatsAppOrderMessage({ customer = {}, items = [], subtotal 
   const sections = [
     'طلب جديد من متجر VELVET',
     '',
-    'حالة الطلب: جديد',
+    ...(String(orderNumber).trim() ? [`رقم الطلب: ${String(orderNumber).trim()}`] : []),
+    `حالة الطلب: ${String(status).trim() || 'جديد'}`,
     '',
     'بيانات العميل:',
     `الاسم: ${name}`,
