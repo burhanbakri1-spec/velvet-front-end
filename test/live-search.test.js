@@ -136,28 +136,28 @@ test('search-dropdown styles provide absolute panel under search field', () => {
   assert.match(styles, /\.header-search\s*\{\s*position:\s*relative/);
 });
 
-test('mega menu uses shared-height shrink-wrap logos with +2% mirror', () => {
+test('mega menu and showcase share one frosted logo mirror box; header brand has none', () => {
   assert.doesNotMatch(megaMenu, /--brand-logo-scale/);
   assert.doesNotMatch(megaMenu, /getBrandLogoScale/);
   assert.match(megaMenu, /className=\{`brand-logo mega-menu__preview-logo/);
   assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?position:\s*absolute/);
   assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?top:\s*24px/);
-  assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?transform:\s*none/);
-  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?--brand-logo-h:\s*80px/);
-  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?width:\s*fit-content/);
-  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?display:\s*inline-flex/);
-  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?transform:\s*none/);
-  assert.match(styles, /\.brand-logo-frame::before\s*\{[\s\S]*?width:\s*102%/);
-  assert.match(styles, /\.brand-logo-frame::before\s*\{[\s\S]*?height:\s*102%/);
-  assert.match(styles, /\.brand-logo-frame::before\s*\{[\s\S]*?transform:\s*translate\(-50%,\s*-50%\)/);
-  assert.match(styles, /\.brand-logo\s*\{[\s\S]*?width:\s*auto/);
-  assert.match(styles, /\.brand-logo\s*\{[\s\S]*?height:\s*100%/);
+  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?--brand-mirror-w:\s*320px/);
+  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?--brand-mirror-h:\s*104px/);
+  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?display:\s*flex/);
+  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?align-items:\s*center/);
+  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?justify-content:\s*center/);
+  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?backdrop-filter:\s*blur\(8px\)/);
+  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?overflow:\s*hidden/);
+  assert.match(styles, /\.brand-logo-frame::before[\s\S]{0,120}?display:\s*none\s*!important/);
   assert.match(styles, /\.brand-logo\s*\{[\s\S]*?object-fit:\s*contain/);
-  assert.match(styles, /backdrop-filter:\s*blur\(8px\)/);
-  assert.match(styles, /html\[dir="rtl"\] \.brand-logo-frame\.mega-menu__preview-logo-frame/);
+  assert.match(styles, /\.brand-logo\s*\{[\s\S]*?max-width:\s*100%/);
+  assert.match(styles, /\.brand-logo\s*\{[\s\S]*?max-height:\s*100%/);
+  assert.match(styles, /\.logo--brand\s*\{[\s\S]*?background:\s*transparent/);
+  assert.match(styles, /\.logo__img--brand\s*\{[\s\S]*?max-height:\s*50px/);
   assert.doesNotMatch(styles, /--brand-logo-boost/);
-  assert.doesNotMatch(styles, /--brand-logo-box-w/);
-  assert.doesNotMatch(styles, /--brand-logo-box-h/);
+  assert.doesNotMatch(styles, /--brand-logo-h:/);
+  assert.doesNotMatch(styles, /\.brand-logo-frame::before\s*\{[\s\S]*?width:\s*102%/);
 });
 
 test('live search i18n keys exist in en and ar', () => {
