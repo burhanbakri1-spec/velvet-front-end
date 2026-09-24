@@ -216,9 +216,9 @@ button { color: inherit; }
    collapsing to 0×0 inside nav-bar max-content grid tracks. */
 .logo__img--brand {
   width: auto;
-  height: 54.5px;
-  max-width: 229px;
-  max-height: 54.5px;
+  height: 62.7px;
+  max-width: 263px;
+  max-height: 62.7px;
   padding: 0;
   object-fit: contain;
   object-position: center;
@@ -231,8 +231,8 @@ button { color: inherit; }
 .logo--brand {
   width: max-content;
   min-width: max-content;
-  height: 56px;
-  max-width: 241px;
+  height: 64px;
+  max-width: 275px;
   padding: 0 6px;
   display: flex;
   align-items: center;
@@ -252,8 +252,8 @@ button { color: inherit; }
 .logo--managed.logo--brand {
   width: max-content;
   min-width: max-content;
-  height: 56px;
-  max-width: 241px;
+  height: 64px;
+  max-width: 275px;
   padding: 0 6px;
   flex: 0 0 auto;
   color: inherit;
@@ -262,6 +262,13 @@ button { color: inherit; }
   transform: none;
   box-shadow: none;
   filter: none;
+}
+/* Fallback white wordmark SVGs become unreadable on solid white headers */
+.site-header--solid .logo__img--brand:not(.logo__img--managed) {
+  filter: brightness(0);
+}
+.site-header--solid .logo--brand span {
+  color: var(--ink);
 }
 /* Main VELVET site.logo â€” uploaded artwork already includes plate + shadow.
    No CSS-generated plate, cast-shadow, or drop-shadow on the main logo. */
@@ -334,9 +341,9 @@ button { color: inherit; }
 }
 .logo--managed .logo__img--brand {
   width: auto;
-  height: 54.5px;
-  max-width: 229px;
-  max-height: 54.5px;
+  height: 62.7px;
+  max-width: 263px;
+  max-height: 62.7px;
   flex: 0 0 auto;
 }
 .logo--managed .logo__img--managed-site,
@@ -674,8 +681,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed.logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 52px;
-    max-width: 215px;
+    height: 58px;
+    max-width: 246px;
     padding: 0 4px;
     flex: 0 0 auto;
     background: transparent;
@@ -710,8 +717,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 52px;
-    max-width: 215px;
+    height: 58px;
+    max-width: 246px;
     padding: 0 4px;
     flex: 0 0 auto;
     background: transparent;
@@ -721,9 +728,9 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed .logo__img--brand,
   .logo__img--brand {
     width: auto;
-    height: 48px;
-    max-width: 207px;
-    max-height: 48px;
+    height: 55.2px;
+    max-width: 238px;
+    max-height: 55.2px;
     flex: 0 0 auto;
   }
   .main-nav { gap: 24px; }
@@ -758,8 +765,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed.logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 48px;
-    max-width: 189px;
+    height: 52px;
+    max-width: 217px;
     padding: 0 2px;
     flex: 0 0 auto;
     background: transparent;
@@ -796,8 +803,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 48px;
-    max-width: 189px;
+    height: 52px;
+    max-width: 217px;
     padding: 0 2px;
     flex: 0 0 auto;
     background: transparent;
@@ -808,9 +815,9 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed .logo__img--brand,
   .logo__img--brand {
     width: auto;
-    height: 43.6px;
-    max-width: 185px;
-    max-height: 43.6px;
+    height: 50.1px;
+    max-width: 213px;
+    max-height: 50.1px;
     flex: 0 0 auto;
   }
   .search-pill { display: none; }
@@ -1682,7 +1689,7 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
    B) Header brand logos: separate transparent box only (see .logo--brand above).
    No floating ::before mirror — box owns background, border, blur, shadow. */
 .brand-logo-frame {
-  --brand-mirror-w: 288px;
+  --brand-mirror-w: 202px;
   --brand-mirror-h: 104px;
   --brand-mirror-pad: 14px;
   position: relative;
@@ -1877,7 +1884,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
   .brand-showcase__brand-logo-frame {
     top: 22px;
     left: 40px;
-    --brand-mirror-w: 252px;
+    --brand-mirror-w: 176px;
     --brand-mirror-h: 92px;
     --brand-mirror-pad: 12px;
     width: var(--brand-mirror-w);
@@ -1892,7 +1899,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     max-height: 100%;
   }
   .brand-logo-frame {
-    --brand-mirror-w: 252px;
+    --brand-mirror-w: 176px;
     --brand-mirror-h: 92px;
     --brand-mirror-pad: 12px;
   }
@@ -1956,7 +1963,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     left: auto;
     right: auto;
     inset-inline-start: 20px;
-    --brand-mirror-w: 198px;
+    --brand-mirror-w: 139px;
     --brand-mirror-h: 74px;
     --brand-mirror-pad: 10px;
     width: var(--brand-mirror-w);
@@ -1971,7 +1978,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     max-height: 100%;
   }
   .brand-logo-frame {
-    --brand-mirror-w: 198px;
+    --brand-mirror-w: 139px;
     --brand-mirror-h: 74px;
     --brand-mirror-pad: 10px;
   }

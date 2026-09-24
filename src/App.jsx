@@ -84,9 +84,10 @@ function RouteView() {
 
   const companyPage = routePath.startsWith('/categories/')
     || ['/about', '/news', '/contact', '/vlogs', '/login', '/register', '/account'].includes(routePath);
-  // Dark/image heroes → translucent white header chrome; light store pages → solid dark chrome.
-  const darkImageHeader = routePath.startsWith('/brands') || routePath.startsWith('/categories');
-  const solidHeader = !companyPage && !darkImageHeader;
+  // Restore pre-polish solid chrome: non-company store pages (Shop, PDP, Brand, …)
+  // get white/solid header. Company/about surfaces stay translucent.
+  // Home keeps its own Header without solid (hero video chrome).
+  const solidHeader = !companyPage;
 
   return (
     <StoreLayout company={companyPage} solid={solidHeader}>{page}</StoreLayout>
