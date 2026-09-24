@@ -142,7 +142,7 @@ test('mega menu and showcase share one frosted logo mirror box; header brand has
   assert.match(megaMenu, /className=\{`brand-logo mega-menu__preview-logo/);
   assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?position:\s*absolute/);
   assert.match(styles, /\.brand-logo-frame\.mega-menu__preview-logo-frame\s*\{[\s\S]*?top:\s*24px/);
-  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?--brand-mirror-w:\s*288px/);
+  assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?--brand-mirror-w:\s*202px/);
   assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?--brand-mirror-h:\s*104px/);
   assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?display:\s*flex/);
   assert.match(styles, /\.brand-logo-frame\s*\{[\s\S]*?align-items:\s*center/);
@@ -154,7 +154,7 @@ test('mega menu and showcase share one frosted logo mirror box; header brand has
   assert.match(styles, /\.brand-logo\s*\{[\s\S]*?max-width:\s*100%/);
   assert.match(styles, /\.brand-logo\s*\{[\s\S]*?max-height:\s*100%/);
   assert.match(styles, /\.logo--brand\s*\{[\s\S]*?background:\s*transparent/);
-  assert.match(styles, /\.logo__img--brand\s*\{[\s\S]*?max-height:\s*54\.5px/);
+  assert.match(styles, /\.logo__img--brand\s*\{[\s\S]*?max-height:\s*62\.7px/);
   assert.doesNotMatch(styles, /--brand-logo-boost/);
   assert.doesNotMatch(styles, /--brand-logo-h:/);
   assert.doesNotMatch(styles, /\.brand-logo-frame::before\s*\{[\s\S]*?width:\s*102%/);
