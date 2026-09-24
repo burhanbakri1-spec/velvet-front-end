@@ -216,9 +216,9 @@ button { color: inherit; }
    collapsing to 0×0 inside nav-bar max-content grid tracks. */
 .logo__img--brand {
   width: auto;
-  height: 50px;
-  max-width: 210px;
-  max-height: 50px;
+  height: 54.5px;
+  max-width: 229px;
+  max-height: 54.5px;
   padding: 0;
   object-fit: contain;
   object-position: center;
@@ -232,7 +232,7 @@ button { color: inherit; }
   width: max-content;
   min-width: max-content;
   height: 56px;
-  max-width: 220px;
+  max-width: 241px;
   padding: 0 6px;
   display: flex;
   align-items: center;
@@ -253,7 +253,7 @@ button { color: inherit; }
   width: max-content;
   min-width: max-content;
   height: 56px;
-  max-width: 220px;
+  max-width: 241px;
   padding: 0 6px;
   flex: 0 0 auto;
   color: inherit;
@@ -334,9 +334,9 @@ button { color: inherit; }
 }
 .logo--managed .logo__img--brand {
   width: auto;
-  height: 50px;
-  max-width: 210px;
-  max-height: 50px;
+  height: 54.5px;
+  max-width: 229px;
+  max-height: 54.5px;
   flex: 0 0 auto;
 }
 .logo--managed .logo__img--managed-site,
@@ -674,8 +674,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed.logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 50px;
-    max-width: 200px;
+    height: 52px;
+    max-width: 215px;
     padding: 0 4px;
     flex: 0 0 auto;
     background: transparent;
@@ -710,8 +710,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 50px;
-    max-width: 200px;
+    height: 52px;
+    max-width: 215px;
     padding: 0 4px;
     flex: 0 0 auto;
     background: transparent;
@@ -721,9 +721,9 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed .logo__img--brand,
   .logo__img--brand {
     width: auto;
-    height: 44px;
-    max-width: 190px;
-    max-height: 44px;
+    height: 48px;
+    max-width: 207px;
+    max-height: 48px;
     flex: 0 0 auto;
   }
   .main-nav { gap: 24px; }
@@ -758,8 +758,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed.logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 46px;
-    max-width: 180px;
+    height: 48px;
+    max-width: 189px;
     padding: 0 2px;
     flex: 0 0 auto;
     background: transparent;
@@ -796,8 +796,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 46px;
-    max-width: 180px;
+    height: 48px;
+    max-width: 189px;
     padding: 0 2px;
     flex: 0 0 auto;
     background: transparent;
@@ -808,9 +808,9 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed .logo__img--brand,
   .logo__img--brand {
     width: auto;
-    height: 40px;
-    max-width: 170px;
-    max-height: 40px;
+    height: 43.6px;
+    max-width: 185px;
+    max-height: 43.6px;
     flex: 0 0 auto;
   }
   .search-pill { display: none; }
@@ -1682,7 +1682,7 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
    B) Header brand logos: separate transparent box only (see .logo--brand above).
    No floating ::before mirror — box owns background, border, blur, shadow. */
 .brand-logo-frame {
-  --brand-mirror-w: 320px;
+  --brand-mirror-w: 288px;
   --brand-mirror-h: 104px;
   --brand-mirror-pad: 14px;
   position: relative;
@@ -1877,7 +1877,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
   .brand-showcase__brand-logo-frame {
     top: 22px;
     left: 40px;
-    --brand-mirror-w: 280px;
+    --brand-mirror-w: 252px;
     --brand-mirror-h: 92px;
     --brand-mirror-pad: 12px;
     width: var(--brand-mirror-w);
@@ -1892,7 +1892,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     max-height: 100%;
   }
   .brand-logo-frame {
-    --brand-mirror-w: 280px;
+    --brand-mirror-w: 252px;
     --brand-mirror-h: 92px;
     --brand-mirror-pad: 12px;
   }
@@ -1956,7 +1956,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     left: auto;
     right: auto;
     inset-inline-start: 20px;
-    --brand-mirror-w: 220px;
+    --brand-mirror-w: 198px;
     --brand-mirror-h: 74px;
     --brand-mirror-pad: 10px;
     width: var(--brand-mirror-w);
@@ -1971,7 +1971,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     max-height: 100%;
   }
   .brand-logo-frame {
-    --brand-mirror-w: 220px;
+    --brand-mirror-w: 198px;
     --brand-mirror-h: 74px;
     --brand-mirror-pad: 10px;
   }
