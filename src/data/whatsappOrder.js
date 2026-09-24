@@ -87,20 +87,46 @@ function formatLineItem(item, index) {
   return lines.join('\n');
 }
 
+function resolveMoney(value, fallback = 0) {
+  if (value == null || value === '') return fallback;
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : fallback;
+}
+
 /**
  * Build the complete Arabic WhatsApp order message.
  * Message language is always Arabic regardless of storefront locale.
- * When a real order was created first, orderNumber + status are included.
+ * When a real order was created first, prefer server orderNumber, status,
+ * delivery area/fee, and final total.
+ *
+ * Delivery lines never hardcode "مجاني" — callers must pass the selected
+ * (or server-authoritative) area and fee.
  */
-export function buildWhatsAppOrderMessage({ customer = {}, items = [], subtotal = 0, shippingLabel = 'مجاني', orderNumber = '', status = '' } = {}) {
+export function buildWhatsAppOrderMessage({
+  customer = {},
+  items = [],
+  subtotal = 0,
+  deliveryArea = '',
+  deliveryFee = null,
+  finalTotal = null,
+  orderNumber = '',
+  status = '',
+} = {}) {
   const name = String(customer.name ?? '').trim();
   const phone = String(customer.phone ?? '').trim();
   const email = String(customer.email ?? '').trim();
   const city = String(customer.city ?? '').trim();
   const address = String(customer.address ?? '').trim();
   const notes = String(customer.notes ?? '').trim();
-  const safeSubtotal = Number(subtotal);
-  const total = Number.isFinite(safeSubtotal) ? safeSubtotal : 0;
+  const safeSubtotal = resolveMoney(subtotal, 0);
+  const safeFee = deliveryFee == null || deliveryFee === ''
+    ? null
+    : resolveMoney(deliveryFee, 0);
+  const safeFinal = finalTotal == null || finalTotal === ''
+    ? safeSubtotal + (safeFee == null ? 0 : safeFee)
+    : resolveMoney(finalTotal, safeSubtotal);
+  const areaLabel = String(deliveryArea ?? '').trim() || '—';
+  const feeLabel = safeFee == null ? '—' : formatOrderPrice(safeFee);
   const lineItems = (Array.isArray(items) ? items : []).map((item, index) => formatLineItem(item, index + 1));
 
   const sections = [
@@ -120,9 +146,10 @@ export function buildWhatsAppOrderMessage({ customer = {}, items = [], subtotal 
     '',
     lineItems.join('\n\n'),
     '',
-    `المجموع الفرعي: ${formatOrderPrice(total)}`,
-    `التوصيل: ${shippingLabel || 'مجاني'}`,
-    `الإجمالي النهائي: ${formatOrderPrice(total)}`,
+    `المجموع الفرعي: ${formatOrderPrice(safeSubtotal)}`,
+    `منطقة التوصيل: ${areaLabel}`,
+    `رسوم التوصيل: ${feeLabel}`,
+    `الإجمالي النهائي: ${formatOrderPrice(safeFinal)}`,
   ];
 
   if (notes) {

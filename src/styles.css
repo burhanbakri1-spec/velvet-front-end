@@ -3431,9 +3431,14 @@ html[dir="rtl"] .checkout-gallery__link img { direction: ltr; }
 
 .checkout-field { display: flex; flex-direction: column; gap: 7px; }
 .checkout-field label { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: #555559; }
-.checkout-field input, .checkout-field textarea { width: 100%; padding: 13px 15px; border: 1px solid #dcdcd8; border-radius: 12px; background: #fbfbf9; font: inherit; font-size: 14px; color: var(--ink); outline: 0; transition: border-color .2s ease, background-color .2s ease; }
-.checkout-field input:focus, .checkout-field textarea:focus { border-color: var(--red); background: #fff; }
+.checkout-field input, .checkout-field textarea, .checkout-field select { width: 100%; padding: 13px 15px; border: 1px solid #dcdcd8; border-radius: 12px; background: #fbfbf9; font: inherit; font-size: 14px; color: var(--ink); outline: 0; transition: border-color .2s ease, background-color .2s ease; }
+.checkout-field input:focus, .checkout-field textarea:focus, .checkout-field select:focus { border-color: var(--red); background: #fff; }
 .checkout-field textarea { resize: vertical; min-height: 76px; }
+.checkout-field select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, #555 50%), linear-gradient(135deg, #555 50%, transparent 50%); background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px); background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; padding-inline-end: 36px; cursor: pointer; }
+html[dir="rtl"] .checkout-field select { background-position: 12px calc(50% - 3px), 18px calc(50% - 3px); }
+.checkout-delivery-status { margin: 0; padding: 12px 14px; border-radius: 12px; background: #f6f5f1; color: #555559; font-size: 13px; line-height: 1.45; }
+.checkout-delivery-status--error { background: #fff4f2; color: #8a2f28; }
+.checkout-delivery-retry { margin-top: 10px; width: auto; }
 .checkout-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
 .checkout-empty { min-height: 65vh; display: grid; place-content: center; justify-items: center; text-align: center; }

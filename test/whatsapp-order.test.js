@@ -85,6 +85,9 @@ test('WhatsApp order message is Arabic and includes customer, items, totals, and
       },
     ],
     subtotal: 64,
+    deliveryArea: 'رام الله',
+    deliveryFee: 0,
+    finalTotal: 64,
   });
 
   assert.match(message, /^طلب جديد من متجر VELVET/);
@@ -105,12 +108,14 @@ test('WhatsApp order message is Arabic and includes customer, items, totals, and
   assert.match(message, /السعر: ₪15\.00/);
   assert.match(message, /الإجمالي: ₪15\.00/);
   assert.match(message, /المجموع الفرعي: ₪64\.00/);
-  assert.match(message, /التوصيل: مجاني/);
+  assert.match(message, /منطقة التوصيل: رام الله/);
+  assert.match(message, /رسوم التوصيل: ₪0\.00/);
   assert.match(message, /الإجمالي النهائي: ₪64\.00/);
   assert.match(message, /ملاحظات العميل:\nالتوصيل بعد الظهر/);
   assert.doesNotMatch(message, /undefined|null/);
   assert.doesNotMatch(message, /الخيارات: Color:/);
   assert.doesNotMatch(message, /\$\d/);
+  assert.doesNotMatch(message, /التوصيل: مجاني/);
 });
 
 test('empty notes are omitted cleanly from the Arabic message', () => {
@@ -153,8 +158,11 @@ test('checkout page wires WhatsApp order flow without fake backend success', () 
   assert.match(checkoutPage, /createOrder/);
   assert.match(checkoutPage, /orderNumber/);
   assert.match(checkoutPage, /orderStatus/);
+  assert.match(checkoutPage, /deliveryZone/);
+  assert.match(checkoutPage, /delivery_price|deliveryFee/);
   assert.doesNotMatch(checkoutPage, /clearCart/);
   assert.doesNotMatch(checkoutPage, /Order placed!/);
+  assert.doesNotMatch(checkoutPage, /shippingLabel:\s*'مجاني'/);
 });
 
 test('checkout success copy is honest in EN and AR', () => {
