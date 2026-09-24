@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ContactSocialLinks from '../components/ContactSocialLinks';
 import PageVideoHero from '../components/PageVideoHero';
 import { useI18n } from '../i18n/I18nContext';
 import { getPlatformMedia } from '../data/platformContent';
@@ -25,6 +26,7 @@ export default function ContactPage() {
           <div className="contact-form__actions"><button className="store-primary-button" type="submit">{copy.contact.submit} <i>{locale === 'ar' ? '←' : '→'}</i></button>{submitted && <p role="status">{copy.contact.success}</p>}</div>
         </form>
       </section>
+      <ContactSocialLinks />
     </div>
   );
 }

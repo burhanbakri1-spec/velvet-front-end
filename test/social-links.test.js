@@ -26,6 +26,18 @@ test('footer Follow group wires official social URLs in a new tab', () => {
   assert.doesNotMatch(footer, /linkedin|youtube/);
 });
 
+test('Contact page wires official social links with icons', () => {
+  const contactPage = fs.readFileSync(new URL('../src/pages/ContactPage.jsx', import.meta.url), 'utf8');
+  const contactSocial = fs.readFileSync(new URL('../src/components/ContactSocialLinks.jsx', import.meta.url), 'utf8');
+  assert.match(contactPage, /ContactSocialLinks/);
+  assert.match(contactSocial, /from '\.\.\/data\/socialLinks'/);
+  assert.match(contactSocial, /socialLinkOrder\.map/);
+  assert.match(contactSocial, /socialLinks\[key\]/);
+  assert.doesNotMatch(contactSocial, /linkedin|youtube/);
+  assert.ok(translations.en.contact.socialTitle);
+  assert.ok(translations.ar.contact.socialTitle);
+});
+
 test('footer social labels exist in EN and AR', () => {
   for (const key of socialLinkOrder) {
     assert.ok(translations.en.footer[key], `missing EN footer.${key}`);

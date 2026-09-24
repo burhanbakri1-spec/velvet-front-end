@@ -19,6 +19,27 @@ const brandAboutContent = new Map();
 /** Independent Mega Menu preview images (brand.{slug}.menuImage / brand.menuImage). */
 const brandMenuImages = new Map();
 
+/**
+ * Normalize legacy PLAY-as-company identity in About (and related) copy without
+ * touching legitimate "play" verbs or the VELVET PLAY sub-brand phrasing.
+ */
+export function normalizeVelvetIdentityCopy(text) {
+  if (text == null || text === '') return text;
+  return String(text)
+    .replace(/\bMeet the PLAY team\b/gi, 'Meet the VELVET team')
+    .replace(/\bthe PLAY team\b/gi, 'the VELVET team')
+    .replace(/\bat PLAY\b/g, 'at VELVET')
+    .replace(/\bfrom PLAY\b/g, 'from VELVET')
+    .replace(/\bby PLAY\b/g, 'by VELVET')
+    .replace(/\bPLAY begins\b/g, 'VELVET begins')
+    .replace(/\bPLAY makes\b/g, 'VELVET makes')
+    .replace(/\bPLAY creates\b/g, 'VELVET creates')
+    .replace(/\bPLAY believes\b/g, 'VELVET believes')
+    .replace(/^PLAY\b/, 'VELVET')
+    .replace(/\bWhy we play\b/g, 'Why VELVET')
+    .replace(/\bPlay it forward\b/g, 'For tomorrow');
+}
+
 export const getPlatformMedia = (key, fallback = '') => websiteMedia.get(key) || fallback;
 
 export function applyBrandMenuImages(platformBrands = []) {
@@ -210,7 +231,12 @@ function setTranslation(locale, key, value) {
     target = target[part];
   }
   const leaf = path.at(-1);
-  if (Object.prototype.hasOwnProperty.call(target || {}, leaf)) target[leaf] = value;
+  if (Object.prototype.hasOwnProperty.call(target || {}, leaf)) {
+    const next = locale === 'en' && path[0] === 'about'
+      ? normalizeVelvetIdentityCopy(value)
+      : value;
+    target[leaf] = next;
+  }
 }
 
 function mapLegacyVlogMediaItem(item, apiUrl) {
@@ -351,10 +377,10 @@ function applyStructuredContent(payload, apiUrl) {
       const field = aboutMatch[2];
       if (field.startsWith('paragraph')) {
         const index = Number(field.slice(-1)) - 1;
-        section.paragraphs[index] = item.values?.en || '';
+        section.paragraphs[index] = normalizeVelvetIdentityCopy(item.values?.en || '');
         section.paragraphsAr[index] = item.values?.ar || item.values?.en || '';
       } else {
-        section[field] = item.values?.en || '';
+        section[field] = normalizeVelvetIdentityCopy(item.values?.en || '');
         section[`${field}Ar`] = item.values?.ar || item.values?.en || '';
       }
       continue;
