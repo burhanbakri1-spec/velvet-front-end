@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { Link, localizePath, useRouter } from '../routing/Router';
@@ -12,6 +12,22 @@ import {
 import { formatPrice } from '../data/currency';
 
 const TABS = ['profile', 'addresses', 'orders', 'favorites', 'reviews'];
+
+function readInitialTab() {
+  const raw = new URLSearchParams(window.location.search).get('tab') || '';
+  return TABS.includes(raw) ? raw : 'profile';
+}
+
+function EmptyState({ message, actionTo, actionLabel }) {
+  return (
+    <div className="account-empty">
+      <p className="account-empty__body">{message}</p>
+      {actionTo && actionLabel ? (
+        <Link className="account-empty__action" to={actionTo}>{actionLabel}</Link>
+      ) : null}
+    </div>
+  );
+}
 
 function ProfileTab({ customer, onLogout }) {
   const { copy, locale } = useI18n();
@@ -40,35 +56,40 @@ function ProfileTab({ customer, onLogout }) {
 
   return (
     <div className="account-tab">
-      <dl className="account-profile">
-        <div><dt>{copy.register.email}</dt><dd dir="ltr">{customer?.email || '—'}</dd></div>
-        <div><dt>{copy.register.name}</dt><dd>{customer?.name || '—'}</dd></div>
-        <div><dt>{copy.register.phone}</dt><dd dir="ltr">{customer?.phone || '—'}</dd></div>
-      </dl>
+      <div className="account-card">
+        <h2 className="account-card__title">{copy.account.tab_profile}</h2>
+        <dl className="account-profile">
+          <div><dt>{copy.register.email}</dt><dd dir="ltr">{customer?.email || '—'}</dd></div>
+          <div><dt>{copy.register.name}</dt><dd>{customer?.name || '—'}</dd></div>
+          <div><dt>{copy.register.phone}</dt><dd dir="ltr">{customer?.phone || '—'}</dd></div>
+        </dl>
+      </div>
 
-      <form className="auth-form account-profile-form" onSubmit={handleSubmit}>
-        <label>
-          <span>{copy.register.name}</span>
-          <input name="name" type="text" value={form.name} onChange={setField('name')} placeholder={copy.register.namePlaceholder} />
-        </label>
-        <label>
-          <span>{copy.register.phone}</span>
-          <input name="phone" type="tel" dir="ltr" value={form.phone} onChange={setField('phone')} placeholder={copy.register.phonePlaceholder} />
-        </label>
-        <div className="auth-form__actions">
-          <button className="store-primary-button" type="submit" disabled={pending}>
-            {pending ? copy.account.saving : copy.account.saveProfile}
-            <i>{locale === 'ar' ? '←' : '→'}</i>
-          </button>
-          <button className="store-secondary-button account-signout" type="button" onClick={onLogout}>
-            {copy.account.signOut}
-          </button>
-        </div>
-      </form>
-
-      {status ? (
-        <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">{status.message}</p>
-      ) : null}
+      <div className="account-card">
+        <h2 className="account-card__title">{copy.account.saveProfile}</h2>
+        <form className="auth-form account-profile-form" onSubmit={handleSubmit}>
+          <label>
+            <span>{copy.register.name}</span>
+            <input name="name" type="text" value={form.name} onChange={setField('name')} placeholder={copy.register.namePlaceholder} />
+          </label>
+          <label>
+            <span>{copy.register.phone}</span>
+            <input name="phone" type="tel" dir="ltr" value={form.phone} onChange={setField('phone')} placeholder={copy.register.phonePlaceholder} />
+          </label>
+          <div className="auth-form__actions">
+            <button className="store-primary-button" type="submit" disabled={pending}>
+              {pending ? copy.account.saving : copy.account.saveProfile}
+              <i>{locale === 'ar' ? '←' : '→'}</i>
+            </button>
+            <button className="account-signout" type="button" onClick={onLogout}>
+              {copy.account.signOut}
+            </button>
+          </div>
+        </form>
+        {status ? (
+          <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">{status.message}</p>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -120,60 +141,65 @@ function AddressesTab() {
 
   return (
     <div className="account-tab">
-      {addresses.length > 0 ? (
-        <ul className="account-addresses">
-          {addresses.map((address) => (
-            <li className="account-address" key={address.id || address.label}>
-              <strong>{address.label || address.fullName}</strong>
-              <span>{address.fullName} · {address.phone}</span>
-              <span>{address.city} — {address.address}</span>
-              {address.notes ? <span>{address.notes}</span> : null}
-              <button type="button" className="account-address__delete" onClick={() => handleDelete(address.id)}>
-                {copy.account.addressDelete}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="auth-panel__note">{copy.account.addressesEmpty}</p>
-      )}
+      <div className="account-card">
+        <h2 className="account-card__title">{copy.account.tab_addresses}</h2>
+        {addresses.length > 0 ? (
+          <ul className="account-addresses">
+            {addresses.map((address) => (
+              <li className="account-address" key={address.id || address.label}>
+                <strong>{address.label || address.fullName}</strong>
+                <span>{address.fullName} · {address.phone}</span>
+                <span>{address.city} — {address.address}</span>
+                {address.notes ? <span>{address.notes}</span> : null}
+                <button type="button" className="account-address__delete" onClick={() => handleDelete(address.id)}>
+                  {copy.account.addressDelete}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState message={copy.account.addressesEmpty} />
+        )}
+      </div>
 
-      <form className="auth-form account-address-form" onSubmit={handleCreate}>
-        <label>
-          <span>{copy.account.addressLabel}</span>
-          <input name="label" value={form.label} onChange={setField('label')} placeholder={copy.account.addressLabelPlaceholder} />
-        </label>
-        <label>
-          <span>{copy.account.addressFullName}</span>
-          <input name="fullName" required value={form.fullName} onChange={setField('fullName')} placeholder={copy.account.addressFullNamePlaceholder} />
-        </label>
-        <label>
-          <span>{copy.account.addressPhone}</span>
-          <input name="phone" type="tel" dir="ltr" required value={form.phone} onChange={setField('phone')} placeholder={copy.account.addressPhonePlaceholder} />
-        </label>
-        <label>
-          <span>{copy.account.addressCity}</span>
-          <input name="city" required value={form.city} onChange={setField('city')} placeholder={copy.account.addressCityPlaceholder} />
-        </label>
-        <label>
-          <span>{copy.account.addressAddress}</span>
-          <input name="address" required value={form.address} onChange={setField('address')} placeholder={copy.account.addressAddressPlaceholder} />
-        </label>
-        <label>
-          <span>{copy.account.addressNotes}</span>
-          <input name="notes" value={form.notes} onChange={setField('notes')} placeholder={copy.account.addressNotesPlaceholder} />
-        </label>
-        <div className="auth-form__actions">
-          <button className="store-primary-button" type="submit" disabled={pending}>
-            {pending ? copy.account.saving : copy.account.addressAdd}
-            <i>{locale === 'ar' ? '←' : '→'}</i>
-          </button>
-        </div>
-      </form>
-
-      {status ? (
-        <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">{status.message}</p>
-      ) : null}
+      <div className="account-card">
+        <h2 className="account-card__title">{copy.account.addressAdd}</h2>
+        <form className="auth-form account-address-form" onSubmit={handleCreate}>
+          <label>
+            <span>{copy.account.addressLabel}</span>
+            <input name="label" value={form.label} onChange={setField('label')} placeholder={copy.account.addressLabelPlaceholder} />
+          </label>
+          <label>
+            <span>{copy.account.addressFullName}</span>
+            <input name="fullName" required value={form.fullName} onChange={setField('fullName')} placeholder={copy.account.addressFullNamePlaceholder} />
+          </label>
+          <label>
+            <span>{copy.account.addressPhone}</span>
+            <input name="phone" type="tel" dir="ltr" required value={form.phone} onChange={setField('phone')} placeholder={copy.account.addressPhonePlaceholder} />
+          </label>
+          <label>
+            <span>{copy.account.addressCity}</span>
+            <input name="city" required value={form.city} onChange={setField('city')} placeholder={copy.account.addressCityPlaceholder} />
+          </label>
+          <label>
+            <span>{copy.account.addressAddress}</span>
+            <input name="address" required value={form.address} onChange={setField('address')} placeholder={copy.account.addressAddressPlaceholder} />
+          </label>
+          <label>
+            <span>{copy.account.addressNotes}</span>
+            <input name="notes" value={form.notes} onChange={setField('notes')} placeholder={copy.account.addressNotesPlaceholder} />
+          </label>
+          <div className="auth-form__actions">
+            <button className="store-primary-button" type="submit" disabled={pending}>
+              {pending ? copy.account.saving : copy.account.addressAdd}
+              <i>{locale === 'ar' ? '←' : '→'}</i>
+            </button>
+          </div>
+        </form>
+        {status ? (
+          <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">{status.message}</p>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -189,7 +215,6 @@ function OrdersTab() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    // Source of truth: GET /api/orders/my-orders — never local snapshots.
     fetchMyOrders(token).then((result) => {
       if (cancelled) return;
       setLoading(false);
@@ -212,7 +237,9 @@ function OrdersTab() {
   if (loading) {
     return (
       <div className="account-tab">
-        <p className="auth-panel__note" role="status">{copy.account.ordersLoading}</p>
+        <div className="account-card">
+          <p className="auth-panel__note" role="status">{copy.account.ordersLoading}</p>
+        </div>
       </div>
     );
   }
@@ -220,7 +247,9 @@ function OrdersTab() {
   if (error) {
     return (
       <div className="account-tab">
-        <p className="auth-panel__status auth-panel__status--error" role="alert">{error}</p>
+        <div className="account-card">
+          <p className="auth-panel__status auth-panel__status--error" role="alert">{error}</p>
+        </div>
       </div>
     );
   }
@@ -228,24 +257,32 @@ function OrdersTab() {
   if (orders.length === 0) {
     return (
       <div className="account-tab">
-        <p className="auth-panel__note">{copy.account.ordersEmpty}</p>
-        <p className="auth-panel__footer"><Link to="/products">{copy.account.ordersBrowse}</Link></p>
+        <div className="account-card">
+          <EmptyState
+            message={copy.account.ordersEmpty}
+            actionTo="/products"
+            actionLabel={copy.account.ordersBrowse}
+          />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="account-tab">
-      <ul className="account-orders">
-        {orders.map((order) => (
-          <li className="account-order" key={order.id || order.orderNumber}>
-            <strong>{order.orderNumber || order.id}</strong>
-            <span>{copy.account.orderStatus}: {order.status || 'Pending'}</span>
-            <span>{copy.account.orderDate}: {new Date(order.createdAt || Date.now()).toLocaleDateString(locale === 'ar' ? 'ar' : 'en-GB')}</span>
-            {order.total != null ? <span>{copy.account.orderTotal}: {formatPrice(order.total)}</span> : null}
-          </li>
-        ))}
-      </ul>
+      <div className="account-card">
+        <h2 className="account-card__title">{copy.account.tab_orders}</h2>
+        <ul className="account-orders">
+          {orders.map((order) => (
+            <li className="account-order" key={order.id || order.orderNumber}>
+              <strong>{order.orderNumber || order.id}</strong>
+              <span>{copy.account.orderStatus}: {order.status || 'Pending'}</span>
+              <span>{copy.account.orderDate}: {new Date(order.createdAt || Date.now()).toLocaleDateString(locale === 'ar' ? 'ar' : 'en-GB')}</span>
+              {order.total != null ? <span>{copy.account.orderTotal}: {formatPrice(order.total)}</span> : null}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -271,26 +308,35 @@ function FavoritesTab() {
   if (favorites.length === 0) {
     return (
       <div className="account-tab">
-        <p className="auth-panel__note">{copy.account.favoritesEmpty}</p>
-        <p className="auth-panel__footer"><Link to="/products">{copy.account.favoritesBrowse}</Link></p>
+        <div className="account-card">
+          {status ? <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">{status.message}</p> : null}
+          <EmptyState
+            message={copy.account.favoritesEmpty}
+            actionTo="/products"
+            actionLabel={copy.account.favoritesBrowse}
+          />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="account-tab">
-      {status ? <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">{status.message}</p> : null}
-      <ul className="account-favorites">
-        {favorites.map((product) => (
-          <li className="account-favorite" key={product.id || product.slug}>
-            {product.image ? <img src={product.image} alt="" /> : null}
-            <Link to={`/products/${product.slug || product.id}`}>
-              {product.name?.[locale] || product.name || product.nameAr || product.id}
-            </Link>
-            {product.price != null ? <span>{formatPrice(product.price)}</span> : null}
-          </li>
-        ))}
-      </ul>
+      <div className="account-card">
+        <h2 className="account-card__title">{copy.account.tab_favorites}</h2>
+        {status ? <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">{status.message}</p> : null}
+        <ul className="account-favorites">
+          {favorites.map((product) => (
+            <li className="account-favorite" key={product.id || product.slug}>
+              {product.image ? <img src={product.image} alt="" /> : null}
+              <Link to={`/products/${product.slug || product.id}`}>
+                {product.name?.[locale] || product.name || product.nameAr || product.id}
+              </Link>
+              {product.price != null ? <span>{formatPrice(product.price)}</span> : null}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -298,7 +344,6 @@ function FavoritesTab() {
 function ReviewsTab() {
   const { copy } = useI18n();
   const { token, customer } = useAuth();
-  // No GET customer my-reviews API — approved attribution from public list + local optimistic pending only.
   const [approved, setApproved] = useState([]);
   const [pendingOptimistic, setPendingOptimistic] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -330,7 +375,9 @@ function ReviewsTab() {
   if (loading) {
     return (
       <div className="account-tab">
-        <p className="auth-panel__note" role="status">{copy.account.reviewsLoading}</p>
+        <div className="account-card">
+          <p className="auth-panel__note" role="status">{copy.account.reviewsLoading}</p>
+        </div>
       </div>
     );
   }
@@ -339,35 +386,43 @@ function ReviewsTab() {
   if (!hasAnything) {
     return (
       <div className="account-tab">
-        {status ? <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">{status.message}</p> : null}
-        <p className="auth-panel__note">{copy.account.reviewsEmpty}</p>
-        <p className="auth-panel__footer"><Link to="/products">{copy.account.reviewsBrowse}</Link></p>
+        <div className="account-card">
+          {status ? <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">{status.message}</p> : null}
+          <EmptyState
+            message={copy.account.reviewsEmpty}
+            actionTo="/products"
+            actionLabel={copy.account.reviewsBrowse}
+          />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="account-tab">
-      {status ? <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">{status.message}</p> : null}
-      {pendingOptimistic.length > 0 ? (
-        <p className="auth-panel__note" role="note">{copy.account.reviewsPendingNote}</p>
-      ) : null}
-      <ul className="account-reviews">
-        {pendingOptimistic.map((review, index) => (
-          <li className="account-review account-review--pending" key={review.id || `pending-${index}`}>
-            <strong>{'★'.repeat(Math.max(1, Math.min(5, Number(review.rating) || 5)))}</strong>
-            <span>{review.comment}</span>
-            <small>{copy.account.reviewPendingBadge} · {review.scope === 'product' ? `${copy.account.reviewProduct}: ${review.productId || ''}` : copy.account.reviewStore}</small>
-          </li>
-        ))}
-        {approved.map((review, index) => (
-          <li className="account-review" key={review.id || `approved-${index}`}>
-            <strong>{'★'.repeat(Math.max(1, Math.min(5, Number(review.rating) || 5)))}</strong>
-            <span>{review.comment}</span>
-            <small>{copy.account.reviewApprovedBadge} · {review.scope === 'product' ? `${copy.account.reviewProduct}: ${review.productId || ''}` : copy.account.reviewStore}</small>
-          </li>
-        ))}
-      </ul>
+      <div className="account-card">
+        <h2 className="account-card__title">{copy.account.tab_reviews}</h2>
+        {status ? <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">{status.message}</p> : null}
+        {pendingOptimistic.length > 0 ? (
+          <p className="auth-panel__note" role="note">{copy.account.reviewsPendingNote}</p>
+        ) : null}
+        <ul className="account-reviews">
+          {pendingOptimistic.map((review, index) => (
+            <li className="account-review account-review--pending" key={review.id || `pending-${index}`}>
+              <strong>{'★'.repeat(Math.max(1, Math.min(5, Number(review.rating) || 5)))}</strong>
+              <span>{review.comment}</span>
+              <small>{copy.account.reviewPendingBadge} · {review.scope === 'product' ? `${copy.account.reviewProduct}: ${review.productId || ''}` : copy.account.reviewStore}</small>
+            </li>
+          ))}
+          {approved.map((review, index) => (
+            <li className="account-review" key={review.id || `approved-${index}`}>
+              <strong>{'★'.repeat(Math.max(1, Math.min(5, Number(review.rating) || 5)))}</strong>
+              <span>{review.comment}</span>
+              <small>{copy.account.reviewApprovedBadge} · {review.scope === 'product' ? `${copy.account.reviewProduct}: ${review.productId || ''}` : copy.account.reviewStore}</small>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -376,7 +431,7 @@ export default function AccountPage() {
   const { copy, locale } = useI18n();
   const { isAuthenticated, customer, logout, authConfigured } = useAuth();
   const { navigate } = useRouter();
-  const [tab, setTab] = useState('profile');
+  const [tab, setTab] = useState(readInitialTab);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -384,17 +439,26 @@ export default function AccountPage() {
     }
   }, [isAuthenticated, locale, navigate]);
 
+  const selectTab = (key) => {
+    setTab(key);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', key);
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="auth-page">
-        <section className="auth-panel" aria-labelledby="account-title">
-          <span className="store-eyebrow">{copy.account.eyebrow}</span>
-          <h1 id="account-title">{copy.account.title}</h1>
-          <p className="auth-panel__intro">{copy.account.redirecting}</p>
-          <p className="auth-panel__footer">
-            <Link to="/login">{copy.account.signIn}</Link>
-          </p>
-        </section>
+        <div className="auth-shell auth-shell--solo">
+          <section className="auth-panel auth-card" aria-labelledby="account-title">
+            <span className="store-eyebrow">{copy.account.eyebrow}</span>
+            <h1 id="account-title">{copy.account.title}</h1>
+            <p className="auth-panel__intro">{copy.account.redirecting}</p>
+            <p className="auth-panel__footer">
+              <Link to="/login">{copy.account.signIn}</Link>
+            </p>
+          </section>
+        </div>
       </div>
     );
   }
@@ -407,40 +471,49 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="auth-page">
-      <section className="auth-panel auth-panel--account" aria-labelledby="account-title">
-        <span className="store-eyebrow">{copy.account.eyebrow}</span>
-        <h1 id="account-title">{copy.account.title}</h1>
-        <p className="auth-panel__intro">
-          {copy.account.welcome.replace('{name}', displayName)}
-        </p>
-        {!authConfigured ? (
-          <p className="auth-panel__note">{copy.login.unavailableNote}</p>
-        ) : null}
+    <div className="account-page">
+      <header className="account-hero">
+        <div className="account-hero__copy">
+          <span className="store-eyebrow">{copy.account.eyebrow}</span>
+          <h1 id="account-title">{copy.account.title}</h1>
+          <p className="account-hero__welcome">
+            {copy.account.welcome.replace('{name}', displayName)}
+          </p>
+        </div>
+        <div className="account-hero__actions">
+          <button className="account-signout" type="button" onClick={handleLogout}>
+            {copy.account.signOut}
+          </button>
+          <Link className="account-hero__home" to="/">{copy.login.backHome}</Link>
+        </div>
+      </header>
 
-        <nav className="account-tabs" aria-label={copy.account.tabsLabel}>
+      {!authConfigured ? (
+        <p className="auth-panel__note account-page__note">{copy.login.unavailableNote}</p>
+      ) : null}
+
+      <div className="account-layout">
+        <nav className="account-nav" aria-label={copy.account.tabsLabel}>
           {TABS.map((key) => (
             <button
               type="button"
               key={key}
-              className={`account-tabs__tab${tab === key ? ' is-active' : ''}`}
-              onClick={() => setTab(key)}
+              className={`account-nav__tab${tab === key ? ' is-active' : ''}`}
+              onClick={() => selectTab(key)}
             >
               {copy.account[`tab_${key}`]}
             </button>
           ))}
         </nav>
 
-        {tab === 'profile' && <ProfileTab customer={customer} onLogout={handleLogout} />}
-        {tab === 'addresses' && <AddressesTab />}
-        {tab === 'orders' && <OrdersTab />}
-        {tab === 'favorites' && <FavoritesTab />}
-        {tab === 'reviews' && <ReviewsTab />}
-
-        <p className="auth-panel__footer">
-          <Link to="/">{copy.login.backHome}</Link>
-        </p>
-      </section>
+        <div className="account-main">
+          {tab === 'profile' && <ProfileTab customer={customer} onLogout={handleLogout} />}
+          {tab === 'addresses' && <AddressesTab />}
+          {tab === 'orders' && <OrdersTab />}
+          {tab === 'favorites' && <FavoritesTab />}
+          {tab === 'reviews' && <ReviewsTab />}
+        </div>
+      </div>
     </div>
   );
 }
