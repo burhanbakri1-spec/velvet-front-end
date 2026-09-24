@@ -53,101 +53,108 @@ export default function RegisterPage() {
 
   return (
     <div className="auth-page">
-      <section className="auth-panel" aria-labelledby="register-title">
-        <span className="store-eyebrow">{copy.register.eyebrow}</span>
-        <h1 id="register-title">{copy.register.title}</h1>
-        <p className="auth-panel__intro">{copy.register.intro}</p>
+      <div className="auth-shell">
+        <aside className="auth-brand" aria-hidden="true">
+          <span className="auth-brand__mark">VELVET</span>
+          <p className="auth-brand__line">{copy.register.brandLine}</p>
+        </aside>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label>
-            <span>{copy.register.name}</span>
-            <input
-              name="name"
-              type="text"
-              autoComplete="name"
-              required
-              value={form.name}
-              onChange={setField('name')}
-              placeholder={copy.register.namePlaceholder}
-            />
-          </label>
-          <label>
-            <span>{copy.register.email}</span>
-            <input
-              name="email"
-              type="email"
-              autoComplete="email"
-              dir="ltr"
-              required
-              value={form.email}
-              onChange={setField('email')}
-              placeholder={copy.register.emailPlaceholder}
-            />
-          </label>
-          <label>
-            <span>{copy.register.phone}</span>
-            <input
-              name="phone"
-              type="tel"
-              autoComplete="tel"
-              dir="ltr"
-              required
-              value={form.phone}
-              onChange={setField('phone')}
-              placeholder={copy.register.phonePlaceholder}
-            />
-          </label>
-          <label>
-            <span>{copy.register.password}</span>
-            <input
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              dir="ltr"
-              required
-              minLength={6}
-              value={form.password}
-              onChange={setField('password')}
-              placeholder={copy.register.passwordPlaceholder}
-            />
-          </label>
-          <label>
-            <span>{copy.register.confirmPassword}</span>
-            <input
-              name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              dir="ltr"
-              required
-              value={form.confirmPassword}
-              onChange={setField('confirmPassword')}
-              placeholder={copy.register.confirmPasswordPlaceholder}
-            />
-          </label>
-          <div className="auth-form__actions">
-            <button className="store-primary-button" type="submit" disabled={pending}>
-              {pending ? copy.register.submitting : copy.register.submit}
-              <i>{locale === 'ar' ? '←' : '→'}</i>
-            </button>
-          </div>
-        </form>
+        <section className="auth-panel auth-card" aria-labelledby="register-title">
+          <span className="store-eyebrow">{copy.register.eyebrow}</span>
+          <h1 id="register-title">{copy.register.title}</h1>
+          <p className="auth-panel__intro">{copy.register.intro}</p>
 
-        {status ? (
-          <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">
-            {status.message}
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <label>
+              <span>{copy.register.name}</span>
+              <input
+                name="name"
+                type="text"
+                autoComplete="name"
+                required
+                value={form.name}
+                onChange={setField('name')}
+                placeholder={copy.register.namePlaceholder}
+              />
+            </label>
+            <label>
+              <span>{copy.register.email}</span>
+              <input
+                name="email"
+                type="email"
+                autoComplete="email"
+                dir="ltr"
+                required
+                value={form.email}
+                onChange={setField('email')}
+                placeholder={copy.register.emailPlaceholder}
+              />
+            </label>
+            <label>
+              <span>{copy.register.phone}</span>
+              <input
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                dir="ltr"
+                required
+                value={form.phone}
+                onChange={setField('phone')}
+                placeholder={copy.register.phonePlaceholder}
+              />
+            </label>
+            <label>
+              <span>{copy.register.password}</span>
+              <input
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                dir="ltr"
+                required
+                minLength={6}
+                value={form.password}
+                onChange={setField('password')}
+                placeholder={copy.register.passwordPlaceholder}
+              />
+            </label>
+            <label>
+              <span>{copy.register.confirmPassword}</span>
+              <input
+                name="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                dir="ltr"
+                required
+                value={form.confirmPassword}
+                onChange={setField('confirmPassword')}
+                placeholder={copy.register.confirmPasswordPlaceholder}
+              />
+            </label>
+            <div className="auth-form__actions">
+              <button className="store-primary-button" type="submit" disabled={pending}>
+                {pending ? copy.register.submitting : copy.register.submit}
+                <i>{locale === 'ar' ? '←' : '→'}</i>
+              </button>
+            </div>
+          </form>
+
+          {status ? (
+            <p className={`auth-panel__status auth-panel__status--${status.tone}`} role="status">
+              {status.message}
+            </p>
+          ) : null}
+
+          {!authConfigured ? (
+            <p className="auth-panel__note">{copy.register.unavailableNote}</p>
+          ) : null}
+
+          <p className="auth-panel__footer">
+            <Link to="/login">{copy.register.signInInstead}</Link>
+            <span className="auth-panel__sep" aria-hidden="true">·</span>
+            <Link to="/">{copy.register.backHome}</Link>
           </p>
-        ) : null}
-
-        {!authConfigured ? (
-          <p className="auth-panel__note">{copy.register.unavailableNote}</p>
-        ) : null}
-
-        <p className="auth-panel__footer">
-          <Link to="/login">{copy.register.signInInstead}</Link>
-          {' · '}
-          <Link to="/">{copy.register.backHome}</Link>
-        </p>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
