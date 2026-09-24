@@ -216,9 +216,9 @@ button { color: inherit; }
    collapsing to 0×0 inside nav-bar max-content grid tracks. */
 .logo__img--brand {
   width: auto;
-  height: 62.7px;
-  max-width: 263px;
-  max-height: 62.7px;
+  height: 72.1px;
+  max-width: 302px;
+  max-height: 72.1px;
   padding: 0;
   object-fit: contain;
   object-position: center;
@@ -231,8 +231,8 @@ button { color: inherit; }
 .logo--brand {
   width: max-content;
   min-width: max-content;
-  height: 64px;
-  max-width: 275px;
+  height: 74px;
+  max-width: 314px;
   padding: 0 6px;
   display: flex;
   align-items: center;
@@ -252,8 +252,8 @@ button { color: inherit; }
 .logo--managed.logo--brand {
   width: max-content;
   min-width: max-content;
-  height: 64px;
-  max-width: 275px;
+  height: 74px;
+  max-width: 314px;
   padding: 0 6px;
   flex: 0 0 auto;
   color: inherit;
@@ -341,9 +341,9 @@ button { color: inherit; }
 }
 .logo--managed .logo__img--brand {
   width: auto;
-  height: 62.7px;
-  max-width: 263px;
-  max-height: 62.7px;
+  height: 72.1px;
+  max-width: 302px;
+  max-height: 72.1px;
   flex: 0 0 auto;
 }
 .logo--managed .logo__img--managed-site,
@@ -681,8 +681,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed.logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 58px;
-    max-width: 246px;
+    height: 66px;
+    max-width: 282px;
     padding: 0 4px;
     flex: 0 0 auto;
     background: transparent;
@@ -717,8 +717,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 58px;
-    max-width: 246px;
+    height: 66px;
+    max-width: 282px;
     padding: 0 4px;
     flex: 0 0 auto;
     background: transparent;
@@ -728,9 +728,9 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed .logo__img--brand,
   .logo__img--brand {
     width: auto;
-    height: 55.2px;
-    max-width: 238px;
-    max-height: 55.2px;
+    height: 63.5px;
+    max-width: 274px;
+    max-height: 63.5px;
     flex: 0 0 auto;
   }
   .main-nav { gap: 24px; }
@@ -765,8 +765,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed.logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 52px;
-    max-width: 217px;
+    height: 60px;
+    max-width: 249px;
     padding: 0 2px;
     flex: 0 0 auto;
     background: transparent;
@@ -803,8 +803,8 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--brand {
     width: max-content;
     min-width: max-content;
-    height: 52px;
-    max-width: 217px;
+    height: 60px;
+    max-width: 249px;
     padding: 0 2px;
     flex: 0 0 auto;
     background: transparent;
@@ -815,9 +815,9 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
   .logo--managed .logo__img--brand,
   .logo__img--brand {
     width: auto;
-    height: 50.1px;
-    max-width: 213px;
-    max-height: 50.1px;
+    height: 57.6px;
+    max-width: 245px;
+    max-height: 57.6px;
     flex: 0 0 auto;
   }
   .search-pill { display: none; }
@@ -1691,7 +1691,8 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 .brand-logo-frame {
   --brand-mirror-w: 202px;
   --brand-mirror-h: 104px;
-  --brand-mirror-pad: 14px;
+  /* Pad tightened so logos can grow +15% inside unchanged outer W×H */
+  --brand-mirror-pad: 2px;
   position: relative;
   pointer-events: none;
   display: flex;
@@ -1886,7 +1887,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     left: 40px;
     --brand-mirror-w: 176px;
     --brand-mirror-h: 92px;
-    --brand-mirror-pad: 12px;
+    --brand-mirror-pad: 1px;
     width: var(--brand-mirror-w);
     height: var(--brand-mirror-h);
     max-width: min(var(--brand-mirror-w), 90vw);
@@ -1901,7 +1902,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
   .brand-logo-frame {
     --brand-mirror-w: 176px;
     --brand-mirror-h: 92px;
-    --brand-mirror-pad: 12px;
+    --brand-mirror-pad: 1px;
   }
   html[dir="rtl"] .brand-showcase__brand-logo-frame { right: 40px; left: auto; }
   .showcase-more { right: 40px; }
@@ -1965,7 +1966,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
     inset-inline-start: 20px;
     --brand-mirror-w: 139px;
     --brand-mirror-h: 74px;
-    --brand-mirror-pad: 10px;
+    --brand-mirror-pad: 1px;
     width: var(--brand-mirror-w);
     height: var(--brand-mirror-h);
     max-width: min(var(--brand-mirror-w), 78vw);
@@ -1980,7 +1981,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
   .brand-logo-frame {
     --brand-mirror-w: 139px;
     --brand-mirror-h: 74px;
-    --brand-mirror-pad: 10px;
+    --brand-mirror-pad: 1px;
   }
   html[dir="rtl"] .brand-showcase__brand-logo-frame {
     left: auto;

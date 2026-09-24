@@ -154,7 +154,7 @@ test('mega menu and showcase share one frosted logo mirror box; header brand has
   assert.match(styles, /\.brand-logo\s*\{[\s\S]*?max-width:\s*100%/);
   assert.match(styles, /\.brand-logo\s*\{[\s\S]*?max-height:\s*100%/);
   assert.match(styles, /\.logo--brand\s*\{[\s\S]*?background:\s*transparent/);
-  assert.match(styles, /\.logo__img--brand\s*\{[\s\S]*?max-height:\s*62\.7px/);
+  assert.match(styles, /\.logo__img--brand\s*\{[\s\S]*?max-height:\s*72\.1px/);
   assert.doesNotMatch(styles, /--brand-logo-boost/);
   assert.doesNotMatch(styles, /--brand-logo-h:/);
   assert.doesNotMatch(styles, /\.brand-logo-frame::before\s*\{[\s\S]*?width:\s*102%/);
