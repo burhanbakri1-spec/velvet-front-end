@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import PageTitleHero from '../components/PageTitleHero';
+import PageVideoHero from '../components/PageVideoHero';
 import { newsCategories, newsItems } from '../data/company';
+import { getPlatformMedia } from '../data/platformContent';
 import { useI18n } from '../i18n/I18nContext';
 
 export default function NewsPage() {
@@ -8,6 +10,8 @@ export default function NewsPage() {
   const [category, setCategory] = useState('all');
   const [sort, setSort] = useState('latest');
   const formatDate = (value) => new Intl.DateTimeFormat(locale === 'ar' ? 'ar' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(`${value}T12:00:00`));
+  const bannerVideo = getPlatformMedia('news.banner.video', '');
+  const bannerImage = getPlatformMedia('news.banner', '');
 
   const visibleItems = useMemo(() => {
     const categoryModel = newsCategories.find((item) => item.id === category);
@@ -21,7 +25,20 @@ export default function NewsPage() {
 
   return (
     <div className="news-page">
-      <PageTitleHero title={copy.news.title} />
+      {bannerVideo || bannerImage ? (
+        <PageVideoHero
+          title={copy.news.title}
+          video={bannerVideo || undefined}
+          poster={bannerImage || undefined}
+          theme="news"
+          autoPlay={Boolean(bannerVideo)}
+          muted={Boolean(bannerVideo)}
+          loop={Boolean(bannerVideo)}
+          showPlayControl={false}
+        />
+      ) : (
+        <PageTitleHero title={copy.news.title} />
+      )}
       <section className="news-controls" aria-label={copy.news.filters}>
         <div className="news-filters">
           {newsCategories.map((item) => <button className={category === item.id ? 'is-active' : ''} type="button" onClick={() => setCategory(item.id)} key={item.id}>{item[locale]}</button>)}
