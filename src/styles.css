@@ -1429,11 +1429,17 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 @keyframes company-title-in { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
 
 .editorial-sections { background: #fff; }
-.editorial-split { min-height: 720px; display: grid; grid-template-columns: 1fr 1fr; }
+.editorial-split {
+  min-height: 720px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #fff;
+}
+.editorial-split:nth-child(even) { background: #fafaf8; }
 .editorial-split__copy { padding: clamp(72px,8.5vw,145px) clamp(45px,8vw,135px); display: flex; flex-direction: column; justify-content: center; }
 .editorial-split__copy h2 { max-width: 600px; margin: 18px 0 35px; font-family: Impact,'Arial Narrow',sans-serif; font-size: clamp(52px,5vw,86px); font-weight: 900; line-height: .9; letter-spacing: -.03em; text-transform: uppercase; }
 .editorial-split__copy p { max-width: 590px; margin: 0 0 22px; color: #4f4f53; font-size: clamp(16px,1.2vw,20px); line-height: 1.62; }
-.editorial-split__media { min-height: 720px; margin: 0; overflow: hidden; background: #e7e7e4; }
+.editorial-split__media { min-height: 720px; margin: 0; overflow: hidden; background: #efece7; }
 .editorial-split__media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 1s cubic-bezier(.22,1,.36,1); }
 .editorial-split:hover .editorial-split__media img { transform: scale(1.025); }
 .editorial-split--reverse .editorial-split__copy { grid-column: 2; }
@@ -1444,7 +1450,19 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 }
 @keyframes editorial-copy-in { from { opacity: .15; transform: translateY(34px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes editorial-media-in { from { opacity: .68; transform: scale(1.06); } to { opacity: 1; transform: scale(1); } }
-.company-careers-cta { min-height: 500px; padding: 95px clamp(24px,7.2vw,138px); background: #f0f1f3; display: grid; grid-template-columns: minmax(0,1fr) auto; align-content: center; align-items: end; gap: 45px; }
+.company-careers-cta {
+  min-height: 500px;
+  padding: 95px clamp(24px,7.2vw,138px);
+  background:
+    radial-gradient(90% 80% at 100% 0%, rgba(232, 48, 48, 0.06), transparent 55%),
+    #f7f7f5;
+  border-top: 1px solid #ebeae6;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  align-content: center;
+  align-items: end;
+  gap: 45px;
+}
 .company-careers-cta .store-eyebrow { grid-column: 1 / -1; }
 .company-careers-cta h2 { margin: 8px 0 0; font-family: Impact,'Arial Narrow',sans-serif; font-size: clamp(66px,8vw,135px); font-weight: 900; line-height: .82; letter-spacing: -.035em; text-transform: uppercase; }
 .company-careers-cta a { min-width: 245px; gap: 35px; }
@@ -1486,27 +1504,102 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 .contact-form__actions button i { font-style: normal; }
 .contact-form__actions p { margin: 0; color: #267b47; font-size: 13px; }
 
+.contact-social {
+  padding: 72px clamp(24px, 7.2vw, 138px) 110px;
+  background:
+    radial-gradient(80% 70% at 0% 0%, rgba(232, 48, 48, 0.06), transparent 55%),
+    #f7f7f5;
+  border-top: 1px solid #ebeae6;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(36px, 6vw, 80px);
+  align-items: center;
+}
+.contact-social__copy { display: grid; gap: 14px; }
+.contact-social__copy h2 {
+  margin: 0;
+  font-family: Impact, 'Arial Narrow', sans-serif;
+  font-size: clamp(40px, 5vw, 72px);
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+.contact-social__copy p {
+  margin: 0;
+  max-width: 36rem;
+  color: #5f5f63;
+  font-size: 16px;
+  line-height: 1.55;
+}
+.contact-social__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.contact-social__link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 72px;
+  padding: 16px 18px;
+  border: 1px solid #e7e6e2;
+  border-radius: 18px;
+  background: #fff;
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(18, 18, 20, 0.04);
+  transition: transform .2s ease, border-color .2s ease, color .2s ease;
+}
+.contact-social__link:hover {
+  transform: translateY(-2px);
+  border-color: rgba(232, 48, 48, 0.35);
+  color: var(--red);
+}
+.contact-social__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #f3f2ef;
+  flex: 0 0 auto;
+}
+.contact-social__icon svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+.contact-social__label {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
 .auth-page {
   min-height: calc(100svh - var(--header-height, 88px));
   display: grid;
   place-items: center;
-  padding: clamp(32px, 6vw, 72px) clamp(16px, 4vw, 40px);
+  padding: clamp(28px, 5vw, 64px) clamp(16px, 4vw, 40px);
   background:
-    radial-gradient(120% 80% at 0% 0%, rgba(232, 48, 48, 0.08), transparent 55%),
-    radial-gradient(90% 70% at 100% 100%, rgba(18, 18, 20, 0.05), transparent 50%),
+    radial-gradient(120% 80% at 0% 0%, rgba(232, 48, 48, 0.07), transparent 55%),
+    radial-gradient(90% 70% at 100% 100%, rgba(18, 18, 20, 0.04), transparent 50%),
     #f7f7f5;
   color: var(--ink);
 }
 .auth-shell {
-  width: min(1040px, 100%);
+  width: min(1000px, 100%);
   display: grid;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   gap: 0;
   border: 1px solid #e7e6e2;
-  border-radius: 28px;
+  border-radius: 26px;
   overflow: hidden;
   background: #fff;
-  box-shadow: 0 24px 60px rgba(18, 18, 20, 0.08);
+  box-shadow: 0 18px 48px rgba(18, 18, 20, 0.07);
 }
 .auth-shell--solo {
   grid-template-columns: 1fr;
@@ -1548,14 +1641,14 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   gap: 18px;
 }
 .auth-card {
-  padding: clamp(28px, 4vw, 48px);
+  padding: clamp(32px, 4.5vw, 52px);
   box-sizing: border-box;
 }
 .auth-panel h1,
 .auth-card h1 {
   margin: 0;
-  font-size: clamp(32px, 5vw, 46px);
-  line-height: 1.05;
+  font-size: clamp(30px, 4.6vw, 42px);
+  line-height: 1.06;
   letter-spacing: -.04em;
 }
 .auth-panel__intro,
@@ -1629,19 +1722,19 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 
 .account-page {
   min-height: calc(100svh - var(--header-height, 88px));
-  padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 48px) 72px;
+  padding: clamp(24px, 4.5vw, 48px) clamp(16px, 4vw, 48px) 72px;
   background:
-    radial-gradient(100% 60% at 100% 0%, rgba(232, 48, 48, 0.06), transparent 50%),
+    radial-gradient(100% 60% at 100% 0%, rgba(232, 48, 48, 0.05), transparent 50%),
     #f7f7f5;
   color: var(--ink);
 }
 .account-hero {
-  width: min(1120px, 100%);
-  margin: 0 auto 28px;
+  width: min(1080px, 100%);
+  margin: 0 auto 24px;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 20px;
+  gap: 18px;
   align-items: flex-end;
 }
 .account-hero__copy {
@@ -1827,6 +1920,11 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
   .contact-form-section { padding: 82px 20px 100px; display: block; }
   .contact-form-intro { margin-bottom: 55px; }
   .contact-form { grid-template-columns: 1fr; }
+  .contact-social {
+    grid-template-columns: 1fr;
+    padding: 56px 20px 80px;
+  }
+  .contact-social__list { grid-template-columns: 1fr; }
   .contact-form__wide, .contact-form__actions { grid-column: 1; }
   .contact-form__actions { align-items: flex-start; flex-direction: column; }
 }
@@ -2085,7 +2183,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
 .editorial-split:nth-child(2) .editorial-split__copy { justify-content: flex-start; padding-top: 64px; }
 .editorial-split:nth-child(3) .editorial-split__copy { justify-content: flex-start; padding-top: 25px; }
 .editorial-split:nth-child(4) .editorial-split__copy { justify-content: flex-start; padding-top: 117px; }
-.company-careers-cta { min-height: 226px; height: 226px; padding: 40px 64px; }
+.company-careers-cta { min-height: 226px; height: 226px; padding: 40px 64px; background: #f7f7f5; }
 .company-careers-cta h2 { font-family: Arial, Helvetica, sans-serif; font-size: 55px; line-height: 1; text-transform: none; }
 
 .news-controls { min-height: 282px; padding: 55px 64px; }
