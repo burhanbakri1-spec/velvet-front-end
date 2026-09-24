@@ -4,8 +4,12 @@
  * Verified staging contract:
  * - POST /api/orders (tenant headers; Bearer optional — guest checkout allowed)
  *   Body: { customer: { name, phone, email?, city, address, notes? },
- *           items: [{ productId, variantId, quantity }] }
- *   → 201 { id, orderNumber (e.g. ORD-…), status (e.g. Pending) }
+ *           items: [{ productId, variantId, quantity }],
+ *           deliveryZoneId?, delivery_city_key? }
+ *   When the company has delivery zones, deliveryZoneId (or delivery_city_key)
+ *   is required; the server resolves fee/name and returns authoritative
+ *   delivery_price, delivery_city_name, total, etc.
+ *   → 201 { id, orderNumber (e.g. ORD-…), status (e.g. Pending), … }
  * - GET /api/orders/my-orders (Bearer + X-Company-Id/X-Site-Id) → 200 array of
  *   the authenticated customer's orders. A newly created authenticated order
  *   appears there immediately. This is the ONLY list endpoint for customers;
@@ -27,9 +31,13 @@ const ORDER_SNAPSHOT_KEY = 'velvet-order-snapshots-v1';
  * Build the exact order payload the staging API accepts. Cart items already
  * carry productId + variantId; variantId is included only when present
  * (products without variants must not send an empty variant id).
+ *
+ * Delivery: send deliveryZoneId so the backend validates the zone and applies
+ * the configured fee. Optional delivery_city_key is included when known.
+ * Never trust a client-supplied fee as authoritative.
  */
-export function buildOrderPayload({ customer = {}, items = [] } = {}) {
-  return {
+export function buildOrderPayload({ customer = {}, items = [], deliveryZone = null } = {}) {
+  const payload = {
     customer: {
       name: String(customer.name || '').trim(),
       phone: String(customer.phone || '').trim(),
@@ -46,6 +54,24 @@ export function buildOrderPayload({ customer = {}, items = [] } = {}) {
       }))
       .filter((item) => item.productId),
   };
+
+  const zoneId = String(
+    deliveryZone?.id
+      || deliveryZone?.deliveryZoneId
+      || deliveryZone?.delivery_zone_id
+      || '',
+  ).trim();
+  const cityKey = String(
+    deliveryZone?.cityKey
+      || deliveryZone?.city_key
+      || deliveryZone?.deliveryCityKey
+      || deliveryZone?.delivery_city_key
+      || '',
+  ).trim();
+  if (zoneId) payload.deliveryZoneId = zoneId;
+  if (cityKey) payload.delivery_city_key = cityKey;
+
+  return payload;
 }
 
 /** Create a real order. Guest checkout is allowed (no token). */
