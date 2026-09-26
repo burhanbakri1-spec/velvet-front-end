@@ -31,10 +31,6 @@ export default function NewsPage() {
           video={bannerVideo || undefined}
           poster={bannerImage || undefined}
           theme="news"
-          autoPlay={Boolean(bannerVideo)}
-          muted={Boolean(bannerVideo)}
-          loop={Boolean(bannerVideo)}
-          showPlayControl={false}
         />
       ) : (
         <PageTitleHero title={copy.news.title} />
