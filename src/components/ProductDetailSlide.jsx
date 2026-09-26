@@ -5,7 +5,6 @@ import {
   getOptionName,
   getOptionValue,
   getProductBadge,
-  getProductDescription,
   getProductName,
 } from '../data/products';
 import { optionValueUnavailable, coerceSelectionsToValidVariant } from '../data/inventory';
@@ -57,7 +56,6 @@ export default function ProductDetailSlide({
         </span>
         <h1>{productName}</h1>
         <FavoriteButton productId={product.id} className="product-detail-favorite" />
-        <p>{getProductDescription(product, locale, true)}</p>
         <div className="category-product-showcase__commerce">
           <div className="category-product-showcase__price">
             <strong>{formatPrice(currentPrice)}</strong>

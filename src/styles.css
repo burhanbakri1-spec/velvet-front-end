@@ -1087,9 +1087,9 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
 .product-results-line { margin-bottom: 24px; display: flex; justify-content: space-between; color: #747477; font-size: 13px; }
 .product-results-line button, .cart-clear { padding: 0; border: 0; border-bottom: 1px solid; background: none; cursor: pointer; }
 .product-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: clamp(18px,2vw,34px); }
-.product-card { min-width: 0; border-radius: 25px; background: transparent; overflow: hidden; box-shadow: none; transition: transform .45s cubic-bezier(.22,1,.36,1); }
+.product-card { min-width: 0; border-radius: 25px; background: #fefefe; overflow: hidden; box-shadow: none; transition: transform .45s cubic-bezier(.22,1,.36,1); }
 .product-card:hover { transform: translateY(-7px); box-shadow: none; }
-.product-card__media { aspect-ratio: 1 / 1.03; background: transparent; display: block; position: relative; overflow: hidden; }
+.product-card__media { aspect-ratio: 1 / 1.03; background: #fefefe; display: block; position: relative; overflow: hidden; }
 .product-card__media-link { display: block; width: 100%; height: 100%; position: relative; }
 .product-card__image { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; transform: scale(.68); transition: transform .7s cubic-bezier(.22,1,.36,1); }
 .product-card:hover .product-card__image { transform: scale(.7); }
@@ -1103,7 +1103,7 @@ html[dir="rtl"] .product-card__gallery-btn span { transform: scaleX(-1); }
 }
 .product-card__badge, .product-detail-badge { padding: 8px 12px; border-radius: 999px; color: #fff; background: var(--red); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .product-card__badge { position: absolute; z-index: 2; left: 15px; top: 15px; }
-.product-card__body { min-height: 255px; padding: 24px; display: flex; flex-direction: column; }
+.product-card__body { min-height: 255px; padding: 24px; display: flex; flex-direction: column; background: #fefefe; }
 .product-card__category, .product-detail-category { color: #77777a; font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
 .product-card h2 { margin: 9px 0 11px; font-size: clamp(20px,1.45vw,25px); line-height: 1.08; letter-spacing: -.025em; }
 .product-card__body p { margin: 0; color: #69696c; font-size: 13px; line-height: 1.5; }

@@ -4,7 +4,7 @@ import { useI18n } from '../i18n/I18nContext';
 const links = [
   { key: 'about', to: '/about' },
   { key: 'news', to: '/news' },
-  { key: 'vlogs', to: '/vlogs' },
+  { key: 'contact', to: '/contact' },
 ];
 
 export default function AboutSubnav({ open, onClose }) {

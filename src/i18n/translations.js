@@ -1,9 +1,9 @@
 export const translations = {
   en: {
     meta: { site: 'VELVET — Make room for wonder', description: 'Discover imaginative toys, creative play, and bright new worlds from VELVET.', home: 'Home', velvetHome: 'Home', products: 'Products', categories: 'Categories', cart: 'Cart', checkout: 'Checkout', about: 'About', news: 'News', contact: 'Contact', vlogs: 'Vlogs', login: 'Login', register: 'Register', account: 'Account' },
-    header: { tagline: 'Make room for wonder.', categories: 'Categories', about: 'About us', products: 'Products', contact: 'Contact', shop: 'Shop', search: 'Search', searchLabel: 'Search products', cart: 'Shopping cart', account: 'Customer account', menu: 'Toggle menu', language: 'العربية', languageLabel: 'Switch to Arabic', nav: 'Main navigation', brands: 'Brands' },
+    header: { tagline: 'Make room for wonder.', categories: 'Categories', about: 'About us', products: 'Products', contact: 'Contact Us', shop: 'Shop', search: 'Search', searchLabel: 'Search products', cart: 'Shopping cart', account: 'Customer account', menu: 'Toggle menu', language: 'العربية', languageLabel: 'Switch to Arabic', nav: 'Main navigation', brands: 'Brands' },
     categoryMenu: { eyebrow: 'Shop every way to play', all: 'All Products', explore: 'Explore all products' },
-    aboutNav: { about: 'About', news: 'News', contact: 'Contact', vlogs: 'Vlogs' },
+    aboutNav: { about: 'About', news: 'News', contact: 'Contact Us' },
     home: {
       feature: 'VELVET feature video', play: 'Play film', pause: 'Pause film', worlds: 'Product showcases',
       introTitle: ['Reimagining play,', 'every day.'],
@@ -179,7 +179,7 @@ export const translations = {
     meta: { site: 'VELVET — مساحة أكبر للدهشة', description: 'اكتشف ألعاباً مبتكرة وتجارب لعب إبداعية وعوالم مبهجة من VELVET.', home: 'الرئيسية', velvetHome: 'الرئيسية', products: 'المنتجات', categories: 'الأقسام', cart: 'السلة', checkout: 'إتمام الشراء', about: 'من نحن', news: 'الأخبار', contact: 'تواصل معنا', vlogs: 'المدونات المرئية', login: 'تسجيل الدخول', register: 'إنشاء حساب', account: 'الحساب' },
     header: { tagline: 'مساحة أكبر للدهشة.', categories: 'الأقسام', about: 'من نحن', products: 'المنتجات', contact: 'تواصل معنا', shop: 'المتجر', search: 'بحث', searchLabel: 'البحث في المنتجات', cart: 'سلة التسوق', account: 'حساب العميل', menu: 'فتح القائمة', language: 'English', languageLabel: 'التبديل إلى الإنجليزية', nav: 'التنقل الرئيسي', brands: 'البراندات' },
     categoryMenu: { eyebrow: 'تسوّق حسب أسلوب اللعب', all: 'كل المنتجات', explore: 'استكشف كل المنتجات' },
-    aboutNav: { about: 'من نحن', news: 'الأخبار', contact: 'تواصل معنا', vlogs: 'المدونات المرئية' },
+    aboutNav: { about: 'من نحن', news: 'الأخبار', contact: 'تواصل معنا' },
     home: {
       feature: 'فيديو VELVET الرئيسي', play: 'تشغيل الفيديو', pause: 'إيقاف الفيديو', worlds: 'عروض المنتجات',
       introTitle: ['نعيد ابتكار اللعب،', 'كل يوم.'],
