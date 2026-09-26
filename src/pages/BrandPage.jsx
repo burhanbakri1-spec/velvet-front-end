@@ -83,7 +83,7 @@ export default function BrandPage({ slug }) {
         onPointerLeave={hideCursor}
       >
         {media.video ? (
-          <video ref={videoRef} className="category-hero__media" src={media.video} poster={media.poster || brand.image} autoPlay muted loop playsInline onClick={togglePlayback} />
+          <video ref={videoRef} className="category-hero__media" src={media.video} poster={media.poster || brand.image} playsInline onClick={togglePlayback} />
         ) : (
           <img className="category-hero__media" src={media.poster || brand.image} alt="" />
         )}

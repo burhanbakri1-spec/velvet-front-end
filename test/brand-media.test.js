@@ -84,6 +84,10 @@ test('BrandPage hero uses full-width adaptive media without hero logo', () => {
   assert.match(brandPage, /variant="full-banner"/);
   assert.doesNotMatch(brandPage, /getBrandLogo/);
   assert.doesNotMatch(brandPage, /category-hero__logo/);
+  // Brand hero: poster first, manual Play control, audio after user click.
+  assert.match(brandPage, /playsInline onClick=\{togglePlayback\}/);
+  assert.match(brandPage, /PlayButton/);
+  assert.doesNotMatch(brandPage, /autoPlay|muted|loop/);
   assert.match(styles, /\.category-hero\s*\{[^}]*height:\s*auto/);
   assert.match(styles, /\.category-hero\s*\{[^}]*overflow:\s*visible/);
   assert.match(styles, /\.category-hero__media[\s\S]*width:\s*100%/);

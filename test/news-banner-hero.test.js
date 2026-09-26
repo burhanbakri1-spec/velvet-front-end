@@ -14,16 +14,22 @@ test('NewsPage reads news.banner media with red PageTitleHero fallback', () => {
   assert.match(newsPage, /news\.banner/);
   assert.match(newsPage, /PageTitleHero/);
   assert.match(newsPage, /PageVideoHero/);
-  assert.match(newsPage, /autoPlay=\{Boolean\(bannerVideo\)\}/);
-  assert.match(newsPage, /showPlayControl=\{false\}/);
   assert.match(newsPage, /theme="news"/);
   assert.doesNotMatch(newsPage, /news\.\d+\.image/);
+  // Poster first: the banner must not autoplay or force muted playback.
+  assert.doesNotMatch(newsPage, /autoPlay/);
+  assert.doesNotMatch(newsPage, /muted/);
+  assert.doesNotMatch(newsPage, /showPlayControl=\{false\}/);
 });
 
-test('PageVideoHero supports ambient muted autoplay loop without play control', () => {
-  assert.match(hero, /autoPlay = false/);
-  assert.match(hero, /muted = false/);
+test('PageVideoHero plays with audio only after a user gesture', () => {
   assert.match(hero, /loop = false/);
   assert.match(hero, /showPlayControl = true/);
   assert.match(hero, /playsInline/);
+  // Play control is rendered for every hero video; playback starts on click.
+  assert.match(hero, /video && showPlayControl \?/);
+  assert.match(hero, /onClick=\{togglePlayback\}/);
+  // No autoplay and no forced mute anywhere in the hero.
+  assert.doesNotMatch(hero, /autoPlay/);
+  assert.doesNotMatch(hero, /muted/);
 });
