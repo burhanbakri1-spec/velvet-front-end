@@ -35,24 +35,28 @@ export default function NewsPage() {
       ) : (
         <PageTitleHero title={copy.news.title} />
       )}
-      <section className="news-controls" aria-label={copy.news.filters}>
-        <div className="news-filters">
-          {newsCategories.map((item) => <button className={category === item.id ? 'is-active' : ''} type="button" onClick={() => setCategory(item.id)} key={item.id}>{item[locale]}</button>)}
+      <section className="news-controls">
+        <h2 className="news-controls__title">{copy.news.title}</h2>
+        <div className="news-controls__body">
+          <div className="news-filters" role="group" aria-label={copy.news.filters}>
+            {newsCategories.map((item) => <button className={category === item.id ? 'is-active' : ''} type="button" onClick={() => setCategory(item.id)} key={item.id}>{item[locale]}</button>)}
+          </div>
+          <label className="news-sort">
+            <span>{copy.news.sort}</span>
+            <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label={copy.news.sort}>
+              <option value="latest">{copy.news.latest}</option>
+              <option value="oldest">{copy.news.oldest}</option>
+              <option value="az">{copy.news.az}</option>
+            </select>
+          </label>
         </div>
-        <label className="news-sort">
-          <span>{copy.news.sort}</span>
-          <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label={copy.news.sort}>
-            <option value="latest">{copy.news.latest}</option>
-            <option value="oldest">{copy.news.oldest}</option>
-            <option value="az">{copy.news.az}</option>
-          </select>
-        </label>
       </section>
       <section className="news-grid" aria-live="polite">
         {visibleItems.map((item, index) => (
-          <article className={`news-card ${index === 0 ? 'news-card--lead' : ''}`} key={item.id}>
-            <img src={item.image} alt="" />
-            <div className="news-card__shade" />
+          <article className={`news-card ${index % 2 === 1 ? 'news-card--reverse' : ''}`} key={item.id}>
+            <div className="news-card__media">
+              <img src={item.image} alt="" />
+            </div>
             <div className="news-card__content">
               <div className="news-card__meta"><span>{formatDate(item.date)}</span><span>{locale === 'ar' ? item.categoryAr : item.category}</span></div>
               <h2>{locale === 'ar' ? item.titleAr : item.title}</h2>
