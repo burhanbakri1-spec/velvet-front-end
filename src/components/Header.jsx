@@ -9,6 +9,9 @@ import { useI18n } from '../i18n/I18nContext';
 import { getBrand, getBrandLogo, getProductBySlug, getSiteLogo, hasUploadedBrandLogo, hasUploadedSiteLogo, velvetBrands } from '../data/velvetCatalog';
 import SearchDropdown from './SearchDropdown';
 
+const TOP_OFFSET = 80;
+const SCROLL_DELTA = 8;
+
 function LanguageControl({ className = '', onSwitch }) {
   const { copy, switchLanguage } = useI18n();
   return (
@@ -34,9 +37,11 @@ export default function Header({ introActive, solid = false }) {
   const [brandsOpen, setBrandsOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuView, setMenuView] = useState('root');
   const [cartOpen, setCartOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
-  const lastY = useRef(0);
+  const [compact, setCompact] = useState(false);
+  const scrollAnchor = useRef(0);
   const closeTimer = useRef(null);
   const { itemCount } = useCart();
   const { isAuthenticated } = useAuth();
@@ -86,7 +91,7 @@ export default function Header({ introActive, solid = false }) {
     const query = search.trim();
     if (query) {
       navigate(localizePath(`/products?search=${encodeURIComponent(query)}`, locale));
-      setMobileOpen(false);
+      closeMobile();
     }
   };
 
@@ -118,17 +123,26 @@ export default function Header({ introActive, solid = false }) {
     setAboutOpen(false);
   };
 
-  const closeMobile = () => setMobileOpen(false);
+  const closeMobile = () => {
+    setMobileOpen(false);
+    setMenuView('root');
+  };
+
+  const toggleMobile = () => {
+    if (mobileOpen) closeMobile();
+    else {
+      setMobileOpen(true);
+      setMenuView('root');
+    }
+    setBrandsOpen(false);
+    setAboutOpen(false);
+    setHidden(false);
+    setCompact(false);
+  };
 
   const goAccount = () => {
     navigate(localizePath(accountPath, locale));
     closeMobile();
-  };
-
-  const goBrand = (slug) => {
-    navigate(localizePath(`/brands/${slug}`, locale));
-    closeMobile();
-    setBrandsOpen(false);
   };
 
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
@@ -139,12 +153,28 @@ export default function Header({ introActive, solid = false }) {
   }, [mobileOpen]);
 
   useEffect(() => {
+    scrollAnchor.current = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
-      setHidden(y > lastY.current && y > 160 && !brandsOpen && !aboutOpen && !mobileOpen);
-      lastY.current = y;
+      const locked = mobileOpen || brandsOpen || aboutOpen;
+      if (locked || y <= TOP_OFFSET) {
+        setHidden(false);
+        setCompact(false);
+        scrollAnchor.current = y;
+        return;
+      }
+      const delta = y - scrollAnchor.current;
+      if (Math.abs(delta) < SCROLL_DELTA) return;
+      if (delta > 0) {
+        setHidden(true);
+        setCompact(false);
+      } else {
+        setHidden(false);
+        setCompact(true);
+      }
+      scrollAnchor.current = y;
     };
-    const onKey = (event) => event.key === 'Escape' && (setBrandsOpen(false), setAboutOpen(false), setMobileOpen(false));
+    const onKey = (event) => event.key === 'Escape' && (setBrandsOpen(false), setAboutOpen(false), closeMobile());
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('keydown', onKey);
     return () => {
@@ -154,7 +184,23 @@ export default function Header({ introActive, solid = false }) {
   }, [aboutOpen, brandsOpen, mobileOpen]);
 
   return (
-    <header className={`site-header ${solid ? 'site-header--solid' : ''} ${introActive ? 'is-entering' : ''} ${hidden ? 'is-hidden' : ''} ${brandsOpen || aboutOpen || mobileOpen ? 'is-open' : ''}`}>
+    <header className={`site-header ${solid ? 'site-header--solid' : ''} ${introActive ? 'is-entering' : ''} ${hidden ? 'is-hidden' : ''} ${compact ? 'is-compact' : ''} ${brandsOpen || aboutOpen || mobileOpen ? 'is-open' : ''}`}>
+      <div className="mobile-utility-row">
+        <button
+          className="header-icon-button header-cart-link"
+          type="button"
+          aria-label={`${copy.header.cart}: ${itemCount}`}
+          onClick={() => setCartOpen(true)}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.5 4.5h2l1.8 10.1a2 2 0 0 0 2 1.7h7.9a2 2 0 0 0 1.9-1.5l1.2-6.3H6.2" />
+            <circle cx="9.4" cy="19.2" r="1.1" />
+            <circle cx="17.4" cy="19.2" r="1.1" />
+          </svg>
+          {itemCount > 0 && <span className="header-cart-count">{itemCount > 99 ? '99+' : itemCount}</span>}
+        </button>
+        <LanguageControl className="language-control--header" />
+      </div>
       <div className="nav-bar">
         <Link
           className={`logo ${contextBrand ? 'logo--brand' : 'logo--velvet'}${managedSiteLogo ? ' logo--managed logo--managed-site' : ''}${managedBrandLogo ? ' logo--managed' : ''}${!contextBrand ? ' logo--velvet-badge' : ''}`}
@@ -236,55 +282,76 @@ export default function Header({ introActive, solid = false }) {
           type="button"
           aria-label={copy.header.menu}
           aria-expanded={mobileOpen}
-          onClick={() => { setMobileOpen((value) => !value); setBrandsOpen(false); setAboutOpen(false); }}
+          onClick={toggleMobile}
         >
           <span /><span /><span />
         </button>
       </div>
 
-      <div className={`mobile-drawer${mobileOpen ? ' is-open' : ''}`} aria-hidden={!mobileOpen}>
-        <div className="header-search header-search--mobile">
-          <form className="mobile-drawer__search" onSubmit={submitSearch} role="search">
-            <label className="sr-only" htmlFor="mobile-header-search">{copy.header.searchLabel}</label>
-            <input
-              id="mobile-header-search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={copy.header.search}
-              type="search"
-            />
-            <button type="submit" aria-label={copy.header.searchLabel}>{copy.header.search}</button>
-          </form>
-          <SearchDropdown query={search} setQuery={setSearch} />
+      <div className={`mobile-drawer${mobileOpen ? ' is-open' : ''}${menuView === 'root' ? '' : ` mobile-drawer--${menuView}`}`} aria-hidden={!mobileOpen}>
+        <div className="mobile-drawer__top">
+          {menuView === 'root' ? (
+            <LanguageControl className="language-control--drawer" onSwitch={closeMobile} />
+          ) : (
+            <button type="button" className="mobile-drawer__back" onClick={() => setMenuView('root')}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" /></svg>
+              <span>{menuView === 'brands' ? copy.header.brands : copy.header.about}</span>
+            </button>
+          )}
+          <button type="button" className="mobile-drawer__close" onClick={closeMobile} aria-label={copy.shop.close}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
         </div>
 
-        <div className="mobile-drawer__section">
-          <p className="mobile-drawer__label">{copy.header.brands || copy.header.categories}</p>
-          <div className="mobile-drawer__brands">
-            {velvetBrands.map((brand) => (
-              <button type="button" key={brand.slug} onClick={() => goBrand(brand.slug)}>
-                {brand.name[locale]}
+        {menuView === 'root' && (
+          <>
+            <div className="header-search header-search--mobile">
+              <form className="mobile-drawer__search" onSubmit={submitSearch} role="search">
+                <label className="sr-only" htmlFor="mobile-header-search">{copy.header.searchLabel}</label>
+                <input
+                  id="mobile-header-search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder={copy.header.search}
+                  type="search"
+                />
+                <button type="submit" aria-label={copy.header.searchLabel}>{copy.header.search}</button>
+              </form>
+              <SearchDropdown query={search} setQuery={setSearch} />
+            </div>
+
+            <nav className="mobile-drawer__links" aria-label={copy.header.nav}>
+              <button type="button" onClick={() => setMenuView('brands')}>
+                <span>{copy.header.brands}</span>
+                <i className="mobile-drawer__chevron" aria-hidden="true" />
               </button>
+              <button type="button" onClick={() => setMenuView('about')}>
+                <span>{copy.header.about}</span>
+                <i className="mobile-drawer__chevron" aria-hidden="true" />
+              </button>
+              <Link to="/contact" onClick={closeMobile}>{copy.header.contact}</Link>
+              <Link to={shopLink} onClick={closeMobile}>{copy.header.shop}</Link>
+            </nav>
+          </>
+        )}
+
+        {menuView === 'brands' && (
+          <nav className="mobile-drawer__list" aria-label={copy.header.brands}>
+            {velvetBrands.map((brand) => (
+              <Link key={brand.slug} to={`/brands/${brand.slug}`} onClick={closeMobile}>
+                {brand.name[locale]}
+              </Link>
             ))}
-          </div>
-        </div>
+          </nav>
+        )}
 
-        <nav className="mobile-drawer__links" aria-label={copy.header.nav}>
-          <Link to="/about" onClick={closeMobile}>{copy.header.about}</Link>
-          <Link to="/contact" onClick={closeMobile}>{copy.header.contact}</Link>
-          <Link to={shopLink} onClick={closeMobile}>{copy.header.shop}</Link>
-        </nav>
-
-        <div className="mobile-drawer__footer">
-          <LanguageControl onSwitch={closeMobile} />
-          <button type="button" className="mobile-drawer__action" onClick={() => { setCartOpen(true); closeMobile(); }}>
-            {copy.header.cart}
-            {itemCount > 0 ? ` (${itemCount})` : ''}
-          </button>
-          <button type="button" className="mobile-drawer__action" aria-label={copy.header.account} onClick={goAccount}>
-            {copy.header.account}
-          </button>
-        </div>
+        {menuView === 'about' && (
+          <nav className="mobile-drawer__list" aria-label={copy.header.about}>
+            <Link to="/about" onClick={closeMobile}>{copy.about.title}</Link>
+            <Link to="/news" onClick={closeMobile}>{copy.news.title}</Link>
+            <Link to="/contact" onClick={closeMobile}>{copy.contact.title}</Link>
+          </nav>
+        )}
       </div>
 
       <div className="mega-menu-zone" onMouseEnter={cancelBrandsClose} onMouseLeave={scheduleBrandsClose}>
