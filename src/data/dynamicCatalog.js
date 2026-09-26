@@ -188,7 +188,7 @@ function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
   const h = hash(`${brandSlug}:${mainCategory?.slug || ''}:${subSlug}:${raw.slug || raw.id}`);
   const palette = PALETTES[h % PALETTES.length];
   const gallery = (Array.isArray(raw.gallery) ? raw.gallery.map((url) => absoluteUrl(url, apiUrl)) : []).filter(Boolean);
-  const image = absoluteUrl(raw.image || raw.primaryImage, apiUrl) || gallery[0] || artwork(nameEn || raw.slug || 'Toy', palette, h % 6);
+  const image = absoluteUrl(raw.image || raw.primaryImage, apiUrl) || gallery[0] || artwork(nameEn || raw.slug || 'Toy', palette, h % 6, 'transparent');
   const hoverImage = absoluteUrl(raw.hoverImage || raw.secondaryImage, apiUrl) || gallery[1] || image;
   const badge = localized(raw.badge, 'en', '');
   const badgeAr = localized(raw.badge, 'ar', badge);
