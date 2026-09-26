@@ -993,24 +993,6 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
     transform: rotate(-45deg);
   }
   html[dir="rtl"] .mobile-drawer__chevron { transform: rotate(135deg); }
-  .mobile-drawer__utility {
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-  }
-  .mobile-drawer__utility button {
-    min-height: 50px;
-    padding: 0;
-    border: 0;
-    border-top: 1px solid #ededed;
-    background: none;
-    color: #4f4f53;
-    text-align: start;
-    font: inherit;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-  }
   .mobile-drawer__list {
     display: flex;
     flex-direction: column;
@@ -4932,9 +4914,6 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
     pointer-events: none;
   }
   .site-header:not(.site-header--solid):not(.is-open) .nav-bar { background: transparent; }
-  .site-header:not(.site-header--solid):not(.is-open):not(.is-compact) {
-    background: linear-gradient(to bottom, rgba(10,8,14,.42), rgba(10,8,14,.14) 58%, transparent);
-  }
   .site-header.is-compact {
     color: var(--ink);
     background: #fff;

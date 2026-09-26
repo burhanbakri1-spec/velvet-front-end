@@ -186,7 +186,6 @@ export default function Header({ introActive, solid = false }) {
   return (
     <header className={`site-header ${solid ? 'site-header--solid' : ''} ${introActive ? 'is-entering' : ''} ${hidden ? 'is-hidden' : ''} ${compact ? 'is-compact' : ''} ${brandsOpen || aboutOpen || mobileOpen ? 'is-open' : ''}`}>
       <div className="mobile-utility-row">
-        <LanguageControl className="language-control--header" />
         <button
           className="header-icon-button header-cart-link"
           type="button"
@@ -200,6 +199,7 @@ export default function Header({ introActive, solid = false }) {
           </svg>
           {itemCount > 0 && <span className="header-cart-count">{itemCount > 99 ? '99+' : itemCount}</span>}
         </button>
+        <LanguageControl className="language-control--header" />
       </div>
       <div className="nav-bar">
         <Link
@@ -332,16 +332,6 @@ export default function Header({ introActive, solid = false }) {
               <Link to="/contact" onClick={closeMobile}>{copy.header.contact}</Link>
               <Link to={shopLink} onClick={closeMobile}>{copy.header.shop}</Link>
             </nav>
-
-            <div className="mobile-drawer__utility">
-              <button type="button" onClick={() => { setCartOpen(true); closeMobile(); }}>
-                {copy.header.cart}
-                {itemCount > 0 ? ` (${itemCount})` : ''}
-              </button>
-              <button type="button" aria-label={copy.header.account} onClick={goAccount}>
-                {copy.header.account}
-              </button>
-            </div>
           </>
         )}
 
