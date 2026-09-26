@@ -1,6 +1,7 @@
 // Generated fallback banners use the production banner canvas (1920×900 / 32:15).
 // Decorative shapes are re-laid out for the wide frame (uniform proportions — not a stretched 960×820).
-export function artwork(title, colors, scene = 0) {
+// `background: 'transparent'` drops the baked-in gradient plate so product artwork shares the card surface.
+export function artwork(title, colors, scene = 0, background = 'gradient') {
   const [a, b, c] = colors;
   const safeTitle = title.replace(/&/g, '&amp;');
   const shapes = [
@@ -8,7 +9,10 @@ export function artwork(title, colors, scene = 0) {
     `<circle cx="960" cy="430" r="300" fill="${b}"/><path d="M790 255 L880 95 L935 295 Z M990 280 L1065 80 L1145 300 Z" fill="${c}"/><circle cx="860" cy="420" r="42" fill="#151225"/><circle cx="1050" cy="420" r="42" fill="#151225"/>`,
     `<rect x="670" y="240" width="580" height="320" rx="58" fill="${b}" transform="rotate(-7 960 400)"/><circle cx="820" cy="580" r="95" fill="#191629"/><circle cx="1130" cy="540" r="95" fill="#191629"/><path d="M735 320 H1160" stroke="${c}" stroke-width="42" stroke-linecap="round"/>`,
   ][scene % 3];
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 900"><defs><radialGradient id="g"><stop stop-color="${a}"/><stop offset="1" stop-color="${c}"/></radialGradient></defs><rect width="1920" height="900" fill="url(#g)"/><circle cx="1580" cy="160" r="220" fill="#fff" opacity=".12"/>${shapes}<text x="72" y="820" fill="#fff" font-family="Arial" font-size="54" font-weight="900">${safeTitle}</text></svg>`;
+  const backdrop = background === 'transparent'
+    ? ''
+    : `<defs><radialGradient id="g"><stop stop-color="${a}"/><stop offset="1" stop-color="${c}"/></radialGradient></defs><rect width="1920" height="900" fill="url(#g)"/><circle cx="1580" cy="160" r="220" fill="#fff" opacity=".12"/>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 900">${backdrop}${shapes}<text x="72" y="820" fill="#fff" font-family="Arial" font-size="54" font-weight="900">${safeTitle}</text></svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
@@ -73,13 +77,13 @@ const badgeArabic = { Offer: 'عرض', 'Best Seller': 'الأكثر مبيعاً
 const availabilityArabic = { 'In stock': 'متوفر', 'Low stock': 'كمية محدودة', 'Out of stock': 'غير متوفر' };
 
 export const products = productSeeds.map((seed, index) => {
-  const image = artwork(seed.name, seed.colors, index);
-  const hoverImage = artwork(seed.name, [seed.colors[1], seed.colors[2], seed.colors[0]], index + 1);
-  const detailImage = artwork(seed.name, [seed.colors[2], seed.colors[0], seed.colors[1]], index + 2);
+  const image = artwork(seed.name, seed.colors, index, 'transparent');
+  const hoverImage = artwork(seed.name, [seed.colors[1], seed.colors[2], seed.colors[0]], index + 1, 'transparent');
+  const detailImage = artwork(seed.name, [seed.colors[2], seed.colors[0], seed.colors[1]], index + 2, 'transparent');
   const options = (seed.options || []).map((option) => ({
     ...option,
     nameAr: optionArabic[option.name] || option.name,
-    values: option.values.map((value, valueIndex) => ({ ...value, labelAr: valueArabic[value.label] || value.label, image: value.color ? artwork(seed.name, [value.color, seed.colors[1], seed.colors[2]], index + valueIndex) : undefined })),
+    values: option.values.map((value, valueIndex) => ({ ...value, labelAr: valueArabic[value.label] || value.label, image: value.color ? artwork(seed.name, [value.color, seed.colors[1], seed.colors[2]], index + valueIndex, 'transparent') : undefined })),
   }));
   const categoryId = categoryIdByName[seed.category];
   const categorySlug = productCategories.find((category) => category.id === categoryId)?.slug;
