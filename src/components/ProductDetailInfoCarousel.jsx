@@ -38,6 +38,9 @@ export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow
 
   const cards = useMemo(() => {
     const description = getProductDescription(product, locale);
+    // Managed CPanel product details land in the short-description field;
+    // fall back to it only when the long description is empty so nothing renders twice.
+    const details = description || getProductDescription(product, locale, true);
     return [
       {
         id: 'specs',
@@ -55,11 +58,11 @@ export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow
           <p>{description}</p>
         ),
       },
-      {
+      ...(details ? [{
         id: 'product-details',
         title: copy.detail.productDetails || copy.detail.about,
-        body: <p className="product-detail-carousel__description">{description}</p>,
-      },
+        body: <p className="product-detail-carousel__description">{details}</p>,
+      }] : []),
       {
         id: 'delivery',
         title: copy.detail.deliveryTitle,
