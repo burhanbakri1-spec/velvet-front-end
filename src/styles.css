@@ -2664,14 +2664,14 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
 
 @media (max-width: 760px) {
   /*
-   * Mobile banners: fixed strip height (~3 per viewport), cover crop, no gray gaps.
+   * Mobile banners: fixed strip height (~2 per viewport), cover crop, no gray gaps.
    * Desktop keeps natural aspect / contain (unchanged above).
    */
   .brand-showcase.brand-showcase--full-banner,
   .category-hero,
   .brand-hero {
     width: 100%;
-    height: calc((100svh - var(--header-height, 72px)) / 3);
+    height: calc((100svh - var(--header-height, 72px)) / 2);
     min-height: 160px;
     max-height: none;
     overflow: hidden;
@@ -4546,12 +4546,13 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
   :root { --mobile-gutter: 20px; }
   /* Full-bleed cover on a 100svh hero exposed only ~27% of the 16:9 frame.
      A shorter portrait frame keeps the video edge-to-edge (no bands) while the
-     crop stays moderate and the subject readable (desktop unchanged). */
+     crop stays moderate and the subject readable (desktop unchanged).
+     4 / 3.3 is ~30% shorter than the previous 4 / 4.7 mobile frame. */
   .hero {
     min-height: 0;
     height: auto;
     max-height: min(78svh, 700px);
-    aspect-ratio: 4 / 4.7;
+    aspect-ratio: 4 / 3.3;
   }
   .hero-media { object-fit: cover; object-position: center; }
 }
@@ -4913,8 +4914,33 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
     max-height: var(--mobile-utility-h);
     padding: 2px var(--mobile-gutter, 22px) 0;
     overflow: hidden;
-    background: transparent;
+    background: #fff;
+    color: var(--ink);
     transition: max-height .35s ease, min-height .35s ease, opacity .25s ease, padding .35s ease;
+  }
+  /* Minimal utility controls: no pill, no capsule, no separate box. */
+  .mobile-utility-row .header-icon-button {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    opacity: 1;
+  }
+  .mobile-utility-row .language-control--header {
+    min-height: var(--mobile-utility-h);
+    padding: 0;
+    gap: 6px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent !important;
+    color: var(--ink) !important;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .mobile-utility-row .language-control--header:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
   }
   .site-header.is-compact .mobile-utility-row {
     min-height: 0;
