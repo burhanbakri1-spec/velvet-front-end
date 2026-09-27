@@ -4544,7 +4544,16 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
 
 @media (max-width: 760px) {
   :root { --mobile-gutter: 20px; }
-  .hero { min-height: 0; height: 100svh; max-height: 820px; }
+  /* Full-bleed cover on a 100svh hero exposed only ~27% of the 16:9 frame.
+     A shorter portrait frame keeps the video edge-to-edge (no bands) while the
+     crop stays moderate and the subject readable (desktop unchanged). */
+  .hero {
+    min-height: 0;
+    height: auto;
+    max-height: min(78svh, 700px);
+    aspect-ratio: 4 / 4.7;
+  }
+  .hero-media { object-fit: cover; object-position: center; }
 }
 
 /* ===== Mobile overflow root-cause fixes (storefront-wide) ===== */
@@ -4897,13 +4906,14 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
   .mobile-utility-row {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     gap: 10px;
     box-sizing: border-box;
     min-height: var(--mobile-utility-h);
     max-height: var(--mobile-utility-h);
     padding: 2px var(--mobile-gutter, 22px) 0;
     overflow: hidden;
+    background: transparent;
     transition: max-height .35s ease, min-height .35s ease, opacity .25s ease, padding .35s ease;
   }
   .site-header.is-compact .mobile-utility-row {
@@ -4913,7 +4923,7 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
     opacity: 0;
     pointer-events: none;
   }
-  .site-header:not(.site-header--solid):not(.is-open) .nav-bar { background: transparent; }
+  .site-header:not(.site-header--solid):not(.is-open):not(.is-compact) .nav-bar { background: transparent; }
   .site-header.is-compact {
     color: var(--ink);
     background: #fff;
