@@ -4544,16 +4544,16 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
 
 @media (max-width: 760px) {
   :root { --mobile-gutter: 20px; }
-  /* Portrait cover on a full-bleed 16:9 hero only ever exposed ~27% of the frame.
-     Anchor the mobile hero to a calmer 4:5 frame and letterbox the video so the
-     whole useful picture stays visible and centered (desktop unchanged). */
+  /* Full-bleed cover on a 100svh hero exposed only ~27% of the 16:9 frame.
+     A shorter portrait frame keeps the video edge-to-edge (no bands) while the
+     crop stays moderate and the subject readable (desktop unchanged). */
   .hero {
     min-height: 0;
     height: auto;
     max-height: min(78svh, 700px);
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 4 / 4.7;
   }
-  .hero-media { object-fit: contain; object-position: center; }
+  .hero-media { object-fit: cover; object-position: center; }
 }
 
 /* ===== Mobile overflow root-cause fixes (storefront-wide) ===== */
