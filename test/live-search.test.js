@@ -91,7 +91,7 @@ test('product-path-hero matches category banner framing (contain desktop, cover 
   assert.match(styles, /@media \(max-width:\s*760px\)[\s\S]*?\.product-path-hero[\s\S]{0,220}?calc\(\(100svh - var\(--header-height/);
 });
 
-test('mobile storefront banners use cover strips (~3 per viewport)', () => {
+test('mobile storefront banners use cover strips (~2 per viewport)', () => {
   assert.doesNotMatch(styles, /min-height:\s*min\(68svh/);
   assert.doesNotMatch(styles, /#showcases \.brand-showcase\.brand-showcase--full-banner[\s\S]{0,120}?padding-block-end:\s*22%/);
   assert.doesNotMatch(styles, /bottom:\s*calc\(22px \+ 5\.5vw\)/);
@@ -101,7 +101,7 @@ test('mobile storefront banners use cover strips (~3 per viewport)', () => {
   assert.ok(fullBannerRules.every((rule) => !/padding-block-end:\s*5\.5%/.test(rule)), 'full-banner must not keep 5.5% presence pad');
   assert.match(styles, /#showcases\s*\{[^}]*gap:\s*0/);
   assert.match(styles, /#showcases\s*\{[^}]*margin-block:\s*0/);
-  // Desktop keep contain; mobile cover + ~3 strips / viewport.
+  // Desktop keep contain; mobile cover + ~2 strips / viewport.
   assert.match(styles, /\.category-hero__media[\s\S]{0,160}?object-fit:\s*contain/);
   assert.match(styles, /Mobile banners: fixed strip height/);
   assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner,\s*\n\s*\.category-hero,\s*\n\s*\.brand-hero\s*\{[\s\S]{0,280}?calc\(\(100svh - var\(--header-height/);
