@@ -160,7 +160,10 @@ test('checkout page wires WhatsApp order flow without fake backend success', () 
   assert.match(checkoutPage, /orderStatus/);
   assert.match(checkoutPage, /deliveryZone/);
   assert.match(checkoutPage, /delivery_price|deliveryFee/);
-  assert.doesNotMatch(checkoutPage, /clearCart/);
+  // The cart is cleared only after a successful order POST; the prepared
+  // WhatsApp message is built from the pre-clear snapshot of the cart.
+  assert.match(checkoutPage, /clearCart\(\)/);
+  assert.doesNotMatch(checkoutPage, /clearCart\(\)[\s\S]*?createOrder\(/);
   assert.doesNotMatch(checkoutPage, /Order placed!/);
   assert.doesNotMatch(checkoutPage, /shippingLabel:\s*'مجاني'/);
 });
