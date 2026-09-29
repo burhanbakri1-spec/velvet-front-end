@@ -12,11 +12,12 @@ import {
   fetchDeliveryZones,
   isDeliveryZoneRejected,
 } from '../data/deliveryZones';
+import { resolveOrderTotals } from '../data/orderTotals';
 import { Link } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
 
 export default function CheckoutPage() {
-  const { items, subtotal, addItem } = useCart();
+  const { items, subtotal, addItem, clearCart } = useCart();
   const { copy, locale } = useI18n();
   const { token, customer } = useAuth();
   const [form, setForm] = useState({ name: '', phone: '', email: '', city: '', address: '', notes: '' });
@@ -119,6 +120,7 @@ export default function CheckoutPage() {
     setPlacing(true);
     try {
       let order = null;
+      let orderCreated = false;
       // Real order first when the storefront API is configured. Guest checkout
       // is allowed (no token); logged-in customers attach their Bearer token so
       // the server associates the order with their account.
@@ -130,6 +132,7 @@ export default function CheckoutPage() {
         });
         const result = await createOrder(payload, { token });
         if (!result.ok) {
+          // Failed request: the cart stays untouched.
           if (isDeliveryZoneRejected(result)) {
             setError(copy.checkout.deliveryAreaUnavailable);
             setSelectedZoneId('');
@@ -141,33 +144,38 @@ export default function CheckoutPage() {
           return;
         }
         order = result.order;
+        orderCreated = true;
         if (customer) persistOrderSnapshot(order, customer);
       }
 
+      // Snapshot everything the WhatsApp message needs from this render before
+      // the cart is cleared — clearing the cart must never erase order data.
+      const submittedItems = items;
+      const submittedForm = form;
       const serverArea = String(order?.delivery_city_name || '').trim();
-      const serverFee = order?.delivery_price;
-      const serverTotal = order?.total;
-      const serverSubtotal = order?.subtotal;
-      const clientTotals = computeCheckoutTotals(subtotal, selectedZone.deliveryPrice);
+
+      // Only a successful POST /api/orders clears the cart (never before the
+      // request, never on a failed request or validation error).
+      if (orderCreated) clearCart();
+
+      const totals = resolveOrderTotals({
+        items: submittedItems,
+        order,
+        fallbackDeliveryFee: selectedZone.deliveryPrice,
+      });
 
       const message = buildWhatsAppOrderMessage({
-        customer: form,
-        items,
-        subtotal: serverSubtotal != null ? Number(serverSubtotal) : clientTotals.subtotal,
+        customer: submittedForm,
+        items: submittedItems,
+        subtotal: totals.subtotal,
         deliveryArea: serverArea || selectedZone.cityName,
-        deliveryFee: serverFee != null && serverFee !== ''
-          ? Number(serverFee)
-          : clientTotals.deliveryFee,
-        finalTotal: serverTotal != null && serverTotal !== ''
-          ? Number(serverTotal)
-          : clientTotals.finalTotal,
+        deliveryFee: totals.deliveryFee,
+        finalTotal: totals.finalTotal,
         orderNumber: order?.orderNumber || order?.id || '',
         status: order?.status || '',
       });
       const url = buildWhatsAppOrderUrl(message);
       const opened = openWhatsAppOrder(url);
-      // Keep cart intact — WhatsApp send is customer-driven; the order is
-      // already recorded server-side when the API is configured.
       setPrepared({ message, url, opened, order });
     } catch {
       setError(copy.checkout.orderError);
