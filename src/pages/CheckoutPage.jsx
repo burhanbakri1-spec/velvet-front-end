@@ -13,6 +13,7 @@ import {
   isDeliveryZoneRejected,
 } from '../data/deliveryZones';
 import { resolveOrderTotals } from '../data/orderTotals';
+import { trackPlatformEvent } from '../analytics/platformAnalytics';
 import { Link } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -31,6 +32,16 @@ export default function CheckoutPage() {
   const [zonesReloadKey, setZonesReloadKey] = useState(0);
 
   const setField = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
+
+  // First-party funnel: a checkout starts when the page is entered (or filled)
+  // with a non-empty cart. purchase is never sent from here — the platform
+  // order API records it after a confirmed order.
+  const checkoutStarted = items.length > 0;
+  useEffect(() => {
+    if (!checkoutStarted) return undefined;
+    trackPlatformEvent('initiate_checkout', {});
+    return undefined;
+  }, [checkoutStarted]);
 
   const inCartSlugs = useMemo(() => new Set(items.map((item) => item.slug)), [items]);
   const recommended = useMemo(() => velvetProducts.filter((item) => !inCartSlugs.has(item.slug)).slice(0, 4), [inCartSlugs]);

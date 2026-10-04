@@ -3,6 +3,7 @@ import { I18nProvider, useI18n } from './i18n/I18nContext';
 import { useEffect } from 'react';
 import { CartProvider } from './context/CartContext';
 import { useGtmPageViews } from './analytics/useGtmPageViews';
+import { usePlatformPageViews } from './analytics/usePlatformPageViews';
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
@@ -32,6 +33,8 @@ function RouteView() {
 
   // Push a GTM page_view after document.title has been updated.
   useGtmPageViews();
+  // Record the visit in the platform's first-party funnel analytics too.
+  usePlatformPageViews();
 
   if (routePath === '/') return <HomePage />;
 
