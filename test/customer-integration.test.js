@@ -56,11 +56,13 @@ test('buildOrderPayload shapes the exact POST /api/orders body', () => {
   ]);
 });
 
-test('buildOrderPayload tolerates empty input', () => {
-  assert.deepEqual(buildOrderPayload(), {
-    customer: { name: '', phone: '', email: undefined, city: '', address: '', notes: undefined },
-    items: [],
-  });
+test('buildOrderPayload tolerates empty input and always carries attribution', () => {
+  const payload = buildOrderPayload();
+  assert.deepEqual(payload.customer, { name: '', phone: '', email: undefined, city: '', address: '', notes: undefined });
+  assert.deepEqual(payload.items, []);
+  assert.equal(typeof payload.analyticsSessionKey, 'string');
+  assert.ok(payload.analyticsSessionKey.length > 0);
+  assert.deepEqual(payload.attribution, {});
 });
 
 test('orders module posts to /api/orders and lists via /api/orders/my-orders', () => {

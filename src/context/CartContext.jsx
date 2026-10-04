@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { trackPlatformEvent } from '../analytics/platformAnalytics';
 
 const STORAGE_KEY = 'play-store-cart-v1';
 const CartContext = createContext(null);
@@ -49,10 +50,30 @@ export function CartProvider({ children }) {
         maxStock,
       }];
     });
+    // Tracked outside the updater: React may re-invoke state updaters
+    // (StrictMode) and a side effect inside would double-count the add.
+    trackPlatformEvent('add_to_cart', { productId: product.id });
   };
 
-  const updateQuantity = (key, quantity) => setItems((current) => quantity < 1 ? current.filter((item) => item.key !== key) : current.map((item) => item.key === key ? { ...item, quantity: item.maxStock == null ? quantity : Math.min(item.maxStock, quantity) } : item));
-  const removeItem = (key) => setItems((current) => current.filter((item) => item.key !== key));
+  const removeItem = (key) => {
+    const removed = items.find((item) => item.key === key);
+    setItems((current) => current.filter((item) => item.key !== key));
+    if (removed?.productId) {
+      // Same rule as addItem: the effect lives outside setItems, never in it.
+      trackPlatformEvent('remove_from_cart', { productId: removed.productId });
+    }
+  };
+
+  const updateQuantity = (key, quantity) => {
+    if (quantity < 1) {
+      // Quantity 0/− is the removal path (cart "−" button): count it once.
+      const removed = items.find((item) => item.key === key);
+      setItems((current) => current.filter((item) => item.key !== key));
+      if (removed?.productId) trackPlatformEvent('remove_from_cart', { productId: removed.productId });
+      return;
+    }
+    setItems((current) => current.map((item) => item.key === key ? { ...item, quantity: item.maxStock == null ? quantity : Math.min(item.maxStock, quantity) } : item));
+  };
   const clearCart = () => setItems([]);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);

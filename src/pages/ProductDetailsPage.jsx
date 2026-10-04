@@ -27,6 +27,7 @@ import {
 } from '../data/velvetCatalog';
 import { getProductAttributeIds } from '../data/classificationFilter';
 import { Link, localizePath, useRouter } from '../routing/Router';
+import { trackPlatformEvent } from '../analytics/platformAnalytics';
 import { useI18n } from '../i18n/I18nContext';
 import { availableStock, selectedVariant } from '../data/inventory';
 import { isSiblingDragGesture } from '../hooks/siblingCarousel';
@@ -109,6 +110,14 @@ export default function ProductDetailsPage({ slug }) {
     setSlideAnimating(false);
     setRelatedPage(0);
   }, [routeProduct?.id, routeProduct?.slug, initialSelections]);
+
+  // One product_view per product detail actually rendered (re-renders for
+  // selections/images do not re-fire; the analytics module dedupes remounts).
+  useEffect(() => {
+    if (!routeProduct?.id) return undefined;
+    trackPlatformEvent('product_view', { productId: routeProduct.id });
+    return undefined;
+  }, [routeProduct?.id]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;

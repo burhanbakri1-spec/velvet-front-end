@@ -5,7 +5,8 @@
  * - POST /api/orders (tenant headers; Bearer optional — guest checkout allowed)
  *   Body: { customer: { name, phone, email?, city, address, notes? },
  *           items: [{ productId, variantId, quantity }],
- *           deliveryZoneId?, delivery_city_key? }
+ *           deliveryZoneId?, delivery_city_key?,
+ *           analyticsSessionKey, attribution }
  *   When the company has delivery zones, deliveryZoneId (or delivery_city_key)
  *   is required; the server resolves fee/name and returns authoritative
  *   delivery_price, delivery_city_name, total, etc.
@@ -24,6 +25,7 @@
  */
 
 import { parseJsonResponse, readErrorDetail, storefrontFetch } from './apiClient.js';
+import { getStorefrontAttribution, getStorefrontSessionKey } from '../analytics/platformAnalytics.js';
 
 const ORDER_SNAPSHOT_KEY = 'velvet-order-snapshots-v1';
 
@@ -70,6 +72,12 @@ export function buildOrderPayload({ customer = {}, items = [], deliveryZone = nu
   ).trim();
   if (zoneId) payload.deliveryZoneId = zoneId;
   if (cityKey) payload.delivery_city_key = cityKey;
+
+  // Same first-touch session + campaign attribution the funnel events use, so
+  // the backend can join a confirmed order to its storefront visitor session.
+  // purchase itself is backend-confirmed: it is never sent from the client.
+  payload.analyticsSessionKey = getStorefrontSessionKey();
+  payload.attribution = getStorefrontAttribution();
 
   return payload;
 }
