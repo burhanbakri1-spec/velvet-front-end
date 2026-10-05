@@ -661,6 +661,126 @@ html[lang="ar"] .intro-cta__meta { letter-spacing: 0; text-transform: none; font
   .intro-cta { padding: 14px 14px 14px 16px; }
 }
 
+.brand-strip {
+  --strip-pad: clamp(18px, 4vw, 56px);
+  --strip-gap: 14px;
+  --strip-cols: 5;
+  --strip-duration: 60s;
+  position: relative;
+  padding: 24px 0 30px;
+  background: #fff;
+  border-top: 1px solid rgba(18,18,20,.08);
+  border-bottom: 1px solid rgba(18,18,20,.08);
+  color: var(--ink, #121214);
+}
+.brand-strip__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 var(--strip-pad);
+  margin-bottom: 16px;
+}
+.brand-strip__title { margin: 0; font-size: clamp(15px, 1.5vw, 19px); font-weight: 800; line-height: 1.1; letter-spacing: -.02em; text-transform: uppercase; }
+html[lang="ar"] .brand-strip__title { letter-spacing: 0; }
+.brand-strip__all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding-bottom: 2px;
+  border-bottom: 1px solid currentColor;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink, #121214);
+  text-decoration: none;
+  transition: color .2s ease;
+}
+html[lang="ar"] .brand-strip__all { letter-spacing: 0; text-transform: none; font-size: 13px; }
+.brand-strip__all:hover { color: var(--red, #e40721); }
+.brand-strip__viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 var(--strip-pad);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.brand-strip__viewport::-webkit-scrollbar { display: none; }
+.brand-strip__track {
+  display: flex;
+  width: max-content;
+  animation: brand-strip-marquee var(--strip-duration) linear infinite;
+}
+.brand-strip__group { display: flex; gap: var(--strip-gap); padding-inline-end: var(--strip-gap); }
+.brand-strip__viewport:hover .brand-strip__track,
+.brand-strip__viewport:focus-within .brand-strip__track,
+.brand-strip__track.is-paused { animation-play-state: paused; }
+html[dir="rtl"] .brand-strip__track { animation-direction: reverse; }
+.brand-strip-card {
+  display: block;
+  flex: 0 0 auto;
+  width: calc((100vw - (var(--strip-pad) * 2) - (var(--strip-gap) * 4)) / var(--strip-cols));
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.brand-strip-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #f3f1ed;
+}
+.brand-strip-card__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .5s cubic-bezier(.22,1,.36,1);
+}
+.brand-strip-card:hover .brand-strip-card__image { transform: scale(1.05); }
+.brand-strip-card__badge {
+  position: absolute;
+  top: 8px;
+  inset-inline-start: 8px;
+  z-index: 1;
+  max-width: calc(100% - 16px);
+  overflow: hidden;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--ink, #121214);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.brand-strip-card__name { display: block; margin-top: 10px; overflow: hidden; font-size: 13px; font-weight: 700; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.brand-strip-card__price { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; font-size: 13px; font-weight: 800; }
+.brand-strip-card__price del { font-size: 11.5px; font-weight: 500; opacity: .5; }
+@keyframes brand-strip-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@media (max-width: 1100px) { .brand-strip { --strip-cols: 3.5; } }
+@media (max-width: 760px) {
+  .brand-strip { --strip-cols: 2.5; --strip-pad: 16px; --strip-duration: 42s; padding: 18px 0 24px; }
+  .brand-strip__head { margin-bottom: 12px; }
+  .brand-strip-card__media { border-radius: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .brand-strip__track { animation: none; }
+  .brand-strip-card__image { transition: none; }
+}
+
 .brand-showcase { height: min(78vw,880px); min-height: 600px; position: relative; overflow: hidden; color: white; background: linear-gradient(145deg,var(--c1),var(--c2) 55%,var(--c3)); isolation: isolate; }
 .brand-showcase::after { content: none; display: none; }
 .brand-showcase__art { position: absolute; inset: 0; z-index: -1; }
