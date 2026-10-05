@@ -70,7 +70,6 @@ export default function BrandProductStrip({ brandSlug }) {
         className="brand-strip__viewport"
         onPointerDown={pauseForInteraction}
         onTouchStart={pauseForInteraction}
-        onWheel={pauseForInteraction}
       >
         <div className={`brand-strip__track${paused ? ' is-paused' : ''}`}>
           <div className="brand-strip__group">{products.map(renderCard)}</div>
