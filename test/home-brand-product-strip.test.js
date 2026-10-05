@@ -120,7 +120,7 @@ test('View all keeps the stable brand route and stays locale-aware', () => {
   assert.match(router, /url\.search/);
 });
 
-test('auto-scroll marquee exists with duplicate track, pause and RTL direction', () => {
+test('auto-scroll marquee exists with duplicate track, interaction pause and RTL direction', () => {
   const strip = fs.readFileSync(stripPath, 'utf8');
   const styles = fs.readFileSync(stylesPath, 'utf8');
 
@@ -132,12 +132,53 @@ test('auto-scroll marquee exists with duplicate track, pause and RTL direction',
   assert.match(styles, /@keyframes brand-strip-marquee \{/);
   assert.match(styles, /transform: translate3d\(-50%, 0, 0\)/);
   assert.match(styles, /\.brand-strip__track \{[^}]*animation: brand-strip-marquee/);
-  assert.match(styles, /\.brand-strip__viewport:hover \.brand-strip__track/);
   assert.match(styles, /\.brand-strip__viewport:focus-within \.brand-strip__track/);
   assert.match(styles, /\.brand-strip__track\.is-paused \{ animation-play-state: paused; \}/);
   assert.match(styles, /html\[dir="rtl"\] \.brand-strip__track \{ animation-direction: reverse; \}/);
   assert.match(styles, /\.brand-strip__viewport \{[^}]*overflow-x: auto/);
   assert.doesNotMatch(styles, /from 'swiper|gsap|animejs/);
+});
+
+test('autoplay keeps running while hovered and has no mouse pause handlers', () => {
+  const strip = fs.readFileSync(stripPath, 'utf8');
+  const styles = fs.readFileSync(stylesPath, 'utf8');
+
+  assert.match(styles, /\.brand-strip__track \{[^}]*animation: brand-strip-marquee var\(--strip-duration\) linear infinite/);
+
+  assert.doesNotMatch(styles, /\.brand-strip__viewport:hover/);
+  assert.doesNotMatch(styles, /brand-strip[^{}]*hover[^{}]*\{[^}]*animation-play-state/);
+  assert.doesNotMatch(styles, /\.brand-strip__track[^{}]*:hover/);
+
+  const pausedRules = styles.match(/[^{}]*\{[^}]*animation-play-state: paused[^}]*\}/g) || [];
+  const stripPausedRules = pausedRules.filter((rule) => rule.includes('brand-strip'));
+  assert.equal(stripPausedRules.length, 1, 'only the manual interaction class may pause the rail');
+  assert.match(stripPausedRules[0], /\.brand-strip__track\.is-paused/);
+  assert.ok(!stripPausedRules[0].includes(':hover'));
+
+  assert.doesNotMatch(strip, /pauseOnHover/);
+  assert.doesNotMatch(strip, /onMouseEnter|onMouseLeave|onMouseOver|onMouseOut/);
+  assert.doesNotMatch(strip, /onPointerEnter|onPointerLeave|onPointerOver/);
+  assert.doesNotMatch(strip, /onWheel/);
+  assert.doesNotMatch(strip, /mouseenter|mouseleave|mouseover|pointerenter/i);
+});
+
+test('featured strip spacing stays compact with no fixed blank-space sizing', () => {
+  const strip = fs.readFileSync(stripPath, 'utf8');
+  const styles = fs.readFileSync(stylesPath, 'utf8');
+
+  const base = styles.match(/\.brand-strip \{[^}]*\}/)?.[0] || '';
+  assert.ok(base, 'base strip rule missing');
+  assert.doesNotMatch(base, /min-height|max-height|height:/);
+  assert.match(base, /padding: 18px 0 22px/);
+
+  assert.match(styles, /\.brand-strip__head \{[^}]*margin-bottom: 14px/);
+  assert.match(styles, /@media \(max-width: 760px\)[\s\S]{0,400}?\.brand-strip \{[^}]*padding: 14px 0 18px/);
+  assert.match(styles, /@media \(max-width: 760px\)[\s\S]{0,400}?\.brand-strip__head \{ margin-bottom: 10px; \}/);
+
+  assert.match(styles, /\.brand-strip-card__media \{[^}]*aspect-ratio: 1 \/ 1/);
+  assert.match(styles, /\.brand-strip-card__name \{[^}]*margin-top: 10px/);
+  assert.match(styles, /\.brand-strip-card__price \{[^}]*margin-top: 4px/);
+  assert.match(strip, /<Link\s+className="brand-strip-card"/);
 });
 
 test('reduced-motion disables automatic strip movement', () => {

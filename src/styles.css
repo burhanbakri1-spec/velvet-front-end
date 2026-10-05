@@ -667,7 +667,7 @@ html[lang="ar"] .intro-cta__meta { letter-spacing: 0; text-transform: none; font
   --strip-cols: 5;
   --strip-duration: 60s;
   position: relative;
-  padding: 24px 0 30px;
+  padding: 18px 0 22px;
   background: #fff;
   border-top: 1px solid rgba(18,18,20,.08);
   border-bottom: 1px solid rgba(18,18,20,.08);
@@ -679,7 +679,7 @@ html[lang="ar"] .intro-cta__meta { letter-spacing: 0; text-transform: none; font
   justify-content: space-between;
   gap: 16px;
   padding: 0 var(--strip-pad);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 .brand-strip__title { margin: 0; font-size: clamp(15px, 1.5vw, 19px); font-weight: 800; line-height: 1.1; letter-spacing: -.02em; text-transform: uppercase; }
 html[lang="ar"] .brand-strip__title { letter-spacing: 0; }
@@ -716,7 +716,6 @@ html[lang="ar"] .brand-strip__all { letter-spacing: 0; text-transform: none; fon
   animation: brand-strip-marquee var(--strip-duration) linear infinite;
 }
 .brand-strip__group { display: flex; gap: var(--strip-gap); padding-inline-end: var(--strip-gap); }
-.brand-strip__viewport:hover .brand-strip__track,
 .brand-strip__viewport:focus-within .brand-strip__track,
 .brand-strip__track.is-paused { animation-play-state: paused; }
 html[dir="rtl"] .brand-strip__track { animation-direction: reverse; }
@@ -772,8 +771,8 @@ html[dir="rtl"] .brand-strip__track { animation-direction: reverse; }
 }
 @media (max-width: 1100px) { .brand-strip { --strip-cols: 3.5; } }
 @media (max-width: 760px) {
-  .brand-strip { --strip-cols: 2.5; --strip-pad: 16px; --strip-duration: 42s; padding: 18px 0 24px; }
-  .brand-strip__head { margin-bottom: 12px; }
+  .brand-strip { --strip-cols: 2.5; --strip-pad: 16px; --strip-duration: 42s; padding: 14px 0 18px; }
+  .brand-strip__head { margin-bottom: 10px; }
   .brand-strip-card__media { border-radius: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
