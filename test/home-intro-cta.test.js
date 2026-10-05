@@ -9,7 +9,7 @@ const stylesPath = new URL('../src/styles.css', import.meta.url);
 function readIntro() { return fs.readFileSync(introPath, 'utf8'); }
 function readStyles() { return fs.readFileSync(stylesPath, 'utf8'); }
 
-test('home intro renders the two redesigned CTA cards with EN and AR labels', () => {
+test('home intro renders the two CTA cards with EN and AR labels', () => {
   const intro = readIntro();
   const { en, ar } = translations;
 
@@ -21,25 +21,45 @@ test('home intro renders the two redesigned CTA cards with EN and AR labels', ()
   assert.ok(ar.home.exploreMeta && ar.home.shopMeta, 'AR micro-labels missing');
 
   assert.match(intro, /className="intro-ctas"/);
-  assert.equal((intro.match(/className="intro-cta"/g) || []).length, 2, 'exactly two CTA cards expected');
-  assert.match(intro, /copy\.home\.meet/);
-  assert.match(intro, /copy\.home\.shopNow/);
+  assert.equal((intro.match(/className="intro-cta intro-cta--/g) || []).length, 2, 'exactly two CTA cards expected');
   assert.match(intro, /intro-cta__label/);
   assert.match(intro, /intro-cta__meta/);
   assert.match(intro, /intro-cta__icon/);
-  assert.doesNotMatch(intro, /href="#showcases"/, 'plain underline anchor should be gone');
 });
 
-test('home intro CTA routes stay locale-aware with no hardcoded absolute URLs', () => {
+test('Explore products scrolls to #showcases on Home instead of routing to /products', () => {
+  const intro = readIntro();
+
+  const primary = intro.match(/<Link className="intro-cta intro-cta--primary"[\s\S]*?<\/Link>/)?.[0] || '';
+  assert.ok(primary, 'primary CTA missing');
+  assert.match(primary, /to="#showcases"/, 'Explore products must target the home showcase section');
+  assert.match(primary, /copy\.home\.meet/);
+  assert.doesNotMatch(primary, /to="\/products"/, 'Explore products must no longer navigate to the shop route');
+
+  // Smooth in-page scroll, no route change, no JS library.
+  assert.match(intro, /onClick=\{scrollToShowcases\}/);
+  assert.match(intro, /event\.preventDefault\(\)/);
+  assert.match(intro, /document\.getElementById\('showcases'\)/);
+  assert.match(intro, /scrollIntoView\(\{ behavior: 'smooth', block: 'start' \}\)/);
+  assert.doesNotMatch(intro, /import .*gsap|from 'animejs'|requestAnimationFrame\(\(\) => window\.scroll/);
+});
+
+test('Shop now keeps routing to the locale-aware shop listing', () => {
   const intro = readIntro();
   const router = fs.readFileSync(new URL('../src/routing/Router.jsx', import.meta.url), 'utf8');
 
-  assert.match(intro, /import \{ Link \} from '\.\.\/routing\/Router'/);
+  const accent = intro.match(/<Link className="intro-cta intro-cta--accent"[\s\S]*?<\/Link>/)?.[0] || '';
+  assert.ok(accent, 'secondary CTA missing');
+  assert.match(accent, /to="\/products"/);
+  assert.match(accent, /copy\.home\.shopNow/);
+  assert.doesNotMatch(accent, /#showcases/);
+
   const targets = [...intro.matchAll(/to="([^"]+)"/g)].map((match) => match[1]);
-  assert.deepEqual(targets, ['/products', '/products'], 'both CTAs must target the shop listing route');
-  assert.ok(targets.every((to) => to.startsWith('/') && !to.startsWith('//')), 'relative app routes only');
+  assert.deepEqual(targets, ['#showcases', '/products']);
+  assert.ok(!/https?:\/\/[^"']*\//.test(intro), 'no hardcoded absolute URLs');
 
   // Link localizes every `to` with the active locale: /products -> /en/products | /ar/products.
+  assert.match(intro, /import \{ Link \} from '\.\.\/routing\/Router'/);
   assert.match(router, /export function localizePath\(to, locale\)/);
   assert.match(router, /const href = localizePath\(to, locale\)/);
 });
@@ -68,17 +88,30 @@ test('home intro heading and paragraphs stay unchanged', () => {
   assert.equal(ar.home.introP1, 'نصنع عوالم مبهجة ومفاجئة تدعو الجميع إلى الفضول والتجربة واللعب بطريقتهم الخاصة.');
 });
 
-test('home intro CTA styling is a bordered card grid that stacks on mobile', () => {
+test('home intro CTA colors: ink primary + VELVET red secondary, same card grid', () => {
   const styles = readStyles();
 
+  // Primary — dark card, white copy, matching border.
+  assert.match(styles, /\.intro-cta--primary \{[^}]*background: var\(--ink, #121214\)/);
+  assert.match(styles, /\.intro-cta--primary \{[^}]*border-color: var\(--ink, #121214\)/);
+  assert.match(styles, /\.intro-cta--primary \{[^}]*color: #fff/);
+  // Secondary — VELVET red card, white copy.
+  assert.match(styles, /\.intro-cta--accent \{[^}]*background: var\(--red, #e40721\)/);
+  assert.match(styles, /\.intro-cta--accent \{[^}]*border-color: var\(--red, #e40721\)/);
+  assert.match(styles, /\.intro-cta--accent \{[^}]*color: #fff/);
+  // High-contrast circular arrow icon.
+  assert.match(styles, /\.intro-cta__icon \{[^}]*background: #fff/);
+  assert.match(styles, /\.intro-cta__icon \{[^}]*border-radius: 50%/);
+  assert.match(styles, /\.intro-cta--accent \.intro-cta__icon \{[^}]*color: var\(--red/);
+
+  // Geometry, spacing and hover unchanged in spirit.
   assert.match(styles, /\.intro-ctas \{[^}]*display: grid/);
   assert.match(styles, /\.intro-ctas \{[^}]*grid-template-columns: repeat\(2, minmax\(0,1fr\)\)/);
-  assert.match(styles, /\.intro-cta \{[^}]*border: 1px solid rgba\(18,18,20,\.14\)/);
   assert.match(styles, /\.intro-cta \{[^}]*border-radius: 14px/);
-  assert.match(styles, /\.intro-cta__label \{[^}]*font-weight: 800/);
-  assert.match(styles, /\.intro-cta__icon \{[^}]*border-radius: 50%/);
   assert.match(styles, /\.intro-cta \{[^}]*transition: transform/);
-  assert.match(styles, /\.intro-cta:hover \{[^}]*translateY\(-2px\)/);
+  assert.match(styles, /\.intro-cta__label \{[^}]*font-weight: 800/);
+  assert.match(styles, /\.intro-cta--primary:hover \{[^}]*translateY\(-2px\)/);
+  assert.match(styles, /\.intro-cta--accent:hover \{[^}]*translateY\(-2px\)/);
 
   // Mobile: single column, full available width.
   assert.match(styles, /@media \(max-width: 760px\) \{\s*\.intro-ctas \{[^}]*grid-template-columns: 1fr/);
@@ -87,4 +120,23 @@ test('home intro CTA styling is a bordered card grid that stacks on mobile', () 
   // Old underline link styling is gone from the intro body (careers keeps it).
   assert.doesNotMatch(styles, /\.intro-section__body a/);
   assert.match(styles, /\.careers-section a \{/);
+});
+
+test('stacked brand scroll CSS and Arabic banner type stay unchanged', () => {
+  const styles = readStyles();
+
+  const stickyBlocks = styles.match(/[^{}]*\{[^}]*position:\s*sticky[^}]*\}/g) || [];
+  const stackedBanners = stickyBlocks.filter((block) => block.includes('brand-showcase--full-banner'));
+  assert.equal(stackedBanners.length, 2, 'home + brand category sticky stacks must survive');
+  assert.ok(stackedBanners.some((block) => block.includes('#showcases')));
+  assert.ok(stackedBanners.some((block) => block.includes('.category-showcases')));
+  for (const block of stackedBanners) {
+    assert.match(block, /position:\s*sticky/);
+    assert.match(block, /top:\s*0/);
+  }
+
+  assert.match(styles, /html\[lang="ar"\] \.brand-showcase__content p \{ font-size: 25\.5px/);
+  assert.match(styles, /html\[lang="ar"\] \.brand-showcase__logo \{ font-size: 30px/);
+  assert.match(styles, /^\.brand-showcase__content p \{[^}]*font-size: 15px/m);
+  assert.match(styles, /^\.brand-showcase__logo \{ font-size: 20px/m);
 });
