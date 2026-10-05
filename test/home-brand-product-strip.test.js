@@ -8,6 +8,7 @@ import {
   isFeaturedProduct,
   selectBrandStripProducts,
 } from '../src/data/brandProductStrip.js';
+import { clampStripScrollPosition, STRIP_GROUPS } from '../src/hooks/stripScroll.js';
 
 const read = (relative) => fs.readFileSync(new URL(`../src/${relative}`, import.meta.url), 'utf8');
 const homePath = new URL('../src/pages/HomePage.jsx', import.meta.url);
@@ -120,23 +121,75 @@ test('View all keeps the stable brand route and stays locale-aware', () => {
   assert.match(router, /url\.search/);
 });
 
-test('auto-scroll marquee exists with duplicate track, interaction pause and RTL direction', () => {
+test('auto-scroll marquee exists with duplicated groups, interaction pause and RTL direction', () => {
   const strip = fs.readFileSync(stripPath, 'utf8');
   const styles = fs.readFileSync(stylesPath, 'utf8');
 
-  assert.ok((strip.match(/brand-strip__group/g) || []).length >= 2, 'track must be duplicated for a seamless loop');
-  assert.match(strip, /aria-hidden="true"/);
+  assert.match(strip, /Array\.from\(\{ length: STRIP_GROUPS \}/, 'track must be duplicated for a seamless loop');
+  assert.match(strip, /aria-hidden=\{index === 0 \? undefined : 'true'\}/);
   assert.match(strip, /is-paused/);
   assert.match(strip, /onPointerDown=\{pauseForInteraction\}/);
+  assert.match(strip, /onScroll=\{normalizeStripScroll\}/);
+  assert.match(strip, /'--strip-groups': STRIP_GROUPS/);
 
   assert.match(styles, /@keyframes brand-strip-marquee \{/);
-  assert.match(styles, /transform: translate3d\(-50%, 0, 0\)/);
   assert.match(styles, /\.brand-strip__track \{[^}]*animation: brand-strip-marquee/);
   assert.match(styles, /\.brand-strip__viewport:focus-within \.brand-strip__track/);
   assert.match(styles, /\.brand-strip__track\.is-paused \{ animation-play-state: paused; \}/);
-  assert.match(styles, /html\[dir="rtl"\] \.brand-strip__track \{ animation-direction: reverse; \}/);
+  assert.match(styles, /html\[dir="rtl"\] \.brand-strip__track \{ animation-name: brand-strip-marquee-rtl; \}/);
   assert.match(styles, /\.brand-strip__viewport \{[^}]*overflow-x: auto/);
   assert.doesNotMatch(styles, /from 'swiper|gsap|animejs/);
+});
+
+test('marquee travels exactly one group per cycle with no -50% jump or direction reversal', () => {
+  const strip = fs.readFileSync(stripPath, 'utf8');
+  const styles = fs.readFileSync(stylesPath, 'utf8');
+
+  assert.doesNotMatch(styles, /animation-direction/, 'RTL must use mirrored keyframes so the cycle never starts shifted off-screen');
+  const marqueeBlocks = styles.match(/@keyframes brand-strip-marquee(?:-rtl)? \{(?:[^{}]|\{[^{}]*\})*\}/g) || [];
+  assert.equal(marqueeBlocks.length, 2, 'LTR and RTL marquee keyframes must both exist');
+  for (const block of marqueeBlocks) {
+    assert.doesNotMatch(block, /-50%/, 'loop distance must follow the group width, not half the track');
+  }
+  assert.match(
+    styles,
+    /@keyframes brand-strip-marquee \{\s*from \{ transform: translate3d\(0%, 0, 0\); \}\s*to \{ transform: translate3d\(calc\(-100% \/ var\(--strip-groups, 8\)\), 0, 0\); \}\s*\}/,
+  );
+  assert.match(
+    styles,
+    /@keyframes brand-strip-marquee-rtl \{\s*from \{ transform: translate3d\(0%, 0, 0\); \}\s*to \{ transform: translate3d\(calc\(100% \/ var\(--strip-groups, 8\)\), 0, 0\); \}\s*\}/,
+  );
+  assert.match(strip, /import \{ normalizeStripScroll, STRIP_GROUPS \} from '\.\.\/hooks\/stripScroll'/);
+  assert.equal(STRIP_GROUPS, 8);
+});
+
+test('strip scroll stays inside the covered band so the viewport never empties', () => {
+  const viewports = [320, 375, 390, 430, 760, 761, 900, 1100, 1101, 1440, 1920, 2560, 3840];
+
+  for (const vw of viewports) {
+    const cols = vw <= 760 ? 2.5 : vw <= 1100 ? 3.5 : 5;
+    const pad = Math.min(56, Math.max(18, 0.04 * vw));
+    const gap = 14;
+    const step = (vw - pad * 2 - gap * 4) / cols + gap;
+    const track = step * STRIP_GROUPS;
+    const band = track - vw - step;
+
+    assert.ok(band >= 0, `vw=${vw}: track (${track.toFixed(1)}) must cover viewport plus one travel step`);
+    assert.ok(band >= step / 2, `vw=${vw}: safe band must absorb at least half a step`);
+
+    for (const position of [0, 1, -1, band, -band, band + step * 3, -band - step * 5, track, -track]) {
+      const clamped = clampStripScrollPosition(position, track, vw, step);
+      assert.ok(clamped >= -band - 1e-6 && clamped <= band + 1e-6, `vw=${vw} pos=${position}: clamped ${clamped} outside band ±${band}`);
+      const delta = position - clamped;
+      assert.ok(Math.abs(delta / step - Math.round(delta / step)) < 1e-9, `vw=${vw} pos=${position}: snap must move by exact group multiples`);
+      assert.ok(Math.abs(clamped) + step + vw <= track + 1e-6, `vw=${vw} pos=${position}: covered window plus travel must fit the track`);
+      assert.equal(clampStripScrollPosition(clamped, track, vw, step), clamped, 'clamp must be idempotent');
+    }
+  }
+
+  assert.equal(clampStripScrollPosition(50, 100, 200, 10), 0, 'no safe band means no manual offset');
+  assert.equal(clampStripScrollPosition(0, 100, 200, 10), 0);
+  assert.equal(clampStripScrollPosition(7, 100, 200, 0), 7, 'unmeasurable step keeps the position untouched');
 });
 
 test('autoplay keeps running while hovered and has no mouse pause handlers', () => {
