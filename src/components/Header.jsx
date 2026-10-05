@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import AboutSubnav from './AboutSubnav';
 import { useI18n } from '../i18n/I18nContext';
 import { getBrand, getBrandLogo, getProductBySlug, getSiteLogo, hasUploadedBrandLogo, hasUploadedSiteLogo, velvetBrands } from '../data/velvetCatalog';
+import { buildShopQuery } from '../hooks/shopQuery';
 import SearchDropdown from './SearchDropdown';
 
 const TOP_OFFSET = 80;
@@ -80,6 +81,12 @@ export default function Header({ introActive, solid = false }) {
     }
     return '/products';
   }, [routePath]);
+
+  // Mobile Shop shortcut: scoped to the current brand context via the existing
+  // `/products?brand=<slug>` convention, otherwise the general Shop.
+  const shopShortcut = contextBrand
+    ? `/products?${buildShopQuery({ brand: contextBrand.slug })}`
+    : '/products';
 
   const siteLogo = getSiteLogo();
   const contextBrandLogo = contextBrand ? getBrandLogo(contextBrand.slug, locale) : '';
@@ -201,7 +208,7 @@ export default function Header({ introActive, solid = false }) {
         </button>
         <Link
           className="header-icon-button mobile-shop-link"
-          to={localizePath('/products', locale)}
+          to={localizePath(shopShortcut, locale)}
           aria-label={copy.header.shop}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">

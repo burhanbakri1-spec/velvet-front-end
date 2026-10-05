@@ -159,6 +159,7 @@ export default function ShopFilterBar({
   onClearGroup,
   onClearAll,
   onSortChange,
+  onSearchChange,
   gridCols,
   onGridColsChange,
 }) {
@@ -219,6 +220,16 @@ export default function ShopFilterBar({
               </>
             )}
           </button>
+          <label className="shop-filter-bar__search">
+            <input
+              type="search"
+              className="shop-filter-bar__search-input"
+              value={state.search || ''}
+              placeholder={copy.header.search}
+              aria-label={copy.header.searchLabel}
+              onChange={(event) => onSearchChange?.(event.target.value)}
+            />
+          </label>
         </div>
       </div>
 
