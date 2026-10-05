@@ -4,6 +4,10 @@
 
 export const BRAND_STRIP_DEFAULT_LIMIT = 8;
 
+// The marquee repeats the selected base set in every track group, so the base
+// set must hold enough UNIQUE products or one product repeats on screen.
+export const BRAND_STRIP_MIN_UNIQUE = 5;
+
 const brandPathOf = (product) => product?.velvetPath?.brandId || product?.brandId || '';
 
 export function isStripVisibleProduct(product) {
@@ -39,23 +43,15 @@ function tierOf(product) {
   return TIER.rest;
 }
 
-export function selectBrandStripProducts(products, brandSlug, options = {}) {
-  const { limit = BRAND_STRIP_DEFAULT_LIMIT, mode = 'auto' } = options;
-  if (!brandSlug) return [];
+function productKey(product) {
+  const key = product?.id ?? product?.slug;
+  return key == null ? product : String(key);
+}
 
-  const brandPool = (Array.isArray(products) ? products : []).filter(
-    (product) => isStripVisibleProduct(product) && brandPathOf(product) === brandSlug
-  );
-  if (!brandPool.length) return [];
-
-  const requestedTier =
-    mode === 'featured' ? TIER.featured : mode === 'bestseller' ? TIER.bestseller : null;
-
-  const candidates = brandPool
-    .map((product, index) => ({ product, index, tier: tierOf(product) }))
-    .filter((entry) => (requestedTier === null ? true : entry.tier <= requestedTier));
-
-  const ordered = (candidates.length ? candidates : brandPool.map((product, index) => ({ product, index, tier: tierOf(product) })))
+function orderPool(pool, requestedTier) {
+  const entries = pool.map((product, index) => ({ product, index, tier: tierOf(product) }));
+  const scoped = requestedTier === null ? entries : entries.filter((entry) => entry.tier <= requestedTier);
+  const ordered = (scoped.length ? scoped : entries)
     .sort(
       (a, b) =>
         a.tier - b.tier ||
@@ -63,6 +59,42 @@ export function selectBrandStripProducts(products, brandSlug, options = {}) {
         a.index - b.index
     )
     .map((entry) => entry.product);
+  return ordered;
+}
 
-  return ordered.slice(0, Math.max(1, limit));
+export function selectBrandStripProducts(products, brandSlug, options = {}) {
+  const { limit = BRAND_STRIP_DEFAULT_LIMIT, mode = 'auto' } = options;
+  if (!brandSlug) return [];
+
+  const pool = (Array.isArray(products) ? products : []).filter(isStripVisibleProduct);
+  const brandPool = pool.filter((product) => brandPathOf(product) === brandSlug);
+  if (!brandPool.length) return [];
+
+  const requestedTier =
+    mode === 'featured' ? TIER.featured : mode === 'bestseller' ? TIER.bestseller : null;
+  const cap = Math.max(1, limit);
+  const target = Math.min(cap, BRAND_STRIP_MIN_UNIQUE);
+
+  const seen = new Set();
+  const takeUnique = (list) =>
+    list.filter((product) => {
+      const key = productKey(product);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+  // Priority: featured same brand -> rest of the same brand by existing tiers.
+  const selected = takeUnique(orderPool(brandPool, requestedTier)).slice(0, cap);
+
+  // Broader catalog fallback only after the same brand is genuinely exhausted.
+  if (selected.length < target) {
+    const fallbackPool = pool.filter((product) => brandPathOf(product) !== brandSlug);
+    for (const product of takeUnique(orderPool(fallbackPool, requestedTier))) {
+      if (selected.length >= target) break;
+      selected.push(product);
+    }
+  }
+
+  return selected;
 }

@@ -199,7 +199,16 @@ export default function Header({ introActive, solid = false }) {
           </svg>
           {itemCount > 0 && <span className="header-cart-count">{itemCount > 99 ? '99+' : itemCount}</span>}
         </button>
-        <LanguageControl className="language-control--header" />
+        <Link
+          className="header-icon-button mobile-shop-link"
+          to={localizePath('/products', locale)}
+          aria-label={copy.header.shop}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5.8 8.5h12.4l-.9 10.3a1.7 1.7 0 0 1-1.7 1.5H8.4a1.7 1.7 0 0 1-1.7-1.5L5.8 8.5Z" />
+            <path d="M9.1 8.5V6.9a2.9 2.9 0 0 1 5.8 0v1.6" />
+          </svg>
+        </Link>
       </div>
       <div className="nav-bar">
         <Link
