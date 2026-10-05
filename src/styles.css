@@ -2099,6 +2099,24 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
   object-position: center;
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
+/* ============================================================
+   HOME — Wix-style stacked vertical scroll for brand banners.
+   Pure CSS sticky stacking (no scroll listeners, no animation lib):
+   every home banner pins at the top of the viewport while the next
+   banner scrolls up from the bottom and progressively covers it.
+   - Banners stay in normal flow, so the incoming banner's top edge
+     always overlaps the pinned one -> zero gaps, zero jumps.
+   - Each banner is a positioned stacking context, so later siblings
+     paint over earlier ones by DOM order (bottom -> top cover).
+   - The last banner never reaches its sticky range, so it releases
+     naturally into the following section.
+   Scoped to #showcases (HomePage only): BrandPage category banners
+   and main-category showcases are NOT affected.
+   ============================================================ */
+#showcases > .brand-showcase.brand-showcase--full-banner {
+  position: sticky;
+  top: 0;
+}
 /* Sub-brand logo systems (NOT main VELVET .logo--velvet*):
    A) Mega Menu + Brand showcase: THE BOX ITSELF is the frosted mirror.
    B) Header brand logos: separate transparent box only (see .logo--brand above).
