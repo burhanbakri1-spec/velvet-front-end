@@ -4,6 +4,7 @@ import { collectProductImages, getProductBadge, getProductName } from '../data/p
 import { formatPrice } from '../data/currency';
 import { selectBrandStripProducts } from '../data/brandProductStrip';
 import { getBrand, velvetProducts } from '../data/velvetCatalog';
+import { normalizeStripScroll, STRIP_GROUPS } from '../hooks/stripScroll';
 import { useI18n } from '../i18n/I18nContext';
 
 const RESUME_DELAY_MS = 3200;
@@ -29,7 +30,7 @@ export default function BrandProductStrip({ brandSlug }) {
   const brandName = getBrand(brandSlug)?.name?.[locale] || '';
   const viewAllTo = `/products?brand=${encodeURIComponent(brandSlug)}`;
 
-  const renderCard = (product) => {
+  const renderCard = (product, focusable) => {
     const name = getProductName(product, locale);
     const badge = getProductBadge(product, locale);
     const images = collectProductImages(product);
@@ -39,6 +40,7 @@ export default function BrandProductStrip({ brandSlug }) {
         className="brand-strip-card"
         to={`/products/${product.slug}`}
         key={`${brandSlug}-${product.id}`}
+        tabIndex={focusable ? undefined : -1}
       >
         <span className="brand-strip-card__media">
           {badge && <span className="brand-strip-card__badge">{badge}</span>}
@@ -52,6 +54,16 @@ export default function BrandProductStrip({ brandSlug }) {
       </Link>
     );
   };
+
+  const renderGroup = (index) => (
+    <div
+      className="brand-strip__group"
+      key={`group-${index}`}
+      aria-hidden={index === 0 ? undefined : 'true'}
+    >
+      {products.map((product) => renderCard(product, index === 0))}
+    </div>
+  );
 
   return (
     <section
@@ -70,10 +82,13 @@ export default function BrandProductStrip({ brandSlug }) {
         className="brand-strip__viewport"
         onPointerDown={pauseForInteraction}
         onTouchStart={pauseForInteraction}
+        onScroll={normalizeStripScroll}
       >
-        <div className={`brand-strip__track${paused ? ' is-paused' : ''}`}>
-          <div className="brand-strip__group">{products.map(renderCard)}</div>
-          <div className="brand-strip__group" aria-hidden="true">{products.map(renderCard)}</div>
+        <div
+          className={`brand-strip__track${paused ? ' is-paused' : ''}`}
+          style={{ '--strip-groups': STRIP_GROUPS }}
+        >
+          {Array.from({ length: STRIP_GROUPS }, (_, index) => renderGroup(index))}
         </div>
       </div>
     </section>
