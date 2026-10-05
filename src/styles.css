@@ -2117,6 +2117,16 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
   position: sticky;
   top: 0;
 }
+/* BrandPage Main Category banners reuse the exact same approved stack:
+   pin the current category banner, let the next one rise from the bottom
+   and cover it bottom -> top. Same CSS-first sticky mechanism, same
+   top:0 pin, no scroll listeners. Scoped to .category-showcases so the
+   brand hero, subcategory/product grids and every other banner are
+   untouched. */
+.category-showcases > .brand-showcase.brand-showcase--full-banner {
+  position: sticky;
+  top: 0;
+}
 /* Sub-brand logo systems (NOT main VELVET .logo--velvet*):
    A) Mega Menu + Brand showcase: THE BOX ITSELF is the frosted mirror.
    B) Header brand logos: separate transparent box only (see .logo--brand above).
