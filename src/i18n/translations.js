@@ -10,6 +10,7 @@ export const translations = {
       introP1: 'We build bright, surprising worlds that invite everyone to get curious, make a mess, and play their own way.',
       introP2: 'From pocket-sized discoveries to big outdoor energy, our ideas begin with one question: what would make this moment more fun?',
       meet: 'Explore products', view: 'View', seeMore: 'See More',
+      shopNow: 'Shop now', exploreMeta: 'All products', shopMeta: 'VELVET store',
       careersEyebrow: 'Build what’s next', careersTitle: ['Come work', 'with us.'], careersBody: 'Bring a point of view, a playful streak, and the nerve to try. We’re growing a team of makers across design, technology, storytelling, and product.', careersCta: 'See open roles'
     },
     footer: { callout: 'Come work with us.', opportunities: 'Explore opportunities', tagline: 'Make room for wonder.', explore: 'Explore', company: 'Company', follow: 'Follow', policies: 'Policies', home: 'Home', products: 'Products', news: 'News', about: 'About us', contact: 'Contact', whatsapp: 'WhatsApp', facebook: 'Facebook', instagram: 'Instagram', tiktok: 'TikTok', terms: 'Terms of use', privacy: 'Privacy', cookies: 'Cookies', accessibility: 'Accessibility', copyright: '© 2026 VELVET', note: 'A VELVET store experience' },
@@ -186,6 +187,7 @@ export const translations = {
       introP1: 'نصنع عوالم مبهجة ومفاجئة تدعو الجميع إلى الفضول والتجربة واللعب بطريقتهم الخاصة.',
       introP2: 'من الاكتشافات الصغيرة إلى مغامرات الهواء الطلق، تبدأ أفكارنا بسؤال واحد: كيف نجعل هذه اللحظة أكثر مرحاً؟',
       meet: 'استكشف المنتجات', view: 'عرض', seeMore: 'شاهد المزيد',
+      shopNow: 'اشتري الآن', exploreMeta: 'كل المنتجات', shopMeta: 'متجر VELVET',
       careersEyebrow: 'اصنع ما هو قادم', careersTitle: ['انضم', 'إلى فريقنا.'], careersBody: 'نبحث عن أصحاب الأفكار الجريئة والروح المرحة والرغبة في التجربة. نبني فريقاً من المصممين والمبدعين وصنّاع المنتجات.', careersCta: 'الوظائف المتاحة'
     },
     footer: { callout: 'انضم إلى فريقنا.', opportunities: 'استكشف الفرص', tagline: 'مساحة أكبر للدهشة.', explore: 'استكشف', company: 'الشركة', follow: 'تابعنا', policies: 'السياسات', home: 'الرئيسية', products: 'المنتجات', news: 'الأخبار', about: 'من نحن', contact: 'تواصل معنا', whatsapp: 'واتساب', facebook: 'فيسبوك', instagram: 'إنستغرام', tiktok: 'تيك توك', terms: 'شروط الاستخدام', privacy: 'الخصوصية', cookies: 'ملفات الارتباط', accessibility: 'إمكانية الوصول', copyright: '© 2026 VELVET', note: 'تجربة متجر VELVET' },

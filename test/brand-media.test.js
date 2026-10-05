@@ -229,3 +229,39 @@ test('brand about content prefers platform copy and falls back to catalog taglin
   assert.equal(managed.description, 'Managed PLAY copy.');
   assert.equal(getBrandAbout('unknown', 'en'), null);
 });
+
+test('Arabic small brand banner text grows ~50% while English and large titles stay put', () => {
+  const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+
+  const enKicker = Number(styles.match(/^\.brand-showcase__content p \{[^}]*font-size: ([\d.]+)px/m)?.[1]);
+  const enLabel = Number(styles.match(/^\.brand-showcase__logo \{ font-size: ([\d.]+)px/m)?.[1]);
+  const arKicker = Number(styles.match(/^html\[lang="ar"\] \.brand-showcase__content p \{ font-size: ([\d.]+)px/m)?.[1]);
+  const arLabel = Number(styles.match(/^html\[lang="ar"\] \.brand-showcase__logo \{ font-size: ([\d.]+)px/m)?.[1]);
+
+  assert.equal(enKicker, 15, 'English kicker must stay 15px');
+  assert.equal(enLabel, 20, 'English brand label must stay 20px');
+  // Arabic baselines before this change: kicker 17px (AR override), label 20px.
+  assert.equal(arKicker, 17 * 1.5, 'Arabic kicker must be 1.5x its previous 17px');
+  assert.equal(arLabel, 20 * 1.5, 'Arabic brand label must be 1.5x its previous 20px');
+  assert.ok(arKicker > enKicker && arLabel > enLabel, 'Arabic small text must stay larger than English');
+
+  // Mobile Arabic keeps the same 1.5x ratio of its previous clamp values.
+  assert.match(styles, /html\[lang="ar"\] \.brand-showcase__content p \{ font-size: clamp\(18px, 4\.65vw, 19\.5px\)/);
+  assert.match(styles, /html\[lang="ar"\] \.brand-showcase__logo \{[^}]*clamp\(19\.5px, 5\.25vw, 21px\)/);
+
+  // English mobile sizes untouched.
+  assert.match(styles, /\.brand-showcase__content p \{ margin: 0 0 6px; font-size: clamp\(11px, 2\.9vw, 12px\)/);
+  assert.match(styles, /\.brand-showcase__logo \{[^}]*clamp\(12px, 3\.2vw, 13px\)/);
+
+  // Large brand titles (Arabic + English, desktop + mobile) unchanged.
+  assert.match(styles, /@media \(min-width: 901px\) \{\s*html\[lang="ar"\] \.brand-showcase__content h2 \{ font-size: 60px; \}/);
+  assert.match(styles, /^\.brand-showcase__content h2 \{[^}]*clamp\(70px,10vw,175px\)/m);
+  assert.match(styles, /html\[lang="ar"\] \.brand-showcase__content h2 \{\s*font-size: clamp\(24px, 6\.8vw, 32px\) !important/);
+
+  // Approved sticky stacking scopes remain intact (home + brand category).
+  const stickyBlocks = styles.match(/[^{}]*\{[^}]*position:\s*sticky[^}]*\}/g) || [];
+  const stackedBanners = stickyBlocks.filter((block) => block.includes('brand-showcase--full-banner'));
+  assert.equal(stackedBanners.length, 2, 'home + brand category sticky stacks must both survive');
+  assert.ok(stackedBanners.some((block) => block.includes('#showcases')));
+  assert.ok(stackedBanners.some((block) => block.includes('.category-showcases')));
+});
