@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import IntroLoader from '../components/IntroLoader';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
 import IntroSection from '../components/IntroSection';
 import BrandShowcase from '../components/BrandShowcase';
+import BrandProductStrip from '../components/BrandProductStrip';
 import CareersSection from '../components/CareersSection';
 import StoreReviewsSection from '../components/StoreReviewsSection';
 import Footer from '../components/Footer';
@@ -41,14 +42,16 @@ export default function HomePage() {
         <IntroSection />
         <section id="showcases" aria-label={copy.home.worlds}>
           {[...velvetBrands].sort((a, b) => a.home.order - b.home.order).map((brand, index) => (
-            <BrandShowcase
-              variant="full-banner"
-              showBrandLogo
-              mediaLoading={index === 0 ? 'eager' : 'lazy'}
-              mediaFetchPriority={index === 0 ? 'high' : undefined}
-              brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
-              key={brand.slug}
-            />
+            <Fragment key={brand.slug}>
+              <BrandShowcase
+                variant="full-banner"
+                showBrandLogo
+                mediaLoading={index === 0 ? 'eager' : 'lazy'}
+                mediaFetchPriority={index === 0 ? 'high' : undefined}
+                brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
+              />
+              <BrandProductStrip brandSlug={brand.slug} />
+            </Fragment>
           ))}
         </section>
         <StoreReviewsSection />
