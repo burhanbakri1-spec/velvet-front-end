@@ -3090,6 +3090,39 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
   justify-content: flex-start;
   padding: 12px 14px;
 }
+/* Shop-page product search sits next to Filter on MOBILE only (desktop row unchanged). */
+.shop-filter-bar__search { display: none; }
+@media (max-width: 760px) {
+  .shop-filter-bar__row.shop-filter-bar__row--filter {
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+  .shop-filter-bar__search {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .shop-filter-bar__search-input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid #e7e6e2;
+    border-radius: 14px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    appearance: none;
+  }
+  .shop-filter-bar__search-input::placeholder { color: #9a9a9e; }
+  .shop-filter-bar__search-input:focus-visible {
+    outline: none;
+    border-color: rgba(228, 7, 33, .45);
+    box-shadow: 0 0 0 3px rgba(228, 7, 33, .12);
+  }
+}
 /* Density + Sort — directly on page background, no parent card/bar */
 .shop-filter-tools {
   display: flex;

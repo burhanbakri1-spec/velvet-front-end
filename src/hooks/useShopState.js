@@ -55,7 +55,7 @@ export function useShopState() {
   }, [go, state]);
   const resetAll = useCallback(() => go(EMPTY_SHOP_STATE), [go]);
   const setSearch = useCallback((value) => {
-    go({ ...state, search: value.trim() });
+    go({ ...state, search: value }, { replace: true });
   }, [go, state]);
   const setSort = useCallback((value) => {
     go({ ...state, sort: SHOP_SORT_OPTIONS.includes(value) ? value : '' });

@@ -11,7 +11,7 @@ const MAX_VISIBLE = 48;
 
 export default function ProductsPage() {
   const { copy, locale } = useI18n();
-  const { state, toggle, select, removeFilter, clearFilters, resetAll, setSort, clearGroup } = useShopState();
+  const { state, toggle, select, removeFilter, clearFilters, resetAll, setSearch, setSort, clearGroup } = useShopState();
   const { gridCols, setGridCols } = useShopGridDensity();
   const [limit, setLimit] = useState(MAX_VISIBLE);
 
@@ -50,6 +50,7 @@ export default function ProductsPage() {
         onClearGroup={clearGroup}
         onClearAll={clearFilters}
         onSortChange={setSort}
+        onSearchChange={setSearch}
         gridCols={gridCols}
         onGridColsChange={setGridCols}
       />
