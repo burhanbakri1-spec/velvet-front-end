@@ -16,7 +16,7 @@ test('home intro renders the two CTA cards with EN and AR labels', () => {
   assert.equal(en.home.meet, 'Explore products');
   assert.equal(ar.home.meet, 'استكشف المنتجات');
   assert.equal(en.home.shopNow, 'Shop now');
-  assert.equal(ar.home.shopNow, 'اشتري الآن');
+  assert.equal(ar.home.shopNow, 'تسوق الآن');
   assert.ok(en.home.exploreMeta && en.home.shopMeta, 'EN micro-labels missing');
   assert.ok(ar.home.exploreMeta && ar.home.shopMeta, 'AR micro-labels missing');
 
@@ -88,21 +88,27 @@ test('home intro heading and paragraphs stay unchanged', () => {
   assert.equal(ar.home.introP1, 'نصنع عوالم مبهجة ومفاجئة تدعو الجميع إلى الفضول والتجربة واللعب بطريقتهم الخاصة.');
 });
 
-test('home intro CTA colors: ink primary + VELVET red secondary, same card grid', () => {
+test('home intro CTA colors: VELVET red primary + yellow secondary, same card grid', () => {
   const styles = readStyles();
 
-  // Primary — dark card, white copy, matching border.
-  assert.match(styles, /\.intro-cta--primary \{[^}]*background: var\(--ink, #121214\)/);
-  assert.match(styles, /\.intro-cta--primary \{[^}]*border-color: var\(--ink, #121214\)/);
+  // Primary — VELVET red card, white copy, matching border.
+  assert.match(styles, /\.intro-cta--primary \{[^}]*background: var\(--red, #e40721\)/);
+  assert.match(styles, /\.intro-cta--primary \{[^}]*border-color: var\(--red, #e40721\)/);
   assert.match(styles, /\.intro-cta--primary \{[^}]*color: #fff/);
-  // Secondary — VELVET red card, white copy.
-  assert.match(styles, /\.intro-cta--accent \{[^}]*background: var\(--red, #e40721\)/);
-  assert.match(styles, /\.intro-cta--accent \{[^}]*border-color: var\(--red, #e40721\)/);
-  assert.match(styles, /\.intro-cta--accent \{[^}]*color: #fff/);
-  // High-contrast circular arrow icon.
+  // Secondary — warm yellow card, dark copy for contrast.
+  assert.match(styles, /\.intro-cta--accent \{[^}]*background: #FFD84D/);
+  assert.match(styles, /\.intro-cta--accent \{[^}]*border-color: #FFD84D/);
+  assert.match(styles, /\.intro-cta--accent \{[^}]*color: var\(--ink, #121214\)/);
+  // White circular arrow icon: red arrow on the red card, dark arrow on the yellow card.
   assert.match(styles, /\.intro-cta__icon \{[^}]*background: #fff/);
   assert.match(styles, /\.intro-cta__icon \{[^}]*border-radius: 50%/);
-  assert.match(styles, /\.intro-cta--accent \.intro-cta__icon \{[^}]*color: var\(--red/);
+  assert.match(styles, /\.intro-cta__icon \{[^}]*color: var\(--red/);
+  assert.match(styles, /\.intro-cta--accent \.intro-cta__icon \{[^}]*color: var\(--ink/);
+  // Meta micro-labels stay readable on both fills.
+  assert.match(styles, /\.intro-cta--accent \.intro-cta__meta \{[^}]*color: rgba\(18,18,20,\.62\)/);
+  // Hover: each card darkens one step deeper, keeping the lift.
+  assert.match(styles, /\.intro-cta--primary:hover \{[^}]*background: #c9061b/);
+  assert.match(styles, /\.intro-cta--accent:hover \{[^}]*background: #F0C531/);
 
   // Geometry, spacing and hover unchanged in spirit.
   assert.match(styles, /\.intro-ctas \{[^}]*display: grid/);
