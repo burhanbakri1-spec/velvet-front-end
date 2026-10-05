@@ -187,7 +187,7 @@ export const translations = {
       introP1: 'نصنع عوالم مبهجة ومفاجئة تدعو الجميع إلى الفضول والتجربة واللعب بطريقتهم الخاصة.',
       introP2: 'من الاكتشافات الصغيرة إلى مغامرات الهواء الطلق، تبدأ أفكارنا بسؤال واحد: كيف نجعل هذه اللحظة أكثر مرحاً؟',
       meet: 'استكشف المنتجات', view: 'عرض', seeMore: 'شاهد المزيد',
-      shopNow: 'اشتري الآن', exploreMeta: 'كل المنتجات', shopMeta: 'متجر VELVET',
+      shopNow: 'تسوق الآن', exploreMeta: 'كل المنتجات', shopMeta: 'متجر VELVET',
       careersEyebrow: 'اصنع ما هو قادم', careersTitle: ['انضم', 'إلى فريقنا.'], careersBody: 'نبحث عن أصحاب الأفكار الجريئة والروح المرحة والرغبة في التجربة. نبني فريقاً من المصممين والمبدعين وصنّاع المنتجات.', careersCta: 'الوظائف المتاحة'
     },
     footer: { callout: 'انضم إلى فريقنا.', opportunities: 'استكشف الفرص', tagline: 'مساحة أكبر للدهشة.', explore: 'استكشف', company: 'الشركة', follow: 'تابعنا', policies: 'السياسات', home: 'الرئيسية', products: 'المنتجات', news: 'الأخبار', about: 'من نحن', contact: 'تواصل معنا', whatsapp: 'واتساب', facebook: 'فيسبوك', instagram: 'إنستغرام', tiktok: 'تيك توك', terms: 'شروط الاستخدام', privacy: 'الخصوصية', cookies: 'ملفات الارتباط', accessibility: 'إمكانية الوصول', copyright: '© 2026 VELVET', note: 'تجربة متجر VELVET' },
