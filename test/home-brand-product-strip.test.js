@@ -4,7 +4,6 @@ import test from 'node:test';
 import { translations } from '../src/i18n/translations.js';
 import {
   BRAND_STRIP_DEFAULT_LIMIT,
-  BRAND_STRIP_MIN_UNIQUE,
   isBestsellerProduct,
   isFeaturedProduct,
   selectBrandStripProducts,
@@ -36,7 +35,7 @@ test('each Home brand banner renders its own product strip directly after it', (
   assert.doesNotMatch(home, /<BrandShowcase[\s\S]*?<BrandShowcase/, 'banners must not collapse into one another');
 });
 
-test('strip selection prefers the same brand and falls back only when it runs out', () => {
+test('strip selection contains products of the same brand only', () => {
   const products = [
     makeProduct('baby-1', 'baby'),
     makeProduct('baby-2', 'baby'),
@@ -48,9 +47,10 @@ test('strip selection prefers the same brand and falls back only when it runs ou
   const babyStrip = selectBrandStripProducts(products, 'baby');
   const playStrip = selectBrandStripProducts(products, 'play');
 
-  assert.deepEqual(babyStrip.slice(0, 3).map((product) => product.id), ['baby-1', 'baby-2', 'baby-3']);
-  assert.ok(babyStrip.every((product, index) => index >= 3 || product.velvetPath.brandId === 'baby'));
-  assert.ok(playStrip.every((product, index) => index >= 2 || product.velvetPath.brandId === 'play'));
+  assert.deepEqual(babyStrip.map((product) => product.id), ['baby-1', 'baby-2', 'baby-3']);
+  assert.deepEqual(playStrip.map((product) => product.id), ['play-1', 'play-2']);
+  assert.ok(babyStrip.every((product) => product.velvetPath.brandId === 'baby'));
+  assert.ok(playStrip.every((product) => product.velvetPath.brandId === 'play'));
   assert.equal(selectBrandStripProducts(products, 'unknown-brand').length, 0);
   assert.equal(selectBrandStripProducts([], 'baby').length, 0);
 });
@@ -94,23 +94,22 @@ test('bestseller, salesCount and fallback tiers apply in priority order', () => 
   assert.deepEqual(ids.slice(4), ['plain-1', 'plain-2']);
 });
 
-test('same-brand products fill the strip before any cross-catalog product', () => {
+test('strip never pulls products from other brands', () => {
   const products = [
     makeProduct('baby-1', 'baby'),
     makeProduct('baby-2', 'baby', { featured: true }),
     makeProduct('baby-3', 'baby'),
-    makeProduct('baby-4', 'baby'),
-    makeProduct('baby-5', 'baby'),
     makeProduct('play-star', 'play', { featured: true, salesCount: 999 }),
     makeProduct('collect-star', 'collect', { featured: true }),
   ];
 
   const strip = selectBrandStripProducts(products, 'baby');
 
-  assert.deepEqual(strip.map((product) => product.id), ['baby-2', 'baby-1', 'baby-3', 'baby-4', 'baby-5']);
+  assert.deepEqual(strip.map((product) => product.id), ['baby-2', 'baby-1', 'baby-3']);
+  assert.equal(strip.length, 3, 'a 3-product brand returns exactly 3 products');
   assert.ok(
     strip.every((product) => product.velvetPath.brandId === 'baby'),
-    'a rich same brand must never pull in cross-catalog products'
+    'rich cross-brand products must never enter the strip'
   );
 });
 
@@ -121,49 +120,33 @@ test('base selection contains unique product ids and slugs', () => {
     makeProduct('solo', 'build'),
     makeProduct('play-1', 'play'),
     makeProduct('play-2', 'play'),
-    makeProduct('play-3', 'play'),
-    makeProduct('play-3', 'play'),
   ];
 
   const strip = selectBrandStripProducts(products, 'build');
   const keys = strip.map((product) => String(product.id ?? product.slug));
 
-  assert.equal(strip.length, BRAND_STRIP_MIN_UNIQUE);
+  assert.deepEqual(keys, ['dup', 'solo']);
   assert.equal(new Set(keys).size, keys.length, 'every selected product must be unique');
-  assert.ok(keys.includes('dup') && keys.includes('solo'));
 });
 
-test('selector never repeats a product to reach the minimum or the limit', () => {
-  assert.ok(BRAND_STRIP_MIN_UNIQUE >= 5 && BRAND_STRIP_MIN_UNIQUE <= BRAND_STRIP_DEFAULT_LIMIT);
-
-  const products = [
+test('selector never pads or repeats products to reach a target size', () => {
+  const lone = [
     makeProduct('only', 'build'),
     ...Array.from({ length: 10 }, (_, index) => makeProduct(`other-${index}`, 'play')),
   ];
 
   for (const limit of [undefined, 3, BRAND_STRIP_DEFAULT_LIMIT]) {
-    const strip = selectBrandStripProducts(products, 'build', limit ? { limit } : {});
-    const ids = strip.map((product) => product.id);
-
-    assert.equal(new Set(ids).size, ids.length, `limit=${limit}: ids must stay unique`);
-    assert.equal(ids.filter((id) => id === 'only').length, 1, 'the lone brand product must appear once');
-    assert.equal(ids.length, Math.min(limit ?? BRAND_STRIP_DEFAULT_LIMIT, BRAND_STRIP_MIN_UNIQUE));
+    const strip = selectBrandStripProducts(lone, 'build', limit ? { limit } : {});
+    assert.deepEqual(strip.map((product) => product.id), ['only'], `limit=${limit}: 1-product brand returns exactly 1`);
   }
-});
 
-test('cross-catalog fallback runs only after same-brand products are exhausted', () => {
-  const others = [makeProduct('play-star', 'play', { featured: true }), makeProduct('collect-star', 'collect', { featured: true })];
-  const starved = [makeProduct('baby-1', 'baby'), makeProduct('baby-2', 'baby'), makeProduct('baby-3', 'baby'), makeProduct('baby-4', 'baby')];
-  const enough = [...starved, makeProduct('baby-5', 'baby')];
+  const eight = Array.from({ length: 8 }, (_, index) => makeProduct(`p-${index}`, 'move'));
+  const eightStrip = selectBrandStripProducts(eight, 'move');
+  assert.equal(eightStrip.length, 8, '8-product brand shows up to 8 unique products');
+  assert.equal(new Set(eightStrip.map((product) => product.id)).size, 8);
 
-  const starvedStrip = selectBrandStripProducts([...starved, ...others], 'baby');
-  assert.equal(starvedStrip.length, BRAND_STRIP_MIN_UNIQUE);
-  assert.ok(starvedStrip.slice(0, 4).every((product) => product.velvetPath.brandId === 'baby'));
-  assert.ok(starvedStrip.slice(4).every((product) => product.velvetPath.brandId !== 'baby'), 'fallback may only occupy slots after the brand ran out');
-
-  const enoughStrip = selectBrandStripProducts([...enough, ...others], 'baby');
-  assert.equal(enoughStrip.length, 5);
-  assert.ok(enoughStrip.every((product) => product.velvetPath.brandId === 'baby'));
+  const five = Array.from({ length: 5 }, (_, index) => makeProduct(`f-${index}`, 'plush'));
+  assert.equal(selectBrandStripProducts(five, 'plush').length, 5, '5-product brand shows exactly 5');
 });
 
 test('strip keeps the 6-10 product range through its default limit', () => {
