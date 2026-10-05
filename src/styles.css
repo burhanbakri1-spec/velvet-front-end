@@ -461,6 +461,7 @@ button { color: inherit; }
 .header-icon-button:hover { opacity: 1; transform: translateY(-1px); }
 .header-icon-button:focus-visible { outline: 1px solid currentColor; outline-offset: 4px; border-radius: 2px; }
 .header-icon-button svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+a.header-icon-button { text-decoration: none; }
 .menu-toggle { display: none; }
 
 .mega-menu {
@@ -5131,22 +5132,6 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
     border-radius: 0;
     box-shadow: none;
     opacity: 1;
-  }
-  .mobile-utility-row .language-control--header {
-    min-height: var(--mobile-utility-h);
-    padding: 0;
-    gap: 6px;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    background: transparent !important;
-    color: var(--ink) !important;
-    font-size: 13px;
-    font-weight: 500;
-  }
-  .mobile-utility-row .language-control--header:focus-visible {
-    text-decoration: underline;
-    text-underline-offset: 3px;
   }
   .site-header.is-compact .mobile-utility-row {
     min-height: 0;
