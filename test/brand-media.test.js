@@ -136,6 +136,27 @@ test('homepage brand banners overlay managed brand logos without affecting Brand
   assert.doesNotMatch(styles, /\.brand-showcase__brand-logo[^}]*background:\s*#/);
 });
 
+test('home brand banners stack with sticky scroll only inside #showcases', () => {
+  const homePage = fs.readFileSync(new URL('../src/pages/HomePage.jsx', import.meta.url), 'utf8');
+  const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
+  const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+
+  assert.match(homePage, /id="showcases"/);
+  assert.match(homePage, /<BrandShowcase/);
+  assert.match(brandPage, /category-showcases/);
+
+  // The only full-banner sticky rule must be scoped to the home #showcases section.
+  const stickyBlocks = styles.match(/[^{}]*\{[^}]*position:\s*sticky[^}]*\}/g) || [];
+  const stackedBanners = stickyBlocks.filter((block) => block.includes('brand-showcase--full-banner'));
+  assert.equal(stackedBanners.length, 1, 'only the home brand banners should opt into sticky stacking');
+  assert.match(stackedBanners[0], /#showcases\s*>/);
+  assert.match(stackedBanners[0], /position:\s*sticky/);
+  assert.match(stackedBanners[0], /top:\s*0/);
+
+  // Stacking must not change banner media/layout contracts.
+  assert.doesNotMatch(stackedBanners[0], /overflow:|height:|transform:/);
+});
+
 test('homepage prioritizes first banner media and lazy-loads the rest', () => {
   const homePage = fs.readFileSync(new URL('../src/pages/HomePage.jsx', import.meta.url), 'utf8');
   const showcase = fs.readFileSync(new URL('../src/components/BrandShowcase.jsx', import.meta.url), 'utf8');
