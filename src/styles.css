@@ -1058,6 +1058,14 @@ html[dir="rtl"] .brand-strip__track { animation-name: brand-strip-marquee-rtl; }
     transform: translateY(0);
     transition: transform .45s cubic-bezier(.22,1,.36,1), visibility 0s;
   }
+  /* Root cause of the floating language pill: `.language-control` forces
+     `visibility: visible !important`, which punched through the closed drawer's
+     `visibility: hidden` (and the header's scroll transform can bring the closed
+     drawer on-screen). This selector is more specific, so the pill is painted only
+     while the drawer is OPEN. */
+  .mobile-drawer:not(.is-open) .language-control {
+    visibility: hidden !important;
+  }
   .mobile-drawer__top {
     display: flex;
     align-items: center;
@@ -3222,6 +3230,26 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
   border-color: var(--red);
   background: var(--red);
   color: #fff;
+}
+/* Category chips: ONE horizontal, touch-scrollable row on phones (desktop unchanged).
+   Direction-agnostic: native scrolling starts at the inline start edge in LTR and RTL. */
+@media (max-width: 760px) {
+  .shop-filter-quick-row {
+    justify-content: flex-start;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .shop-filter-quick-row::-webkit-scrollbar { display: none; }
+  .shop-filter-bar__quick {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    width: max-content;
+    min-width: 100%;
+    justify-content: center;
+  }
+  .shop-filter-bar__quick-chip { flex: 0 0 auto; }
 }
 .shop-filter-bar__chips {
   display: flex;
