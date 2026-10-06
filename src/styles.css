@@ -3613,6 +3613,17 @@ html[dir="rtl"] .shop-filter-column__head h3 { letter-spacing: 0; text-transform
 .shop-grid-density__icon {
   display: none;
 }
+/* Grid-density switch is a desktop affordance. Phones/tablets (<=760px) hide it
+   so the Sort pill keeps the tools row for itself — no leftover gap, same sort
+   position as before (space-between flex-end keeps it on the trailing edge). */
+@media (max-width: 760px) {
+  .shop-grid-density {
+    display: none;
+  }
+  .shop-filter-tools {
+    justify-content: flex-end;
+  }
+}
 .shop-products .product-card { border-radius: 14px; box-shadow: none; border: 1px solid #e7e6e2; transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease; }
 .shop-products .product-card:hover { transform: translateY(-3px); box-shadow: none; }
 .shop-products .product-card__media { aspect-ratio: 1 / 1.02; }

@@ -59,7 +59,9 @@ export function RouterProvider({ children }) {
       try { window.localStorage.setItem('play-language', explicitLocale); } catch { /* Storage may be unavailable. */ }
       return;
     }
-    if (location.pathname === '/' && locale === 'ar') return;
+    // No locale prefix in the URL: canonicalize to the active locale so a
+    // first visit to "/" opens the Arabic route (/ar). An explicitly remembered
+    // English preference (/en) is kept, and the query string/hash travel along.
     navigate(`${localizePath(location.pathname, locale)}${location.search}${location.hash}`, { replace: true });
   }, [explicitLocale, locale, location.hash, location.pathname, location.search, navigate]);
 
