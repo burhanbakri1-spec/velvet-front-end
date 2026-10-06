@@ -3,6 +3,7 @@ import ProductCard from '../components/ProductCard';
 import ShopFilterBar from '../components/ShopFilterBar';
 import PageNavigation from '../components/PageNavigation';
 import { filterProducts, resolvePath, sortProducts } from '../data/velvetCatalog';
+import { isExplicitShopSort, orderProductsByIds, orderedIdsForShop } from '../data/displayPriority';
 import { useI18n } from '../i18n/I18nContext';
 import { useShopGridDensity } from '../hooks/useShopGridDensity';
 import { useShopState } from '../hooks/useShopState';
@@ -17,10 +18,12 @@ export default function ProductsPage() {
 
   useEffect(() => setLimit(MAX_VISIBLE), [state]);
 
-  const results = useMemo(
-    () => sortProducts(filterProducts(state), state.sort, locale),
-    [state, locale],
-  );
+  const results = useMemo(() => {
+    const filtered = filterProducts(state);
+    const orderedIds = orderedIdsForShop(state.brand);
+    const scoped = Array.isArray(orderedIds) ? orderProductsByIds(filtered, orderedIds) : filtered;
+    return isExplicitShopSort(state.sort) ? sortProducts(scoped, state.sort, locale) : scoped;
+  }, [state, locale]);
   const path = useMemo(() => resolvePath(state), [state]);
   const shown = results.slice(0, limit);
   const showAllNote = results.length > shown.length;

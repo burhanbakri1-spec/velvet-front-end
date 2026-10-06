@@ -1,6 +1,7 @@
 import { aboutSections, newsCategories, newsItems } from './company.js';
 import { homeCategories, productCategories, products } from './products.js';
 import { buildDynamicCatalog } from './dynamicCatalog.js';
+import { setDisplayPriority } from './displayPriority.js';
 import {
   applyDynamicCatalog,
   applyFilterDefinitions,
@@ -443,6 +444,8 @@ export function applyPlatformContent(payload, apiUrl) {
   applyFilterDefinitions(payload);
   const dynamic = buildDynamicCatalog(payload, apiUrl);
   applyDynamicCatalog(dynamic?.brands || null, dynamic?.products || null);
+  if (dynamic?.brands?.length) setDisplayPriority(payload.displayPriority, dynamic.brands);
+  else setDisplayPriority(null, []);
   // Navigation SoT: CPanel mains/subs via brandId→brands[].slug (not workbook-only).
   applyPlatformNavigationCategories(dynamic?.brands || []);
   reconcilePlatformProductPaths(dynamic?.products || []);

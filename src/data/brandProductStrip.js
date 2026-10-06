@@ -1,6 +1,7 @@
 // Isolated product selection for the Home brand product strips.
-// CPanel/API will later drive this through brand.productShowcaseMode
-// (featured | bestseller | manual). Nothing else in the app reads these rules.
+// When a home displayPriority scope is present, orderedIds replaces the
+// local featured/bestseller/sales tier. Without that scope the tier order remains.
+import { orderProductsByIds } from './displayPriority.js';
 
 export const BRAND_STRIP_DEFAULT_LIMIT = 8;
 
@@ -67,9 +68,13 @@ export function selectBrandStripProducts(products, brandSlug, options = {}) {
   );
   if (!brandPool.length) return [];
 
+  const cap = Math.max(1, limit);
+  if (Array.isArray(options.orderedIds)) {
+    return orderProductsByIds(brandPool, options.orderedIds).slice(0, cap);
+  }
+
   const requestedTier =
     mode === 'featured' ? TIER.featured : mode === 'bestseller' ? TIER.bestseller : null;
-  const cap = Math.max(1, limit);
 
   // Same brand only: featured -> bestseller/sales -> remaining visible,
   // unique by id/slug, never padded or duplicated to reach a target size.
