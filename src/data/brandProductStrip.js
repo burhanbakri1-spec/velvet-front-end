@@ -1,6 +1,8 @@
 // Isolated product selection for the Home brand product strips.
-// CPanel/API will later drive this through brand.productShowcaseMode
-// (featured | bestseller | manual). Nothing else in the app reads these rules.
+// A saved home priority replaces the automatic tier order.
+// Missing priority keeps featured → bestseller → sales → catalog order.
+
+import { orderProductsByIds } from './displayPriority.js';
 
 export const BRAND_STRIP_DEFAULT_LIMIT = 8;
 
@@ -59,12 +61,13 @@ function orderPool(pool, requestedTier) {
 }
 
 export function selectBrandStripProducts(products, brandSlug, options = {}) {
-  const { limit = BRAND_STRIP_DEFAULT_LIMIT, mode = 'auto' } = options;
+  const { limit = BRAND_STRIP_DEFAULT_LIMIT, mode = 'auto', priority = null } = options;
   if (!brandSlug) return [];
 
   const brandPool = (Array.isArray(products) ? products : []).filter(
     (product) => isStripVisibleProduct(product) && brandPathOf(product) === brandSlug
   );
+  if (priority) return orderProductsByIds(brandPool, priority.orderedIds);
   if (!brandPool.length) return [];
 
   const requestedTier =

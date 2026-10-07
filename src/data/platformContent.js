@@ -13,6 +13,7 @@ import {
 } from './velvetCatalog.js';
 import { applyVlogContent } from './vlogs.js';
 import { translations } from '../i18n/translations.js';
+import { applyDisplayPriority } from './displayPriority.js';
 
 const websiteMedia = new Map();
 const brandAboutContent = new Map();
@@ -447,6 +448,7 @@ export function applyPlatformContent(payload, apiUrl) {
   applyPlatformNavigationCategories(dynamic?.brands || []);
   reconcilePlatformProductPaths(dynamic?.products || []);
   applyBrandMenuImages(dynamic?.brands || []);
+  applyDisplayPriority(payload);
   applyStructuredContent(payload, apiUrl);
   newsCategories.splice(0, newsCategories.length, { id: 'all', en: 'All', ar: 'الكل' }, ...[...new Set(newsItems.map((item) => item.category))].map((category) => {
     const item = newsItems.find((entry) => entry.category === category);

@@ -3,6 +3,7 @@ import { Link } from '../routing/Router';
 import { collectProductImages, getProductBadge, getProductName } from '../data/products';
 import { formatPrice } from '../data/currency';
 import { selectBrandStripProducts } from '../data/brandProductStrip';
+import { getHomePriority } from '../data/displayPriority';
 import { getBrand, velvetProducts } from '../data/velvetCatalog';
 import { normalizeStripScroll, STRIP_GROUPS } from '../hooks/stripScroll';
 import { useI18n } from '../i18n/I18nContext';
@@ -13,7 +14,10 @@ export default function BrandProductStrip({ brandSlug }) {
   const { copy, locale } = useI18n();
   const arrow = locale === 'ar' ? '←' : '→';
   const source = velvetProducts;
-  const products = useMemo(() => selectBrandStripProducts(source, brandSlug), [source, brandSlug]);
+  const products = useMemo(
+    () => selectBrandStripProducts(source, brandSlug, { priority: getHomePriority(brandSlug) }),
+    [source, brandSlug],
+  );
   const [paused, setPaused] = useState(false);
   const resumeTimerRef = useRef(null);
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { artwork } from '../data/products';
 import { filterProducts, getBrand, getCategory, getSubcategory } from '../data/velvetCatalog';
+import { getShopPriority, orderProductsByIds } from '../data/displayPriority';
 import CategoryProductShowcase from '../components/CategoryProductShowcase';
 import PageNavigation from '../components/PageNavigation';
 import { useI18n } from '../i18n/I18nContext';
@@ -70,12 +71,16 @@ export default function BrandCategoryPage({ slug, categorySlug, subcategorySlug 
     : (category.subs.length
       ? category.subs.map((sub) => sub.name[locale]).join(' · ')
       : (category.description?.[locale] || ''));
-  const products = filterProducts({
+  const filteredProducts = filterProducts({
     ...EMPTY_SHOP_STATE,
     brand: slug,
     category: categorySlug,
     ...(isSubMode ? { subcategory: subcategorySlug } : {}),
   });
+  const brandShopPriority = getShopPriority(slug);
+  const products = brandShopPriority
+    ? orderProductsByIds(filteredProducts, brandShopPriority.orderedIds)
+    : filteredProducts;
   const shopHref = isSubMode
     ? `/products?brand=${encodeURIComponent(slug)}&category=${encodeURIComponent(categorySlug)}&subcategory=${encodeURIComponent(subcategorySlug)}`
     : `/products?brand=${encodeURIComponent(slug)}&category=${encodeURIComponent(categorySlug)}`;
