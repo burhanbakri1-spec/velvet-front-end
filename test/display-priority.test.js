@@ -41,6 +41,30 @@ test('home strips follow saved home ordered ids and ignore other brands', () => 
   assert.deepEqual(strip.map((item) => item.id), ['a', 'b']);
 });
 
+test('empty home orderedIds does not fall back to the featured strip', () => {
+  applyDisplayPriority({
+    displayPriority: { home: { orderedIds: [] } },
+  });
+  const products = [product('featured', 'baby'), product('plain', 'baby')];
+  products[0].featured = true;
+  const priority = getHomePriority('baby');
+  assert.deepEqual(priority.orderedIds, []);
+  assert.deepEqual(selectBrandStripProducts(products, 'baby', { priority }), []);
+});
+
+test('missing home scope keeps the automatic strip', () => {
+  applyDisplayPriority({
+    displayPriority: { shop: { orderedIds: ['kept-for-shop'] } },
+  });
+  assert.equal(getHomePriority('baby'), null);
+  const products = [product('plain', 'baby'), product('featured', 'baby')];
+  products[1].featured = true;
+  assert.deepEqual(
+    selectBrandStripProducts(products, 'baby', { priority: getHomePriority('baby') }).map((item) => item.id),
+    ['featured', 'plain'],
+  );
+});
+
 test('empty ordered ids render an empty product set', () => {
   applyDisplayPriority({
     displayPriority: {

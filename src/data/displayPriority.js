@@ -32,9 +32,11 @@ function writeBrand(brands, slug, home, shop) {
 export function applyDisplayPriority(payload) {
   const brands = {};
   let shop = null;
+  let home = null;
   const root = payload?.displayPriority;
   if (root && typeof root === 'object' && !Array.isArray(root)) {
     shop = readEntry(root.shop);
+    home = readEntry(root.home);
     const brandMap = root.brands && typeof root.brands === 'object' ? root.brands : {};
     for (const [slug, config] of Object.entries(brandMap)) {
       writeBrand(brands, slug, readEntry(config?.home), readEntry(config?.shop));
@@ -45,7 +47,7 @@ export function applyDisplayPriority(payload) {
     if (!config) continue;
     writeBrand(brands, brand.slug, readEntry(config.home), readEntry(config.shop));
   }
-  saved = shop || Object.keys(brands).length ? { shop, brands } : null;
+  saved = shop || home || Object.keys(brands).length ? { shop, home, brands } : null;
 }
 
 export function getHomePriority(brandSlug) {
@@ -54,7 +56,7 @@ export function getHomePriority(brandSlug) {
     const entry = saved.brands[key]?.home;
     if (entry) return entry;
   }
-  return null;
+  return saved.home || null;
 }
 
 /** Brand shops do not inherit the general shop list. */

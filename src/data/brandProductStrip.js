@@ -67,7 +67,8 @@ export function selectBrandStripProducts(products, brandSlug, options = {}) {
   const brandPool = (Array.isArray(products) ? products : []).filter(
     (product) => isStripVisibleProduct(product) && brandPathOf(product) === brandSlug
   );
-  if (priority) return orderProductsByIds(brandPool, priority.orderedIds);
+  // A present home scope owns the strip, including an empty orderedIds list.
+  if (priority != null) return orderProductsByIds(brandPool, priority.orderedIds);
   if (!brandPool.length) return [];
 
   const requestedTier =
