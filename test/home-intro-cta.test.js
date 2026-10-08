@@ -88,18 +88,18 @@ test('home intro heading and paragraphs stay unchanged', () => {
   assert.equal(ar.home.introP1, 'نصنع عوالم مبهجة ومفاجئة تدعو الجميع إلى الفضول والتجربة واللعب بطريقتهم الخاصة.');
 });
 
-test('home intro CTA colors: VELVET red primary + yellow secondary, same card grid', () => {
+test('home intro CTA colors: VELVET turquoise primary + yellow secondary, same card grid', () => {
   const styles = readStyles();
 
-  // Primary — VELVET red card, white copy, matching border.
-  assert.match(styles, /\.intro-cta--primary \{[^}]*background: var\(--red, #e40721\)/);
-  assert.match(styles, /\.intro-cta--primary \{[^}]*border-color: var\(--red, #e40721\)/);
+  // Primary — VELVET turquoise card, white copy, matching border.
+  assert.match(styles, /\.intro-cta--primary \{[^}]*background: var\(--red, #0A8492\)/);
+  assert.match(styles, /\.intro-cta--primary \{[^}]*border-color: var\(--red, #0A8492\)/);
   assert.match(styles, /\.intro-cta--primary \{[^}]*color: #fff/);
   // Secondary — warm yellow card, dark copy for contrast.
   assert.match(styles, /\.intro-cta--accent \{[^}]*background: #FFD84D/);
   assert.match(styles, /\.intro-cta--accent \{[^}]*border-color: #FFD84D/);
   assert.match(styles, /\.intro-cta--accent \{[^}]*color: var\(--ink, #121214\)/);
-  // White circular arrow icon: red arrow on the red card, dark arrow on the yellow card.
+  // White circular arrow icon: turquoise arrow on the primary card, dark arrow on the yellow card.
   assert.match(styles, /\.intro-cta__icon \{[^}]*background: #fff/);
   assert.match(styles, /\.intro-cta__icon \{[^}]*border-radius: 50%/);
   assert.match(styles, /\.intro-cta__icon \{[^}]*color: var\(--red/);
@@ -107,7 +107,7 @@ test('home intro CTA colors: VELVET red primary + yellow secondary, same card gr
   // Meta micro-labels stay readable on both fills.
   assert.match(styles, /\.intro-cta--accent \.intro-cta__meta \{[^}]*color: rgba\(18,18,20,\.62\)/);
   // Hover: each card darkens one step deeper, keeping the lift.
-  assert.match(styles, /\.intro-cta--primary:hover \{[^}]*background: #c9061b/);
+  assert.match(styles, /\.intro-cta--primary:hover \{[^}]*background: var\(--brand-hover\)/);
   assert.match(styles, /\.intro-cta--accent:hover \{[^}]*background: #F0C531/);
 
   // Geometry, spacing and hover unchanged in spirit.
