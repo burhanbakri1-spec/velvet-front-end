@@ -134,12 +134,15 @@ test('stacked brand scroll CSS and Arabic banner type stay unchanged', () => {
   const stickyBlocks = styles.match(/[^{}]*\{[^}]*position:\s*sticky[^}]*\}/g) || [];
   const stackedBanners = stickyBlocks.filter((block) => block.includes('brand-showcase--full-banner'));
   assert.equal(stackedBanners.length, 2, 'home + brand category sticky stacks must survive');
-  assert.ok(stackedBanners.some((block) => block.includes('#showcases')));
-  assert.ok(stackedBanners.some((block) => block.includes('.category-showcases')));
-  for (const block of stackedBanners) {
-    assert.match(block, /position:\s*sticky/);
-    assert.match(block, /top:\s*0/);
-  }
+  const homeStack = stackedBanners.find((block) => block.includes('#showcases'));
+  const categoryStack = stackedBanners.find((block) => block.includes('.category-showcases'));
+  assert.ok(homeStack);
+  assert.ok(categoryStack);
+  assert.match(homeStack, /position:\s*sticky/);
+  assert.match(homeStack, /--deck-index/);
+  assert.match(homeStack, /--brand-deck-edge/);
+  assert.match(categoryStack, /position:\s*sticky/);
+  assert.match(categoryStack, /top:\s*0/);
 
   assert.match(styles, /html\[lang="ar"\] \.brand-showcase__content p \{ font-size: 25\.5px/);
   assert.match(styles, /html\[lang="ar"\] \.brand-showcase__logo \{ font-size: 30px/);

@@ -46,11 +46,12 @@ export default function HomePage() {
               <BrandShowcase
                 variant="full-banner"
                 showBrandLogo
+                deckIndex={index}
                 mediaLoading={index === 0 ? 'eager' : 'lazy'}
                 mediaFetchPriority={index === 0 ? 'high' : undefined}
                 brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
               />
-              <BrandProductStrip brandSlug={brand.slug} />
+              <BrandProductStrip brandSlug={brand.slug} deckIndex={index} />
             </Fragment>
           ))}
         </section>

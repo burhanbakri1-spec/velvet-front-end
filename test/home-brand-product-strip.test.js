@@ -30,7 +30,7 @@ test('each Home brand banner renders its own product strip directly after it', (
 
   assert.match(home, /import BrandProductStrip from '\.\.\/components\/BrandProductStrip'/);
   assert.match(home, /<Fragment key=\{brand\.slug\}>/);
-  assert.match(home, /<BrandShowcase[\s\S]*?\/>\s*<BrandProductStrip brandSlug=\{brand\.slug\} \/>/);
+  assert.match(home, /<BrandShowcase[\s\S]*deckIndex=\{index\}[\s\S]*?\/>\s*<BrandProductStrip brandSlug=\{brand\.slug\} deckIndex=\{index\} \/>/);
   assert.match(home, /<\/Fragment>/);
   assert.doesNotMatch(home, /<BrandShowcase[\s\S]*?<BrandShowcase/, 'banners must not collapse into one another');
 });
@@ -313,11 +313,14 @@ test('strip stays Home-only and does not touch BrandPage or the Shop grid', () =
   assert.doesNotMatch(styles, /brand-strip-card[^{]*grid/);
 });
 
-test('sticky Home banner selector is unchanged and the strip paints above it', () => {
+test('home brand banners stick as a scroll deck and the strip paints above its banner', () => {
   const styles = fs.readFileSync(stylesPath, 'utf8');
 
-  assert.match(styles, /#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position: sticky;[^}]*top: 0;[^}]*\}/);
+  assert.match(styles, /#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*--brand-deck-edge:\s*12px;[^}]*position:\s*sticky;[^}]*--deck-index/);
+  assert.match(styles, /#showcases > \.brand-strip \{[^}]*z-index:\s*calc\(\(var\(--deck-index, 0\) \* 2\) \+ 2\)/);
   assert.match(styles, /\.category-showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position: sticky;[^}]*top: 0;[^}]*\}/);
+  assert.match(styles, /@media \(max-width:\s*1100px\) \{[^}]*#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);
+  assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[^}]*#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);
   assert.match(styles, /\.brand-strip \{[^}]*position: relative/);
   assert.match(styles, /#showcases \{[^}]*gap:\s*0/);
 });

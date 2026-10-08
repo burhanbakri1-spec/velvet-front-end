@@ -10,6 +10,7 @@ export default function BrandShowcase({
   showBrandLogo = false,
   mediaLoading = 'lazy',
   mediaFetchPriority,
+  deckIndex,
 }) {
   const viewCursorRef = useRef(null);
   const { copy, locale } = useI18n();
@@ -34,7 +35,12 @@ export default function BrandShowcase({
   return (
     <article
       className={`brand-showcase brand-showcase--${brand.scene}${isFullBanner ? ' brand-showcase--full-banner' : ''}`}
-      style={{ '--c1': brand.palette[0], '--c2': brand.palette[1], '--c3': brand.palette[2] }}
+      style={{
+        '--c1': brand.palette[0],
+        '--c2': brand.palette[1],
+        '--c3': brand.palette[2],
+        ...(deckIndex == null ? {} : { '--deck-index': deckIndex }),
+      }}
       onPointerEnter={moveViewCursor}
       onPointerMove={moveViewCursor}
       onPointerLeave={hideViewCursor}

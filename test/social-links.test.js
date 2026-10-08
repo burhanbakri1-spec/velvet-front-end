@@ -46,7 +46,10 @@ test('footer social labels exist in EN and AR', () => {
 });
 
 test('bootstrap loader shows VELVET branding, not i-play', () => {
+  const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
   assert.match(main, /Loading VELVET…/);
   assert.doesNotMatch(main, /Loading i-play/);
   assert.match(main, /platform-content-loading/);
+  assert.match(styles, /\.platform-content-loading span \{[^}]*border-top-color:\s*#0A8492/);
+  assert.doesNotMatch(styles, /\.platform-content-loading span \{[^}]*(?:#ff5f45|#e40721|#ff5a2f)/i);
 });
