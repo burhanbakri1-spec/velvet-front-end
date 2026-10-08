@@ -223,10 +223,11 @@ test('strip scroll stays inside the covered band so the viewport never empties',
   const viewports = [320, 375, 390, 430, 760, 761, 900, 1100, 1101, 1440, 1920, 2560, 3840];
 
   for (const vw of viewports) {
-    const cols = vw <= 760 ? 2.5 : vw <= 1100 ? 3.5 : 5;
+    const cols = vw <= 760 ? 2.5 : vw <= 1100 ? 3.5 : 4;
+    const gapCount = vw <= 1100 ? 4 : 3;
     const pad = Math.min(56, Math.max(18, 0.04 * vw));
     const gap = 14;
-    const step = (vw - pad * 2 - gap * 4) / cols + gap;
+    const step = (vw - pad * 2 - gap * gapCount) / cols + gap;
     const track = step * STRIP_GROUPS;
     const band = track - vw - step;
 
