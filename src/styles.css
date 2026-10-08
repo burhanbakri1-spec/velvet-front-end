@@ -2295,15 +2295,18 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
    HOME — scroll-driven brand card deck.
    Each full banner sticks as it reaches the stack. Its product strip
    keeps a higher layer, so the strip scrolls through that section.
-   The next banner sticks 12px lower and paints above both, leaving a
-   lip of the previous card. Nothing is position:fixed. Tablet, mobile,
-   and reduced motion use normal document flow.
-   Scoped to #showcases (HomePage only).
+   The next banner sticks one logo-band lower (160px: logo inset +
+   104px mirror + a little air) and paints above the card beneath,
+   leaving that brand's top logo visible. At most two previous lips
+   stay in the stack so the column does not grow with every brand.
+   Nothing is position:fixed. Tablet, mobile, and reduced motion use
+   normal document flow. Scoped to #showcases (HomePage only).
    ============================================================ */
 #showcases > .brand-showcase.brand-showcase--full-banner {
-  --brand-deck-edge: 12px;
+  --brand-deck-edge: 160px;
+  --brand-deck-slots: 2;
   position: sticky;
-  top: calc(var(--header-height) + (var(--deck-index, 0) * var(--brand-deck-edge)));
+  top: calc(var(--header-height) + (min(var(--deck-index, 0), var(--brand-deck-slots)) * var(--brand-deck-edge)));
   z-index: calc((var(--deck-index, 0) * 2) + 1);
   transition: top .55s cubic-bezier(.22, 1, .36, 1);
 }
@@ -2311,7 +2314,7 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
   z-index: calc((var(--deck-index, 0) * 2) + 2);
 }
 body:has(.site-header.is-hidden) #showcases > .brand-showcase.brand-showcase--full-banner {
-  top: calc((var(--deck-index, 0) * var(--brand-deck-edge, 12px)));
+  top: calc(min(var(--deck-index, 0), var(--brand-deck-slots, 2)) * var(--brand-deck-edge, 160px));
 }
 @media (max-width: 1100px) {
   #showcases > .brand-showcase.brand-showcase--full-banner {

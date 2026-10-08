@@ -163,7 +163,8 @@ test('brand category banners reuse the home sticky stack, scoped and layout-neut
     assert.doesNotMatch(block, /height:|overflow:|transform:|max-height:|min-height:/);
   }
   assert.match(homeStack, /--deck-index/);
-  assert.match(homeStack, /--brand-deck-edge:\s*12px/);
+  assert.match(homeStack, /--brand-deck-edge:\s*160px/);
+  assert.match(homeStack, /--brand-deck-slots:\s*2/);
   assert.match(categoryStack, /top:\s*0/);
 
   // Scope must not leak to heroes, product cards or subcategory grids.
