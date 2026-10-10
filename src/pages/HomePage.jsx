@@ -8,13 +8,13 @@ import BrandProductStrip from '../components/BrandProductStrip';
 import CareersSection from '../components/CareersSection';
 import StoreReviewsSection from '../components/StoreReviewsSection';
 import Footer from '../components/Footer';
-import { getBrandLogo, velvetBrands } from '../data/velvetCatalog';
+import { velvetBrands } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 
 export default function HomePage() {
   const previewTarget = new URLSearchParams(window.location.search).get('view');
   const [introActive, setIntroActive] = useState(!previewTarget);
-  const { copy, locale } = useI18n();
+  const { copy } = useI18n();
   const brands = [...velvetBrands].sort((a, b) => a.home.order - b.home.order);
 
   useEffect(() => {
@@ -26,35 +26,40 @@ export default function HomePage() {
 
     const pack = () => {
       frame = 0;
-      const tabs = [...root.querySelectorAll('.brand-deck-tab')];
       const banners = [...root.querySelectorAll(':scope > .brand-showcase.brand-showcase--full-banner')];
-      if (!desktop.matches || reduced.matches) {
-        tabs.forEach((tab) => tab.classList.remove('is-collapsed'));
+      if (!desktop.matches || reduced.matches || banners.length === 0) {
+        banners.forEach((banner) => banner.classList.remove('is-collapsed'));
         return;
       }
-      const headerHidden = document.querySelector('.site-header.is-hidden');
-      const header = headerHidden
-        ? 0
-        : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 0;
-      const edge = parseFloat(getComputedStyle(root).getPropertyValue('--brand-deck-edge')) || 56;
+      const heroH = banners[0].getBoundingClientRect().height;
+      const slots = Math.max(banners.length - 1, 1);
+      const available = Math.max(0, window.innerHeight - heroH);
+      const fitted = Math.floor(available / slots);
+      const edge = Math.min(48, Math.max(16, fitted || 16));
+      root.style.setProperty('--brand-deck-edge', `${edge}px`);
       let active = 0;
       banners.forEach((banner, index) => {
-        if (banner.getBoundingClientRect().top <= header + edge + 8) active = index;
+        if (banner.getBoundingClientRect().top <= (index * edge) + edge) active = index;
       });
-      tabs.forEach((tab, index) => tab.classList.toggle('is-collapsed', index < active));
+      banners.forEach((banner, index) => banner.classList.toggle('is-collapsed', index < active));
     };
 
     const onScroll = () => {
       if (!frame) frame = window.requestAnimationFrame(pack);
     };
 
+    const images = [...root.querySelectorAll('.brand-showcase__image')];
     pack();
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    images.forEach((image) => image.addEventListener('load', onScroll));
     desktop.addEventListener('change', pack);
     reduced.addEventListener('change', pack);
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      images.forEach((image) => image.removeEventListener('load', onScroll));
       desktop.removeEventListener('change', pack);
       reduced.removeEventListener('change', pack);
     };
@@ -84,18 +89,9 @@ export default function HomePage() {
       <main>
         <Hero introActive={introActive} />
         <IntroSection />
-        <section id="showcases" aria-label={copy.home.worlds} style={{ '--brand-deck-count': brands.length }}>
+        <section id="showcases" aria-label={copy.home.worlds}>
           {brands.map((brand, index) => (
             <Fragment key={brand.slug}>
-              <div
-                className={`brand-deck-tab${index === 0 ? ' brand-deck-tab--base' : ''}`}
-                style={{ '--deck-index': index, '--c1': brand.home.palette[0] }}
-                aria-hidden="true"
-              >
-                <span className="brand-deck-tab__logo">
-                  <img src={getBrandLogo(brand.slug, locale)} alt="" />
-                </span>
-              </div>
               <BrandShowcase
                 variant="full-banner"
                 showBrandLogo
