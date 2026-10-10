@@ -39,7 +39,7 @@ export default function BrandShowcase({
         '--c1': brand.palette[0],
         '--c2': brand.palette[1],
         '--c3': brand.palette[2],
-        ...(deckIndex == null ? {} : { '--deck-index': deckIndex }),
+        ...(deckIndex == null ? {} : { '--deck-index': String(deckIndex) }),
       }}
       onPointerEnter={moveViewCursor}
       onPointerMove={moveViewCursor}

@@ -41,55 +41,58 @@ export default function HomePage() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
 
-    const pageTop = (node) => {
-      let y = 0;
-      let current = node;
-      while (current) {
-        y += current.offsetTop;
-        current = current.offsetParent;
-      }
-      return y;
-    };
-
     const sync = () => {
-      const edge = parseFloat(getComputedStyle(root).getPropertyValue('--brand-hero-edge')) || 0;
-      const sections = [...root.querySelectorAll(':scope > .home-brand')];
+      const heroes = [...root.querySelectorAll(':scope > .home-brand > .brand-showcase')];
       const enabled = desktop.matches && !reduced.matches;
-      const headerHidden = document.querySelector('.site-header.is-hidden');
-      const pin = headerHidden
-        ? 0
-        : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 0;
-      const scroll = document.scrollingElement?.scrollTop || 0;
-
-      sections.forEach((section) => {
-        const hero = section.querySelector(':scope > .brand-showcase');
-        if (!hero) return;
-        hero.style.removeProperty('position');
-        hero.style.removeProperty('top');
-        hero.style.removeProperty('z-index');
-      });
-
-      sections.forEach((section, index) => {
-        const hero = section.querySelector(':scope > .brand-showcase');
-        if (!hero) return;
-        if (!enabled || index === sections.length - 1) {
-          section.style.removeProperty('--brand-runway');
+      if (!enabled) {
+        heroes.forEach((hero) => {
+          hero.style.removeProperty('overflow');
+          const frame = hero.querySelector('.brand-showcase__brand-logo-frame');
+          frame?.style.removeProperty('top');
+          frame?.style.removeProperty('transform');
+          frame?.style.removeProperty('transform-origin');
+        });
+        return;
+      }
+      const rootStyle = getComputedStyle(root);
+      const slice = parseFloat(rootStyle.getPropertyValue('--brand-stack-slice')) || 48;
+      const band = parseFloat(rootStyle.getPropertyValue('--brand-hero-edge')) || 140;
+      const origin = document.documentElement.dir === 'rtl' ? 'top right' : 'top left';
+      heroes.forEach((hero, index) => {
+        const frame = hero.querySelector('.brand-showcase__brand-logo-frame');
+        const next = heroes[index + 1];
+        if (!frame) return;
+        if (!frame.dataset.naturalTop && !frame.style.top) {
+          frame.dataset.naturalTop = String(parseFloat(getComputedStyle(frame).top) || 0);
+        }
+        const clear = () => {
+          hero.style.removeProperty('overflow');
+          frame.style.removeProperty('top');
+          frame.style.removeProperty('transform');
+          frame.style.removeProperty('transform-origin');
+        };
+        if (!next) {
+          clear();
           return;
         }
-        const height = hero.offsetHeight || 0;
-        section.style.setProperty('--brand-runway', `${Math.max(0, Math.round(height - edge))}px`);
-        if (height === 0) return;
-
-        const visualTop = pageTop(hero) - scroll < pin - 0.5 ? pin : pageTop(hero) - scroll;
-        const strip = section.querySelector(':scope > .brand-strip');
-        if (strip) {
-          const stripTop = strip.getBoundingClientRect().top;
-          const peek = stripTop - visualTop;
-          if (peek > 0 && peek < height * 0.55) {
-            hero.style.position = 'relative';
-            hero.style.top = 'auto';
-          }
+        const visible = next.getBoundingClientRect().top - hero.getBoundingClientRect().top;
+        if (visible >= band - 0.5) {
+          clear();
+          return;
         }
+        const frameH = frame.offsetHeight || 104;
+        const inkH = frame.querySelector('img')?.offsetHeight || frameH;
+        const inkOffset = Math.max(0, (frameH - inkH) / 2);
+        const endScale = Math.min(1, (slice - 8) / Math.max(1, inkH));
+        const endTop = 4 - inkOffset * endScale;
+        const t = Math.max(0, Math.min(1, (band - visible) / Math.max(1, band - slice)));
+        const naturalTop = parseFloat(frame.dataset.naturalTop) || 0;
+        const scale = 1 + (endScale - 1) * t;
+        const top = naturalTop + (endTop - naturalTop) * t;
+        hero.style.overflow = 'hidden';
+        frame.style.transformOrigin = origin;
+        frame.style.top = `${top.toFixed(2)}px`;
+        frame.style.transform = `scale(${scale.toFixed(4)})`;
       });
     };
 

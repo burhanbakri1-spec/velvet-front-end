@@ -2296,17 +2296,20 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
 /* ============================================================
-   HOME — one hero per brand section.
-   Each hero sticks only inside its .home-brand section. The runway is
-   hero height minus --brand-hero-edge (140px), so the next hero covers
-   the previous real banner and leaves that 140px logo slice, then the
-   previous hero leaves with its section. HomePage returns a hero to
-   normal flow when only a partial banner would sit above its own
-   product strip. Strips paint above every hero. Older heroes do not
-   accumulate. Tablet, mobile, and reduced motion use normal flow.
+   HOME — stacked real brand heroes.
+   Desktop: .home-brand uses display:contents so every hero sticks
+   inside #showcases, not just its own section. Each hero pins at
+   header + index * --brand-stack-slice and paints above the previous
+   one, so the next full banner slides over the previous real banner
+   and leaves that compact top slice. --brand-hero-edge is the natural
+   logo band (140px). As the next banner covers a hero, HomePage
+   scales that hero's own logo into the slice. The banner art is the
+   real hero, not a separate rail.
+   The active hero is not scaled or clipped. Strips paint above the
+   whole stack. Tablet, mobile, and reduced motion use normal flow.
    Scoped to #showcases (HomePage only).
    ============================================================ */
-#showcases { --brand-hero-edge: 140px; }
+#showcases { --brand-hero-edge: 140px; --brand-stack-slice: 48px; }
 #showcases > .home-brand { margin: 0; padding: 0; }
 #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
   position: sticky;
@@ -2315,7 +2318,7 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
   transition: top .55s cubic-bezier(.22, 1, .36, 1);
 }
 body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
-  top: 0;
+  top: calc(var(--deck-index, 0) * var(--brand-stack-slice));
 }
 #showcases > .home-brand > .brand-strip {
   position: relative;
@@ -2326,12 +2329,13 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
   pointer-events: none;
 }
 @media (min-width: 1101px) {
-  #showcases > .home-brand:not(:last-child) {
-    margin-bottom: calc(var(--brand-runway, 0px) * -1);
+  #showcases > .home-brand { display: contents; }
+  #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
+    top: calc(var(--header-height) + (var(--deck-index, 0) * var(--brand-stack-slice)));
+    z-index: calc(1 + var(--deck-index, 0));
   }
-  #showcases > .home-brand:not(:last-child) > .home-brand__runway {
-    height: var(--brand-runway, 0px);
-  }
+  #showcases > .home-brand > .brand-strip { z-index: 20; }
+  #showcases > .home-brand > .home-brand__runway { height: 0; }
 }
 @media (max-width: 1100px) {
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
