@@ -2305,8 +2305,12 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
    logo band (140px). As the next banner covers a hero, HomePage
    scales that hero's own logo into the slice. The banner art is the
    real hero, not a separate rail.
-   The active hero is not scaled or clipped. Strips paint above the
-   whole stack. Tablet, mobile, and reduced motion use normal flow.
+   HomePage shortens only the active hero so it fits under the stack.
+   Its image uses cover (no stretch) and the logo, title, and CTA stay
+   inside that box. Slice height stays at most 48px and shrinks only
+   when the full stack would leave the active hero too short.
+   Strips paint above the whole stack. Tablet, mobile, and reduced
+   motion use normal flow.
    Scoped to #showcases (HomePage only).
    ============================================================ */
 #showcases { --brand-hero-edge: 140px; --brand-stack-slice: 48px; }
