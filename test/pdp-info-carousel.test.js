@@ -2,19 +2,17 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 import { translations } from '../src/i18n/translations.js';
-import { buildQrImageUrl } from '../src/data/productShare.js';
 
 const carousel = fs.readFileSync(new URL('../src/components/ProductDetailInfoCarousel.jsx', import.meta.url), 'utf8');
 const slide = fs.readFileSync(new URL('../src/components/ProductDetailSlide.jsx', import.meta.url), 'utf8');
 const page = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
-const share = fs.readFileSync(new URL('../src/components/ProductShareControls.jsx', import.meta.url), 'utf8');
-const shareHelper = fs.readFileSync(new URL('../src/data/productShare.js', import.meta.url), 'utf8');
 
 test('PDP carousel card order matches store policies', () => {
   const order = [
     "id: 'specs'",
     "id: 'product-details'",
     "id: 'delivery'",
+    "id: 'payment'",
     "id: 'exchange'",
     "id: 'cancellation'",
   ];
@@ -79,13 +77,12 @@ test('PDP builds dynamic specs including sku hierarchy attributes and availabili
   assert.match(page, /getProductAttributeIds/);
 });
 
-test('PDP keeps COD payment, copy link, and QR for current product URL', () => {
-  assert.match(slide, /product-payment/);
-  assert.match(slide, /copy\.detail\.paymentTitle/);
-  assert.match(slide, /ProductShareControls/);
-  assert.match(share, /copy\.detail\.copyLink/);
-  assert.match(shareHelper, /api\.qrserver\.com/);
-  const qr = buildQrImageUrl('https://example.com/ar/products/demo');
-  assert.match(qr, /api\.qrserver\.com/);
-  assert.match(qr, /demo/);
+test('PDP shows cash on delivery only in the details carousel', () => {
+  assert.match(carousel, /id: 'payment'/);
+  assert.match(carousel, /copy\.detail\.paymentTitle/);
+  assert.match(carousel, /copy\.detail\.paymentBody/);
+  assert.doesNotMatch(slide, /product-payment/);
+  assert.doesNotMatch(slide, /ProductShareControls/);
+  assert.doesNotMatch(slide, /product-share/);
+  assert.doesNotMatch(page, /ProductShareControls/);
 });

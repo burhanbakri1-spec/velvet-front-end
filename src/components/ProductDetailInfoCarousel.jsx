@@ -69,6 +69,11 @@ export default function ProductDetailInfoCarousel({ product, specs = [], eyebrow
         body: <PolicyList points={copy.detail.deliveryPoints || []} />,
       },
       {
+        id: 'payment',
+        title: copy.detail.paymentTitle,
+        body: <p>{copy.detail.paymentBody}</p>,
+      },
+      {
         id: 'exchange',
         title: copy.detail.exchangeTitle,
         body: <PolicyList points={copy.detail.exchangePoints || []} />,

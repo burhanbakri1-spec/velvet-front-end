@@ -1,3 +1,32 @@
+// Generated rail wordmarks use one type size and one cap center. The frame
+// hugs each name so the visible artwork shares a height instead of sitting
+// in leftover padding.
+export const RAIL_WORDMARK = Object.freeze({
+  viewH: 64,
+  nameSize: 40,
+  capCenter: 46,
+  capRatio: 0.72,
+});
+
+export function railWordmarkNameSize() {
+  return RAIL_WORDMARK.nameSize;
+}
+
+function escapeXml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+export function railWordmarkSvg({ velvet = 'VELVET', branch, accent, nameWidth = 120, velvetWidth = 72 }) {
+  const { viewH, nameSize, capCenter, capRatio } = RAIL_WORDMARK;
+  const viewW = Math.max(88, Math.ceil(Math.max(nameWidth, velvetWidth) + 12));
+  const baseline = capCenter + (nameSize * capRatio) / 2;
+  const fill = `#${String(accent || '').replace('#', '')}`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${viewW}" height="${viewH}" viewBox="0 0 ${viewW} ${viewH}" role="img"><text x="${viewW / 2}" y="18" fill="${fill}" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="0.12em" text-anchor="middle">${escapeXml(velvet)}</text><text x="${viewW / 2}" y="${baseline.toFixed(2)}" fill="${fill}" font-family="Impact, 'Arial Narrow', sans-serif" font-size="${nameSize}" font-weight="900" text-anchor="middle">${escapeXml(branch)}</text></svg>`;
+}
+
 // Fit a logo's visible ink to one shared max box. Transparent padding in the
 // file is scaled out so every mark has the same prominence, while the ink
 // aspect ratio stays intact and the result stays inside the max box.

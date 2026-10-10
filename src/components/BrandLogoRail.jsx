@@ -1,19 +1,30 @@
 import { useLayoutEffect, useRef } from 'react';
 import { getBrandLogo, isGeneratedBrandLogo } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
-import { measureLogoInk, railLogoFit } from './railLogoFit';
+import { measureLogoInk, railLogoFit, railWordmarkSvg } from './railLogoFit';
+
+function textWidth(text, font) {
+  if (typeof document === 'undefined') return 0;
+  const canvas = textWidth.canvas || (textWidth.canvas = document.createElement('canvas'));
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return 0;
+  ctx.font = font;
+  return ctx.measureText(String(text || '')).width;
+}
 
 function railLogo(brand, locale) {
   const src = getBrandLogo(brand.slug, locale);
-  if (!isGeneratedBrandLogo(src)) return src;
+  if (!isGeneratedBrandLogo(src)) return { src, normalize: 'ink' };
   const accent = String(brand.accent || brand.home?.accent || '').replace('#', '');
-  if (!/^[0-9a-fA-F]{6}$/.test(accent)) return src;
-  const svg = decodeURIComponent(src.replace(/^data:image\/svg\+xml;charset=UTF-8,/, ''))
-    .replace('viewBox="0 0 420 88"', 'viewBox="70 0 280 88"')
-    .replace(/fill="#ffffff"/gi, `fill="#${accent}"`)
-    .replace(/text-anchor="(?:start|end)"/g, 'text-anchor="middle"')
-    .replace(/x="(?:24|396)"/g, 'x="210"');
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  if (!/^[0-9a-fA-F]{6}$/.test(accent)) return { src, normalize: 'ink' };
+  const branch = brand.home?.logo?.[locale] || brand.short?.[locale] || '';
+  const nameWidth = textWidth(branch, '900 40px Impact, "Arial Narrow", sans-serif');
+  const velvetWidth = textWidth('VELVET', '700 13px Arial, Helvetica, sans-serif') + 13 * 0.12 * 5;
+  const svg = railWordmarkSvg({ branch, accent, nameWidth, velvetWidth });
+  return {
+    src: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    normalize: 'frame',
+  };
 }
 
 function fitRailImage(img) {
@@ -31,17 +42,17 @@ function fitRailImage(img) {
 }
 
 function RailLogo({ brand, locale }) {
-  const src = railLogo(brand, locale);
+  const logo = railLogo(brand, locale);
   const ref = useRef(null);
   const fit = () => {
-    if (ref.current) fitRailImage(ref.current);
+    if (logo.normalize === 'ink' && ref.current) fitRailImage(ref.current);
   };
   useLayoutEffect(() => {
     fit();
-  }, [src]);
+  }, [logo.src, logo.normalize]);
   return (
     <span className="brand-logo-rail__item" role="listitem">
-      <img ref={ref} src={src} alt={brand.name[locale]} onLoad={fit} />
+      <img ref={ref} src={logo.src} alt={brand.name[locale]} data-logo-fit={logo.normalize} onLoad={fit} />
     </span>
   );
 }
