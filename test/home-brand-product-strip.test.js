@@ -316,12 +316,10 @@ test('strip stays Home-only and does not touch BrandPage or the Shop grid', () =
 test('home brand banners stick as a scroll deck and the strip paints above its banner', () => {
   const styles = fs.readFileSync(stylesPath, 'utf8');
 
-  assert.match(styles, /#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*sticky;[^}]*--brand-deck-lead/);
-  assert.match(styles, /--brand-deck-slice:\s*112px/);
-  assert.match(styles, /\.is-collapsed \.brand-showcase__brand-logo-frame \{[^}]*transform:\s*translate/);
-  assert.doesNotMatch(styles, /--brand-deck-slots|brand-deck-tab/);
-  assert.doesNotMatch(fs.readFileSync(homePath, 'utf8'), /brand-deck-tab|getBrandLogo/);
-  assert.match(styles, /#showcases > \.brand-strip \{[^}]*z-index:\s*calc\(\(var\(--deck-index, 0\) \* 2\) \+ 2\)/);
+  assert.match(styles, /#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*sticky;[^}]*top:\s*var\(--header-height\);[^}]*z-index:\s*1/);
+  assert.doesNotMatch(styles, /--brand-deck-slice|brand-deck-tab|is-collapsed/);
+  assert.doesNotMatch(fs.readFileSync(homePath, 'utf8'), /brand-deck-tab|getBrandLogo|is-collapsed|is-upcoming/);
+  assert.match(styles, /#showcases > \.brand-strip \{[^}]*z-index:\s*2/);
   assert.match(styles, /\.category-showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position: sticky;[^}]*top: 0;[^}]*\}/);
   assert.match(styles, /@media \(max-width:\s*1100px\) \{[^}]*#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);
   assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[^}]*#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);

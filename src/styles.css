@@ -2292,64 +2292,26 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
 /* ============================================================
-   HOME — scroll-driven brand card deck.
-   Previous banners stay sticky and overlap in one 112px band,
-   tall enough for each banner's own logo at its original size.
-   Each collapsed banner is clipped to its own window of that
-   band so the logos stay identifiable. The active hero sticks
-   below the band and keeps its full height. Tablet, mobile, and
-   reduced motion use normal document flow.
+   HOME — one hero at a time.
+   The active full banner pins. The next banner shares that same
+   pin and paints over the previous one, so earlier brands do not
+   stay stacked. Each product strip paints above every banner, so
+   it stays fully visible between its hero and the next hero.
+   Tablet, mobile, and reduced motion use normal document flow.
    Scoped to #showcases (HomePage only).
    ============================================================ */
-#showcases {
-  --brand-deck-slice: 112px;
-  --brand-deck-edge: 0px;
-}
 #showcases > .brand-showcase.brand-showcase--full-banner {
   position: sticky;
-  top: var(--brand-deck-lead, 0px);
-  z-index: calc((var(--deck-index, 0) * 2) + 1);
+  top: var(--header-height);
+  z-index: 1;
+  transition: top .55s cubic-bezier(.22, 1, .36, 1);
 }
-#showcases > .brand-showcase.brand-showcase--full-banner.is-collapsed {
-  top: var(--brand-deck-header, 0px);
-  overflow: hidden;
-  clip-path: inset(
-    0
-    calc(100% - (var(--deck-index, 0) + 1) * var(--brand-deck-slot, 100%))
-    calc(100% - var(--brand-deck-slice))
-    calc(var(--deck-index, 0) * var(--brand-deck-slot, 100%))
-  );
-}
-#showcases > .brand-showcase.brand-showcase--full-banner.is-collapsed .brand-showcase__image,
-#showcases > .brand-showcase.brand-showcase--full-banner.is-collapsed .brand-showcase__tint,
-#showcases > .brand-showcase.brand-showcase--full-banner.is-collapsed .brand-showcase__brand-logo-frame {
-  transform: translate(
-    calc((var(--deck-index, 0) * var(--brand-deck-slot, 0px)) + 8px - clamp(14px, 3.5vw, 56px)),
-    calc(4px - clamp(14px, 2.8vw, 34px))
-  );
-}
-html[dir="rtl"] #showcases > .brand-showcase.brand-showcase--full-banner.is-collapsed {
-  clip-path: inset(
-    0
-    calc(var(--deck-index, 0) * var(--brand-deck-slot, 100%))
-    calc(100% - var(--brand-deck-slice))
-    calc(100% - (var(--deck-index, 0) + 1) * var(--brand-deck-slot, 100%))
-  );
-}
-html[dir="rtl"] #showcases > .brand-showcase.brand-showcase--full-banner.is-collapsed .brand-showcase__image,
-html[dir="rtl"] #showcases > .brand-showcase.brand-showcase--full-banner.is-collapsed .brand-showcase__tint,
-html[dir="rtl"] #showcases > .brand-showcase.brand-showcase--full-banner.is-collapsed .brand-showcase__brand-logo-frame {
-  transform: translate(
-    calc((var(--deck-index, 0) * var(--brand-deck-slot, 0px) * -1) - 8px + clamp(14px, 3.5vw, 56px)),
-    calc(4px - clamp(14px, 2.8vw, 34px))
-  );
-}
-#showcases > .brand-showcase.brand-showcase--full-banner.is-upcoming {
-  position: relative;
-  top: auto;
+body:has(.site-header.is-hidden) #showcases > .brand-showcase.brand-showcase--full-banner {
+  top: 0;
 }
 #showcases > .brand-strip {
-  z-index: calc((var(--deck-index, 0) * 2) + 2);
+  position: relative;
+  z-index: 2;
 }
 @media (max-width: 1100px) {
   #showcases > .brand-showcase.brand-showcase--full-banner {
