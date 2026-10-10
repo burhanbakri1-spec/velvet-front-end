@@ -316,8 +316,9 @@ test('strip stays Home-only and does not touch BrandPage or the Shop grid', () =
 test('home brand banners stick as a scroll deck and the strip paints above its banner', () => {
   const styles = fs.readFileSync(stylesPath, 'utf8');
 
-  assert.match(styles, /#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*sticky;[^}]*var\(--deck-index, 0\) \* var\(--brand-deck-edge\)/);
-  assert.match(styles, /\.is-collapsed \.brand-showcase__brand-logo-frame \{[^}]*transform:\s*translateY/);
+  assert.match(styles, /#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*sticky;[^}]*--brand-deck-lead/);
+  assert.match(styles, /--brand-deck-slice:\s*112px/);
+  assert.match(styles, /\.is-collapsed \.brand-showcase__brand-logo-frame \{[^}]*transform:\s*translate/);
   assert.doesNotMatch(styles, /--brand-deck-slots|brand-deck-tab/);
   assert.doesNotMatch(fs.readFileSync(homePath, 'utf8'), /brand-deck-tab|getBrandLogo/);
   assert.match(styles, /#showcases > \.brand-strip \{[^}]*z-index:\s*calc\(\(var\(--deck-index, 0\) \* 2\) \+ 2\)/);

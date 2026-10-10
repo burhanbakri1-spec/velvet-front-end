@@ -28,20 +28,41 @@ export default function HomePage() {
       frame = 0;
       const banners = [...root.querySelectorAll(':scope > .brand-showcase.brand-showcase--full-banner')];
       if (!desktop.matches || reduced.matches || banners.length === 0) {
-        banners.forEach((banner) => banner.classList.remove('is-collapsed'));
+        banners.forEach((banner) => {
+          banner.classList.remove('is-collapsed');
+          banner.classList.remove('is-upcoming');
+        });
+        root.style.removeProperty('--brand-deck-lead');
+        root.style.removeProperty('--brand-deck-slot');
         return;
       }
-      const heroH = banners[0].getBoundingClientRect().height;
-      const slots = Math.max(banners.length - 1, 1);
-      const available = Math.max(0, window.innerHeight - heroH);
-      const fitted = Math.floor(available / slots);
-      const edge = Math.min(48, Math.max(16, fitted || 16));
-      root.style.setProperty('--brand-deck-edge', `${edge}px`);
-      let active = 0;
-      banners.forEach((banner, index) => {
-        if (banner.getBoundingClientRect().top <= (index * edge) + edge) active = index;
-      });
-      banners.forEach((banner, index) => banner.classList.toggle('is-collapsed', index < active));
+      const slice = 112;
+      const headerHidden = document.querySelector('.site-header.is-hidden');
+      const headerH = headerHidden
+        ? 0
+        : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 0;
+      root.style.setProperty('--brand-deck-header', `${headerH}px`);
+      const measureActive = () => {
+        let next = 0;
+        const line = headerH + slice + 8;
+        banners.forEach((banner, index) => {
+          if (banner.getBoundingClientRect().top <= line) next = index;
+        });
+        return next;
+      };
+      const apply = (active) => {
+        const heroH = banners[Math.min(active, banners.length - 1)].getBoundingClientRect().height || slice;
+        const maxBand = Math.max(slice, window.innerHeight - heroH - 8);
+        const band = active > 0 ? Math.min(headerH + slice, maxBand) : headerH;
+        root.style.setProperty('--brand-deck-lead', `${band}px`);
+        root.style.setProperty('--brand-deck-slot', `${root.clientWidth / Math.max(active, 1)}px`);
+        banners.forEach((banner, index) => {
+          banner.classList.toggle('is-collapsed', index < active);
+          banner.classList.toggle('is-upcoming', index > active);
+        });
+      };
+      apply(measureActive());
+      apply(measureActive());
     };
 
     const onScroll = () => {

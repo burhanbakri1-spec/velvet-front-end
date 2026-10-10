@@ -163,9 +163,9 @@ test('brand category banners reuse the home sticky stack, scoped and layout-neut
     assert.doesNotMatch(block, /height:|overflow:|transform:|max-height:|min-height:/);
   }
   assert.match(homeStack, /--deck-index/);
-  assert.match(homeStack, /var\(--deck-index, 0\) \* var\(--brand-deck-edge\)/);
+  assert.match(homeStack, /--brand-deck-lead/);
+  assert.match(styles, /--brand-deck-slice:\s*112px/);
   assert.doesNotMatch(homeStack, /min\(var\(--deck-index/);
-  assert.match(styles, /#showcases \{\s*--brand-deck-edge:\s*28px;/);
   assert.doesNotMatch(styles, /--brand-deck-slots|brand-deck-tab/);
   assert.match(categoryStack, /top:\s*0/);
 
