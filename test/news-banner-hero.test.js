@@ -7,6 +7,7 @@ import path from 'node:path';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const newsPage = fs.readFileSync(path.join(root, 'src/pages/NewsPage.jsx'), 'utf8');
 const hero = fs.readFileSync(path.join(root, 'src/components/PageVideoHero.jsx'), 'utf8');
+const playback = fs.readFileSync(path.join(root, 'src/components/useStorefrontVideo.js'), 'utf8');
 
 test('NewsPage reads news.banner media with red PageTitleHero fallback', () => {
   assert.match(newsPage, /getPlatformMedia/);
@@ -22,14 +23,17 @@ test('NewsPage reads news.banner media with red PageTitleHero fallback', () => {
   assert.doesNotMatch(newsPage, /showPlayControl=\{false\}/);
 });
 
-test('PageVideoHero plays with audio only after a user gesture', () => {
+test('PageVideoHero autoplays through the shared storefront player', () => {
   assert.match(hero, /loop = false/);
   assert.match(hero, /showPlayControl = true/);
   assert.match(hero, /playsInline/);
-  // Play control is rendered for every hero video; playback starts on click.
+  assert.match(hero, /useStorefrontVideo/);
   assert.match(hero, /video && showPlayControl \?/);
-  assert.match(hero, /onClick=\{togglePlayback\}/);
-  // No autoplay and no forced mute anywhere in the hero.
+  assert.match(hero, /onClick=\{video \? togglePlayback : undefined\}/);
   assert.doesNotMatch(hero, /autoPlay/);
-  assert.doesNotMatch(hero, /muted/);
+  assert.match(playback, /media\.muted = false/);
+  assert.match(playback, /media\.muted = true/);
+  assert.match(playback, /intro-active/);
+  assert.match(playback, /soundUnlocked/);
+  assert.doesNotMatch(playback, /currentTime/);
 });

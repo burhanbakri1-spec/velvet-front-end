@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { artwork } from '../data/products';
 import { getBrand, getBrandAbout, getBrandPageHeaderMedia } from '../data/velvetCatalog';
 import BrandShowcase from '../components/BrandShowcase';
 import { PlayButton } from '../components/Hero';
+import { useStorefrontVideo } from '../components/useStorefrontVideo';
 import PageNavigation from '../components/PageNavigation';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
@@ -13,8 +14,11 @@ import { Link } from '../routing/Router';
 // linking to the shared shop filtered to /{locale}/products?brand=…&category=….
 export default function BrandPage({ slug }) {
   const brand = getBrand(slug);
+  const media = getBrandPageHeaderMedia(slug);
   const cursorRef = useRef(null);
+  const videoRef = useRef(null);
   const { copy, locale } = useI18n();
+  const { playing, togglePlayback } = useStorefrontVideo(videoRef, { sourceKey: media.video || '' });
 
   const moveCursor = (event) => {
     if (event.pointerType !== 'mouse' || window.innerWidth <= 760 || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -36,35 +40,7 @@ export default function BrandPage({ slug }) {
     );
   }
 
-  const media = getBrandPageHeaderMedia(slug);
   const brandAbout = getBrandAbout(slug, locale);
-
-  const videoRef = useRef(null);
-  const [playing, setPlaying] = useState(false);
-
-  useEffect(() => {
-    const mediaElement = videoRef.current;
-    if (!mediaElement) return undefined;
-    const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
-    const onEnded = () => setPlaying(false);
-    mediaElement.addEventListener('play', onPlay);
-    mediaElement.addEventListener('pause', onPause);
-    mediaElement.addEventListener('ended', onEnded);
-    return () => {
-      mediaElement.removeEventListener('play', onPlay);
-      mediaElement.removeEventListener('pause', onPause);
-      mediaElement.removeEventListener('ended', onEnded);
-    };
-  }, []);
-
-  const togglePlayback = async () => {
-    const mediaElement = videoRef.current;
-    if (!mediaElement) return;
-    if (mediaElement.paused) {
-      try { await mediaElement.play(); } catch { setPlaying(false); }
-    } else mediaElement.pause();
-  };
 
   return (
     <div className="category-page">

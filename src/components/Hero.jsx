@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { getPlatformMedia } from '../data/platformContent';
+import { useStorefrontVideo } from './useStorefrontVideo';
 
 export function PlayButton({ label = 'Play film', onClick, playing = false }) {
   return (
@@ -12,31 +13,8 @@ export function PlayButton({ label = 'Play film', onClick, playing = false }) {
 
 export default function Hero({ introActive }) {
   const videoRef = useRef(null);
-  const [playing, setPlaying] = useState(false);
   const { copy } = useI18n();
-
-  useEffect(() => {
-    const media = videoRef.current;
-    if (!media) return undefined;
-    const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
-    media.addEventListener('play', onPlay);
-    media.addEventListener('pause', onPause);
-    media.addEventListener('ended', onPause);
-    return () => {
-      media.removeEventListener('play', onPlay);
-      media.removeEventListener('pause', onPause);
-      media.removeEventListener('ended', onPause);
-    };
-  }, []);
-
-  const togglePlayback = async () => {
-    const media = videoRef.current;
-    if (!media) return;
-    if (media.paused) {
-      try { await media.play(); } catch { setPlaying(false); }
-    } else media.pause();
-  };
+  const { playing, togglePlayback } = useStorefrontVideo(videoRef, { hold: introActive, sourceKey: 'home-hero' });
 
   return (
     <section id="top" className={`hero ${introActive ? 'hero--intro' : ''} ${playing ? 'is-playing' : 'is-paused'}`} aria-label={copy.home.feature}>

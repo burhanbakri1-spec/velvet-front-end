@@ -609,8 +609,15 @@ html[dir="rtl"] .mega-menu__preview-logo-frame {
 @keyframes orbit { to { transform: rotate(360deg) translateX(25px) rotate(-360deg); } }
 @keyframes toy-float { 50% { translate: 0 -18px; rotate: -2deg; } }
 .hero-shade { position: absolute; inset: 0; z-index: 1; background: transparent; pointer-events: none; }
-.play-button { position: absolute; z-index: 4; left: 50%; top: 51%; width: 92px; aspect-ratio: 1; transform: translate(-50%,-50%); border: 2px solid white; border-radius: 50%; color: white; background: rgba(0,0,0,.06); display: grid; place-items: center; cursor: pointer; transition: transform .35s ease, background .35s ease; }
+.play-button { position: absolute; z-index: 4; left: 50%; top: 51%; width: 92px; aspect-ratio: 1; transform: translate(-50%,-50%); border: 2px solid white; border-radius: 50%; color: white; background: rgba(0,0,0,.06); display: grid; place-items: center; cursor: pointer; transition: opacity .35s ease, transform .35s ease, background .35s ease; }
 .play-button:hover { transform: translate(-50%,-50%) scale(1.08); background: rgba(255,255,255,.15); }
+.hero.is-playing .play-button,
+.category-hero.is-playing .play-button { opacity: 0; pointer-events: none; transform: translate(-50%,-50%) scale(.85); }
+.hero-media, .category-hero__media { cursor: pointer; }
+@media (hover: hover) and (pointer: fine) {
+  .hero.is-playing:hover .play-button,
+  .category-hero.is-playing:hover .play-button { opacity: .82; pointer-events: auto; }
+}
 .play-icon { width: 0; height: 0; margin-left: 6px; border-top: 13px solid transparent; border-bottom: 13px solid transparent; border-left: 20px solid currentColor; }
 .pause-icon { width: 20px; height: 26px; border-left: 6px solid currentColor; border-right: 6px solid currentColor; }
 .scroll-cue { position: absolute; z-index: 3; right: clamp(20px,3vw,55px); bottom: 24px; width: 28px; height: 54px; border: 2px solid white; border-radius: 20px; }
@@ -1662,6 +1669,9 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 .page-video-hero__play { position: absolute; left: 50%; top: 50%; z-index: 3; width: 92px; aspect-ratio: 1; padding: 0; border: 2px solid #fff; border-radius: 50%; color: #fff; background: rgba(12,8,17,.16); display: grid; place-items: center; cursor: pointer; transform: translate(-50%,-50%); transition: opacity .35s ease, transform .4s cubic-bezier(.22,1,.36,1), background .3s ease; }
 .page-video-hero__play:hover { background: rgba(var(--brand-rgb),.88); transform: translate(-50%,-50%) scale(1.07); }
 .page-video-hero.is-playing .page-video-hero__play { opacity: 0; pointer-events: none; transform: translate(-50%,-50%) scale(.85); }
+@media (hover: hover) and (pointer: fine) {
+  .page-video-hero.is-playing:hover .page-video-hero__play { opacity: .82; pointer-events: auto; }
+}
 .page-video-hero__scroll { position: absolute; right: clamp(24px,4vw,70px); bottom: 45px; width: 29px; height: 55px; border: 1.5px solid rgba(255,255,255,.9); border-radius: 999px; }
 .page-video-hero__scroll i { position: absolute; left: 50%; top: 9px; width: 3px; height: 9px; border-radius: 3px; background: #fff; transform: translateX(-50%); animation: scroll-dot 1.7s ease-in-out infinite; }
 @keyframes company-title-in { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
@@ -2296,24 +2306,17 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
 /* ============================================================
-   HOME — stacked real brand heroes.
-   Desktop: .home-brand uses display:contents so every hero sticks
-   inside #showcases, not just its own section. Each hero pins at
-   header + index * --brand-stack-slice and paints above the previous
-   one, so the next full banner slides over the previous real banner
-   and leaves that compact top slice. --brand-hero-edge is the natural
-   logo band (140px). As the next banner covers a hero, HomePage
-   scales that hero's own logo into the slice. The banner art is the
-   real hero, not a separate rail.
-   HomePage shortens only the active hero so it fits under the stack.
-   Its image uses cover (no stretch) and the logo, title, and CTA stay
-   inside that box. Slice height stays at most 48px and shrinks only
-   when the full stack would leave the active hero too short.
-   Strips paint above the whole stack. Tablet, mobile, and reduced
-   motion use normal flow.
+   HOME — one logo rail above the active brand hero.
+   Desktop: previous brands leave the banner stack and appear as
+   contained logos in a single horizontal rail. Every hero pins at
+   the same place, just under that rail, so the active banner stays
+   full size and the next banner covers the previous one completely.
+   --brand-rail-height is 0 until a previous brand exists, then 80px.
+   Strips paint above the rail and the heroes. Tablet, mobile, and
+   reduced motion use normal flow.
    Scoped to #showcases (HomePage only).
    ============================================================ */
-#showcases { --brand-hero-edge: 140px; --brand-stack-slice: 48px; }
+#showcases { --brand-hero-edge: 140px; --brand-rail-height: 0px; }
 #showcases > .home-brand { margin: 0; padding: 0; }
 #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
   position: sticky;
@@ -2322,7 +2325,7 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
   transition: top .55s cubic-bezier(.22, 1, .36, 1);
 }
 body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
-  top: calc(var(--deck-index, 0) * var(--brand-stack-slice));
+  top: var(--brand-rail-height, 0px);
 }
 #showcases > .home-brand > .brand-strip {
   position: relative;
@@ -2332,15 +2335,57 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
   height: 0;
   pointer-events: none;
 }
+.brand-logo-rail { display: none; }
 @media (min-width: 1101px) {
   #showcases > .home-brand { display: contents; }
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
-    top: calc(var(--header-height) + (var(--deck-index, 0) * var(--brand-stack-slice)));
-    z-index: calc(1 + var(--deck-index, 0));
+    top: calc(var(--header-height) + var(--brand-rail-height, 0px));
+    z-index: 1;
+  }
+  #showcases > .brand-logo-rail {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 8;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 10px;
+    height: var(--brand-rail-height, 0px);
+    margin: 0;
+    padding: 0 24px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    background: transparent;
+    scrollbar-width: thin;
+  }
+  #showcases > .brand-logo-rail[data-empty] {
+    height: 0;
+    padding: 0;
+    pointer-events: none;
+  }
+  .brand-logo-rail__item {
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 168px;
+    height: 64px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: #17151f;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  }
+  .brand-logo-rail__item img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
   }
   #showcases > .home-brand > .brand-strip { z-index: 20; }
   #showcases > .home-brand > .home-brand__runway { height: 0; }
 }
+body:has(.site-header.is-hidden) #showcases > .brand-logo-rail { top: 0; }
 @media (max-width: 1100px) {
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
     position: static;
@@ -2351,6 +2396,7 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
   #showcases > .home-brand > .brand-strip { z-index: auto; }
   #showcases > .home-brand { margin-bottom: 0; }
   #showcases > .home-brand > .home-brand__runway { height: 0; }
+  #showcases > .brand-logo-rail { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
@@ -2362,6 +2408,7 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
   #showcases > .home-brand > .brand-strip { z-index: auto; }
   #showcases > .home-brand { margin-bottom: 0; }
   #showcases > .home-brand > .home-brand__runway { height: 0; }
+  #showcases > .brand-logo-rail { display: none; }
 }
 /* BrandPage Main Category banners reuse the exact same approved stack:
    pin the current category banner, let the next one rise from the bottom
@@ -2835,6 +2882,7 @@ html[dir="rtl"] .product-card__badge { left: auto; right: 15px; }
   object-position: center;
 }
 .brand-hero:hover .category-hero__media { transform: none; }
+.brand-hero video.category-hero__media { position: relative; z-index: 2; cursor: pointer; }
 
 .brand-about {
   display: grid;

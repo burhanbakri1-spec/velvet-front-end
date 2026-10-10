@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useI18n } from '../i18n/I18nContext';
+import { useStorefrontVideo } from './useStorefrontVideo';
 
 export default function PageVideoHero({
   title,
@@ -12,38 +13,11 @@ export default function PageVideoHero({
   showPlayControl = true,
 }) {
   const videoRef = useRef(null);
-  const [playing, setPlaying] = useState(false);
   const { copy } = useI18n();
-
-  useEffect(() => {
-    const media = videoRef.current;
-    if (!media) return undefined;
-    const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
-    media.addEventListener('play', onPlay);
-    media.addEventListener('pause', onPause);
-    media.addEventListener('ended', onPause);
-    return () => {
-      media.removeEventListener('play', onPlay);
-      media.removeEventListener('pause', onPause);
-      media.removeEventListener('ended', onPause);
-    };
-  }, [video]);
-
-  const togglePlayback = async () => {
-    const media = videoRef.current;
-    if (!media) return;
-    if (media.paused) {
-      try {
-        await media.play();
-      } catch {
-        setPlaying(false);
-      }
-    } else media.pause();
-  };
+  const { playing, togglePlayback } = useStorefrontVideo(videoRef, { sourceKey: video || '' });
 
   return (
-    <section className={`page-video-hero page-video-hero--${theme} ${playing ? 'is-playing' : ''}`} style={{ '--media-overlay': overlay }}>
+    <section className={`page-video-hero page-video-hero--${theme} ${playing ? 'is-playing' : ''}`} style={{ '--media-overlay': overlay }} onClick={video ? togglePlayback : undefined}>
       {video ? (
         <video
           ref={videoRef}
@@ -51,7 +25,6 @@ export default function PageVideoHero({
           preload="metadata"
           playsInline
           loop={loop}
-          onClick={togglePlayback}
           aria-label={title}
         >
           <source src={video} type="video/mp4" />
@@ -63,7 +36,7 @@ export default function PageVideoHero({
         <h1>{title}</h1>
       </div>
       {video && showPlayControl ? (
-        <button className="page-video-hero__play" type="button" onClick={togglePlayback} aria-label={playing ? copy.home.pause : copy.home.play}>
+        <button className="page-video-hero__play" type="button" onClick={(event) => { event.stopPropagation(); togglePlayback(); }} aria-label={playing ? copy.home.pause : copy.home.play}>
           {playing ? <span className="pause-icon" /> : <span className="play-icon" />}
         </button>
       ) : null}

@@ -318,9 +318,12 @@ test('home brand banners stick as a scroll deck and the strip paints above its b
 
   assert.match(styles, /#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*sticky;[^}]*top:\s*var\(--header-height\);[^}]*z-index:\s*1/);
   assert.match(styles, /--brand-hero-edge:\s*140px/);
-  assert.match(styles, /--brand-stack-slice:\s*48px/);
+  assert.match(styles, /--brand-rail-height:\s*0px/);
   assert.match(styles, /@media \(min-width:\s*1101px\) \{\s*#showcases > \.home-brand \{[^}]*display:\s*contents/);
-  assert.match(styles, /top:\s*calc\(var\(--header-height\) \+ \(var\(--deck-index, 0\) \* var\(--brand-stack-slice\)\)\)/);
+  assert.match(styles, /top:\s*calc\(var\(--header-height\) \+ var\(--brand-rail-height, 0px\)\)/);
+  assert.match(styles, /#showcases > \.brand-logo-rail \{[^}]*flex-wrap:\s*nowrap[^}]*overflow-x:\s*auto/);
+  assert.match(styles, /\.brand-logo-rail__item img \{[^}]*object-fit:\s*contain/);
+  assert.match(fs.readFileSync(homePath, 'utf8'), /BrandLogoRail/);
   assert.match(styles, /#showcases > \.home-brand > \.brand-strip \{ z-index:\s*20; \}/);
   assert.doesNotMatch(styles, /--brand-deck-slice|brand-deck-tab|is-collapsed/);
   assert.doesNotMatch(fs.readFileSync(homePath, 'utf8'), /brand-deck-tab|getBrandLogo|is-collapsed|is-upcoming/);
