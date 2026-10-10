@@ -2251,7 +2251,7 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
 }
 .intro-section h2 {
   font-family: Arial, Helvetica, sans-serif;
-  font-size: clamp(36px, 2.9vw, 48px);
+  font-size: clamp(28px, 2.15vw, 34px);
   line-height: 1.08;
   text-transform: none;
   letter-spacing: -.045em;
@@ -2260,6 +2260,9 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
 .intro-section__body { padding-top: 0; }
 .intro-section__body p { max-width: 535px; margin: 0; font-size: 18px; line-height: 1.52; }
 .intro-section .intro-ctas { margin-top: 16px; }
+@media (min-width: 1101px) {
+  .intro-section h2 { white-space: nowrap; }
+}
 
 .brand-showcase { height: 100vh; min-height: 720px; max-height: 900px; background: #211a1d; }
 .brand-showcase::after { z-index: 0; content: none; display: none; }
@@ -2360,7 +2363,7 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-x: contain;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.92);
     scrollbar-width: thin;
   }
   #showcases > .brand-logo-rail[data-empty] {
@@ -2372,12 +2375,11 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     flex: 0 0 auto;
     display: grid;
     place-items: center;
-    width: 132px;
-    height: 40px;
-    padding: 2px 8px;
-    border-radius: 8px;
-    background: #17151f;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.14);
+    width: 140px;
+    height: 44px;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
   }
   .brand-logo-rail__item img {
     display: block;

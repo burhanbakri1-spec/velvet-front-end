@@ -13,7 +13,7 @@ export default function IntroSection() {
 
   return (
     <section className="intro-section" id="about">
-      <h2>{copy.home.introTitle[0]}<br />{copy.home.introTitle[1]}</h2>
+      <h2>{copy.home.introTitle[0]} {copy.home.introTitle[1]}</h2>
       <div className="intro-section__body">
         <p>{copy.home.introP1}</p>
         <div className="intro-ctas">

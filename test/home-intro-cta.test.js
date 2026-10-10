@@ -77,7 +77,8 @@ test('home intro heading and paragraphs stay unchanged', () => {
   const intro = readIntro();
   const { en, ar } = translations;
 
-  assert.match(intro, /\{copy\.home\.introTitle\[0\]\}<br \/>\{copy\.home\.introTitle\[1\]\}/);
+  assert.match(intro, /\{copy\.home\.introTitle\[0\]\} \{copy\.home\.introTitle\[1\]\}/);
+  assert.doesNotMatch(intro, /<br\s*\/>/);
   assert.match(intro, /\{copy\.home\.introP1\}/);
   assert.doesNotMatch(intro, /introP2/);
 
