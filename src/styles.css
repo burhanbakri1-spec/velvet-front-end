@@ -2375,16 +2375,19 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     flex: 0 0 auto;
     display: grid;
     place-items: center;
-    width: 140px;
-    height: 44px;
+    width: 104px;
+    height: 40px;
     padding: 0;
+    overflow: hidden;
     background: transparent;
     box-shadow: none;
   }
   .brand-logo-rail__item img {
     display: block;
-    width: 100%;
-    height: 100%;
+    width: auto;
+    height: auto;
+    max-width: 96px;
+    max-height: 32px;
     object-fit: contain;
     object-position: center;
   }
