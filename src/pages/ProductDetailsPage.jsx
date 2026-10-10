@@ -374,6 +374,7 @@ export default function ProductDetailsPage({ slug }) {
     stockLimit,
     interactive: !isTransitioning,
     showMedia: true,
+    showCopy: false,
     onSelections: setSelections,
     onQuantity: setQuantity,
     onAdd: handleAdd,
@@ -415,6 +416,8 @@ export default function ProductDetailsPage({ slug }) {
 
       <PageNavigation fallbackPath={detailFallback} breadcrumbs={detailBreadcrumbs} />
 
+      <div className="product-detail-stage">
+      <div className="product-detail-stage__gallery">
       <section
         className="category-product-showcase category-product-showcase--detail"
         aria-label={productName}
@@ -505,6 +508,9 @@ export default function ProductDetailsPage({ slug }) {
           </div>
         </section>
       )}
+      </div>
+      <ProductDetailSlide {...slideProps} showMedia={false} showCopy interactive />
+      </div>
 
       <div className="product-detail-content" data-product-section="commerce">
         <ProductDetailInfoCarousel

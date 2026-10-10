@@ -1374,7 +1374,7 @@ html[dir="rtl"] .product-card__gallery-btn span { transform: scaleX(-1); }
   display: block;
 }
 .category-product-showcase--detail .category-product-showcase__media { width: min(560px, 100%); }
-.category-product-showcase--detail .category-product-showcase__copy h1 { margin: 0 auto; font-size: clamp(28px, 2.2vw, 34px); line-height: 1.2; letter-spacing: -.03em; }
+.category-product-showcase--detail .category-product-showcase__copy h1 { margin: 0 auto; font-size: clamp(30px, 2.2vw, 36px); line-height: 1.2; letter-spacing: -.03em; }
 .category-product-showcase--detail .product-showcase-nav__button { top: 250px; }
 .product-detail-badge { display: inline-block; margin-inline-start: 10px; padding: 6px 10px; border-radius: 999px; color: #fff; background: var(--red); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; vertical-align: middle; }
 
@@ -4544,13 +4544,31 @@ html[dir="rtl"] .product-path-hero__copy {
   padding: 18px clamp(20px, 4vw, 64px) 28px;
   background: #fdfdfd;
 }
+.product-detail-page .product-detail-stage {
+  width: min(1120px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 8px 0 4px;
+}
+.product-detail-page .product-detail-stage .category-product-showcase.category-product-showcase--detail {
+  padding: 0;
+}
+.product-detail-page .product-detail-stage .product-image-gallery--compact {
+  padding: 12px 0 0;
+  margin: 0;
+}
+.product-detail-page .product-detail-stage .same-subcategory-products__viewport {
+  padding: 0;
+}
+.product-detail-page .product-detail-stage .same-subcategory-products__track {
+  gap: 10px;
+}
 .product-detail-page .product-detail-focal {
-  width: min(380px, 100%);
+  width: min(440px, 100%);
 }
 .product-detail-page .category-product-showcase--detail .category-product-showcase__media {
   width: 100%;
-  max-width: 380px;
-  max-height: 320px;
+  max-width: 440px;
+  max-height: 440px;
   aspect-ratio: 1;
   background: #fff;
 }
@@ -4561,15 +4579,39 @@ html[dir="rtl"] .product-path-hero__copy {
 .product-detail-page .product-detail-options { margin-top: 12px; }
 .product-detail-page .product-detail-buy { margin-top: 14px; }
 @media (min-width: 1101px) {
-  .product-detail-page .product-switcher-slide__content {
-    width: min(1120px, 100%);
+  .product-detail-page .product-detail-stage {
     display: grid;
-    grid-template-columns: minmax(260px, 380px) minmax(280px, 1fr);
+    grid-template-columns: 440px minmax(320px, 1fr);
     column-gap: 40px;
-    align-items: center;
-    text-align: start;
+    align-items: start;
   }
-  .product-detail-page .category-product-showcase__copy {
+  .product-detail-page .product-detail-stage__gallery { min-width: 0; }
+  .product-detail-page .product-detail-stage .product-detail-focal,
+  .product-detail-page .product-detail-stage .category-product-showcase--detail .category-product-showcase__media {
+    width: 440px;
+    max-width: 100%;
+    height: 440px;
+    max-height: 440px;
+  }
+  .product-detail-page .product-detail-stage .product-showcase-nav__button {
+    top: calc(50% - 22px);
+    width: 44px;
+    font-size: 18px;
+    background: rgba(255, 255, 255, .92);
+  }
+  .product-detail-page .product-detail-stage .product-showcase-nav__button--previous { left: 10px; right: auto; }
+  .product-detail-page .product-detail-stage .product-showcase-nav__button--next { right: 10px; left: auto; }
+  html[dir="rtl"] .product-detail-page .product-detail-stage .product-showcase-nav__button--previous { right: 10px; left: auto; }
+  html[dir="rtl"] .product-detail-page .product-detail-stage .product-showcase-nav__button--next { left: 10px; right: auto; }
+  .product-detail-page .product-detail-stage .product-image-gallery--compact .same-subcategory-products__slide,
+  .product-detail-page .product-detail-stage .product-image-gallery--compact .same-subcategory-products__slide img {
+    max-height: 92px;
+  }
+  .product-detail-page .product-detail-stage .product-detail-slide--commerce-only {
+    max-width: none;
+    margin: 0;
+  }
+  .product-detail-page .product-detail-stage .category-product-showcase__copy {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
@@ -4578,29 +4620,28 @@ html[dir="rtl"] .product-path-hero__copy {
     padding-top: 0;
     text-align: start;
   }
-  .product-detail-page .category-product-showcase__category,
-  .product-detail-page .category-product-showcase__copy h1 {
+  .product-detail-page .product-detail-stage .category-product-showcase__category,
+  .product-detail-page .product-detail-stage .category-product-showcase__copy h1 {
     grid-column: 1;
     margin: 0;
     text-align: start;
   }
-  .product-detail-page .product-detail-favorite {
+  .product-detail-page .product-detail-stage .product-detail-favorite {
     grid-column: 2;
     grid-row: 1 / span 2;
     justify-self: end;
   }
-  .product-detail-page .category-product-showcase__commerce,
-  .product-detail-page .product-detail-options,
-  .product-detail-page .product-detail-buy,
-  .product-detail-page .product-detail-cart-link {
+  .product-detail-page .product-detail-stage .category-product-showcase__commerce,
+  .product-detail-page .product-detail-stage .product-detail-options,
+  .product-detail-page .product-detail-stage .product-detail-buy,
+  .product-detail-page .product-detail-stage .product-detail-cart-link {
     grid-column: 1 / -1;
     margin-top: 0;
     justify-content: flex-start;
   }
-  .product-detail-page .product-detail-options { align-items: flex-start; width: 100%; }
-  .product-detail-page .product-detail-option legend { text-align: start; }
-  .product-detail-page .product-detail-option .product-option__values { justify-content: flex-start; }
-  .product-detail-page .category-product-showcase--detail .product-showcase-nav__button { top: 150px; }
+  .product-detail-page .product-detail-stage .product-detail-options { align-items: flex-start; width: 100%; }
+  .product-detail-page .product-detail-stage .product-detail-option legend { text-align: start; }
+  .product-detail-page .product-detail-stage .product-detail-option .product-option__values { justify-content: flex-start; }
 }
 html[dir="rtl"] .category-product-showcase__availability { padding-left: 0; padding-inline-start: 17px; }
 html[dir="rtl"] .category-product-showcase__availability::before { left: auto; inset-inline-start: 0; }

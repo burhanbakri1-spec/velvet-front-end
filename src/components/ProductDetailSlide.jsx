@@ -29,6 +29,7 @@ export default function ProductDetailSlide({
   onBuyNow,
   interactive = true,
   showMedia = true,
+  showCopy = true,
 }) {
   const productName = getProductName(product, locale);
   const optionDelta = product.options.reduce(
@@ -48,7 +49,7 @@ export default function ProductDetailSlide({
           </figure>
         </div>
       )}
-      <div className="category-product-showcase__copy">
+      {showCopy && <div className="category-product-showcase__copy">
         <span className="category-product-showcase__category">
           {eyebrow}
           {product.badge && <span className="product-detail-badge">{getProductBadge(product, locale)}</span>}
@@ -115,7 +116,7 @@ export default function ProductDetailSlide({
           <button className="store-primary-button product-detail-buy__secondary" type="button" disabled={unavailable || !interactive} onClick={onBuyNow}>{copy.detail.buyNow}</button>
         </div>
         {added && interactive && <Link className="view-cart-link product-detail-cart-link" to="/cart">{copy.detail.viewCart} {locale === 'ar' ? '←' : '→'}</Link>}
-      </div>
+      </div>}
     </div>
   );
 }
