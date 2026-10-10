@@ -749,9 +749,13 @@ html[dir="rtl"] .brand-strip__track { animation-name: brand-strip-marquee-rtl; }
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
+  /* 40% zoom out. The media box stays full size; only the picture scales. */
+  transform: scale(0.6);
+  transform-origin: center;
   transition: transform .5s cubic-bezier(.22,1,.36,1);
 }
-.brand-strip-card:hover .brand-strip-card__image { transform: scale(1.05); }
+.brand-strip-card:hover .brand-strip-card__image { transform: scale(0.63); }
 .brand-strip-card__badge {
   position: absolute;
   top: 8px;
@@ -2292,44 +2296,65 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
 /* ============================================================
-   HOME — one hero at a time.
-   The active full banner pins. The next banner shares that same
-   pin and paints over the previous one, so earlier brands do not
-   stay stacked. Each product strip paints above every banner, so
-   it stays fully visible between its hero and the next hero.
+   HOME — one hero per brand section.
+   Each hero sticks only inside its .home-brand section. That
+   section keeps a runway of (hero height − 140px logo edge) and
+   pulls the next section back over the same distance, so the next
+   hero slides over the previous one like a card. Only that 140px
+   logo edge of the immediately previous hero stays visible, then
+   the previous hero leaves with its section. Older heroes do not
+   accumulate. Each product strip paints above every hero.
    Tablet, mobile, and reduced motion use normal document flow.
    Scoped to #showcases (HomePage only).
    ============================================================ */
-#showcases > .brand-showcase.brand-showcase--full-banner {
+#showcases { --brand-hero-edge: 140px; }
+#showcases > .home-brand { margin: 0; padding: 0; }
+#showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
   position: sticky;
   top: var(--header-height);
   z-index: 1;
   transition: top .55s cubic-bezier(.22, 1, .36, 1);
 }
-body:has(.site-header.is-hidden) #showcases > .brand-showcase.brand-showcase--full-banner {
+body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
   top: 0;
 }
-#showcases > .brand-strip {
+#showcases > .home-brand > .brand-strip {
   position: relative;
   z-index: 2;
 }
+#showcases > .home-brand > .home-brand__runway {
+  height: 0;
+  pointer-events: none;
+}
+@media (min-width: 1101px) {
+  #showcases > .home-brand:not(:last-child) {
+    margin-bottom: calc(var(--brand-runway, 0px) * -1);
+  }
+  #showcases > .home-brand:not(:last-child) > .home-brand__runway {
+    height: var(--brand-runway, 0px);
+  }
+}
 @media (max-width: 1100px) {
-  #showcases > .brand-showcase.brand-showcase--full-banner {
+  #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
     position: static;
     top: auto;
     z-index: auto;
     transition: none;
   }
-  #showcases > .brand-strip { z-index: auto; }
+  #showcases > .home-brand > .brand-strip { z-index: auto; }
+  #showcases > .home-brand { margin-bottom: 0; }
+  #showcases > .home-brand > .home-brand__runway { height: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  #showcases > .brand-showcase.brand-showcase--full-banner {
+  #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
     position: static;
     top: auto;
     z-index: auto;
     transition: none;
   }
-  #showcases > .brand-strip { z-index: auto; }
+  #showcases > .home-brand > .brand-strip { z-index: auto; }
+  #showcases > .home-brand { margin-bottom: 0; }
+  #showcases > .home-brand > .home-brand__runway { height: 0; }
 }
 /* BrandPage Main Category banners reuse the exact same approved stack:
    pin the current category banner, let the next one rise from the bottom

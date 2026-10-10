@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import IntroLoader from '../components/IntroLoader';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
@@ -34,6 +34,49 @@ export default function HomePage() {
     };
   }, [previewTarget]);
 
+  useLayoutEffect(() => {
+    const root = document.getElementById('showcases');
+    if (!root) return undefined;
+    const desktop = window.matchMedia('(min-width: 1101px)');
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let frame = 0;
+
+    const sync = () => {
+      const edge = parseFloat(getComputedStyle(root).getPropertyValue('--brand-hero-edge')) || 0;
+      const sections = [...root.querySelectorAll(':scope > .home-brand')];
+      const enabled = desktop.matches && !reduced.matches;
+      sections.forEach((section, index) => {
+        if (!enabled || index === sections.length - 1) {
+          section.style.removeProperty('--brand-runway');
+          return;
+        }
+        const hero = section.querySelector(':scope > .brand-showcase');
+        const height = hero?.offsetHeight || 0;
+        section.style.setProperty('--brand-runway', `${Math.max(0, Math.round(height - edge))}px`);
+      });
+    };
+
+    const schedule = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        sync();
+      });
+    };
+
+    sync();
+    const observer = new ResizeObserver(schedule);
+    root.querySelectorAll(':scope > .home-brand > .brand-showcase').forEach((hero) => observer.observe(hero));
+    desktop.addEventListener('change', schedule);
+    reduced.addEventListener('change', schedule);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+      desktop.removeEventListener('change', schedule);
+      reduced.removeEventListener('change', schedule);
+    };
+  }, []);
+
   return (
     <>
       <IntroLoader active={introActive} />
@@ -43,7 +86,7 @@ export default function HomePage() {
         <IntroSection />
         <section id="showcases" aria-label={copy.home.worlds}>
           {brands.map((brand, index) => (
-            <Fragment key={brand.slug}>
+            <section className="home-brand" key={brand.slug}>
               <BrandShowcase
                 variant="full-banner"
                 showBrandLogo
@@ -53,7 +96,8 @@ export default function HomePage() {
                 brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
               />
               <BrandProductStrip brandSlug={brand.slug} deckIndex={index} />
-            </Fragment>
+              <div className="home-brand__runway" aria-hidden="true" />
+            </section>
           ))}
         </section>
         <StoreReviewsSection />

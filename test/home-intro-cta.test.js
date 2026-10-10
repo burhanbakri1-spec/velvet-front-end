@@ -141,6 +141,7 @@ test('stacked brand scroll CSS and Arabic banner type stay unchanged', () => {
   assert.match(homeStack, /position:\s*sticky/);
   assert.match(homeStack, /top:\s*var\(--header-height\)/);
   assert.match(homeStack, /z-index:\s*1/);
+  assert.match(styles, /--brand-hero-edge:\s*140px/);
   assert.doesNotMatch(styles, /--brand-deck-slice|is-collapsed/);
   assert.match(categoryStack, /position:\s*sticky/);
   assert.match(categoryStack, /top:\s*0/);
