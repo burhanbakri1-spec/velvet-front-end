@@ -316,7 +316,11 @@ test('strip stays Home-only and does not touch BrandPage or the Shop grid', () =
 test('home brand banners stick as a scroll deck and the strip paints above its banner', () => {
   const styles = fs.readFileSync(stylesPath, 'utf8');
 
-  assert.match(styles, /#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*--brand-deck-edge:\s*160px;[^}]*--brand-deck-slots:\s*2;[^}]*position:\s*sticky;[^}]*min\(var\(--deck-index, 0\), var\(--brand-deck-slots\)\)/);
+  assert.match(styles, /#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*--brand-deck-edge:\s*56px;[^}]*position:\s*sticky;[^}]*min\(var\(--deck-index, 0\), 1\)/);
+  assert.match(styles, /\.brand-deck-tab \{[^}]*height:\s*var\(--brand-deck-edge\)/);
+  assert.match(styles, /\.brand-deck-tab\.is-collapsed \.brand-deck-tab__logo \{[^}]*opacity:\s*1/);
+  assert.doesNotMatch(styles, /--brand-deck-slots/);
+  assert.match(fs.readFileSync(homePath, 'utf8'), /brand-deck-tab/);
   assert.match(styles, /#showcases > \.brand-strip \{[^}]*z-index:\s*calc\(\(var\(--deck-index, 0\) \* 2\) \+ 2\)/);
   assert.match(styles, /\.category-showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position: sticky;[^}]*top: 0;[^}]*\}/);
   assert.match(styles, /@media \(max-width:\s*1100px\) \{[^}]*#showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);

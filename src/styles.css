@@ -2293,28 +2293,70 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
 /* ============================================================
    HOME — scroll-driven brand card deck.
-   Each full banner sticks as it reaches the stack. Its product strip
-   keeps a higher layer, so the strip scrolls through that section.
-   The next banner sticks one logo-band lower (160px: logo inset +
-   104px mirror + a little air) and paints above the card beneath,
-   leaving that brand's top logo visible. At most two previous lips
-   stay in the stack so the column does not grow with every brand.
-   Nothing is position:fixed. Tablet, mobile, and reduced motion use
-   normal document flow. Scoped to #showcases (HomePage only).
+   The active hero sticks just under one compact logo rail. Every
+   previous brand collapses into that same 56px rail (a logo chip,
+   not a slice of the old hero) so the rail never grows and the
+   active hero stays full size. Later heroes share one sticky top
+   and cover the previous hero completely. Tablet, mobile, and
+   reduced motion use normal document flow.
+   Scoped to #showcases (HomePage only).
    ============================================================ */
-#showcases > .brand-showcase.brand-showcase--full-banner {
-  --brand-deck-edge: 160px;
-  --brand-deck-slots: 2;
+#showcases {
+  --brand-deck-edge: 56px;
+}
+.brand-deck-tab {
+  --brand-deck-tab-step: calc((100% - 36px) / var(--brand-deck-count, 12));
   position: sticky;
-  top: calc(var(--header-height) + (min(var(--deck-index, 0), var(--brand-deck-slots)) * var(--brand-deck-edge)));
+  top: var(--header-height);
+  z-index: calc(36 + var(--deck-index, 0));
+  height: var(--brand-deck-edge);
+  margin-bottom: calc(var(--brand-deck-edge) * -1);
+  pointer-events: none;
+  background: transparent;
+  transition: top .55s cubic-bezier(.22, 1, .36, 1);
+}
+.brand-deck-tab--base.is-collapsed {
+  background: #f6f4f1;
+  box-shadow: inset 0 -1px 0 rgba(18, 18, 20, .08);
+}
+.brand-deck-tab__logo {
+  position: absolute;
+  top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  height: 44px;
+  width: calc(var(--brand-deck-tab-step) * 1.15);
+  padding: 2px 8px;
+  inset-inline-start: calc(12px + (var(--deck-index, 0) * var(--brand-deck-tab-step)));
+  border-radius: 8px;
+  background: var(--c1, #171226);
+  opacity: 0;
+}
+.brand-deck-tab.is-collapsed .brand-deck-tab__logo { opacity: 1; }
+.brand-deck-tab__logo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+html[dir="rtl"] .brand-deck-tab__logo { justify-content: flex-end; }
+html[dir="rtl"] .brand-deck-tab__logo img { object-position: right center; }
+#showcases > .brand-showcase.brand-showcase--full-banner {
+  --brand-deck-edge: 56px;
+  position: sticky;
+  top: calc(var(--header-height) + (min(var(--deck-index, 0), 1) * (var(--brand-deck-edge) - 1px)));
   z-index: calc((var(--deck-index, 0) * 2) + 1);
   transition: top .55s cubic-bezier(.22, 1, .36, 1);
 }
 #showcases > .brand-strip {
   z-index: calc((var(--deck-index, 0) * 2) + 2);
 }
+body:has(.site-header.is-hidden) .brand-deck-tab { top: 0; }
 body:has(.site-header.is-hidden) #showcases > .brand-showcase.brand-showcase--full-banner {
-  top: calc(min(var(--deck-index, 0), var(--brand-deck-slots, 2)) * var(--brand-deck-edge, 160px));
+  top: calc(min(var(--deck-index, 0), 1) * (var(--brand-deck-edge, 56px) - 1px));
 }
 @media (max-width: 1100px) {
   #showcases > .brand-showcase.brand-showcase--full-banner {
@@ -2324,6 +2366,7 @@ body:has(.site-header.is-hidden) #showcases > .brand-showcase.brand-showcase--fu
     transition: none;
   }
   #showcases > .brand-strip { z-index: auto; }
+  .brand-deck-tab { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   #showcases > .brand-showcase.brand-showcase--full-banner {
@@ -2333,6 +2376,7 @@ body:has(.site-header.is-hidden) #showcases > .brand-showcase.brand-showcase--fu
     transition: none;
   }
   #showcases > .brand-strip { z-index: auto; }
+  .brand-deck-tab { display: none; }
 }
 /* BrandPage Main Category banners reuse the exact same approved stack:
    pin the current category banner, let the next one rise from the bottom
