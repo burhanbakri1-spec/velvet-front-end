@@ -322,7 +322,9 @@ test('home brand banners stick as a scroll deck and the strip paints above its b
   assert.doesNotMatch(styles, /--brand-deck-slice|brand-deck-tab|is-collapsed/);
   assert.doesNotMatch(fs.readFileSync(homePath, 'utf8'), /brand-deck-tab|getBrandLogo|is-collapsed|is-upcoming/);
   assert.match(styles, /#showcases > \.home-brand > \.brand-strip \{[^}]*z-index:\s*2/);
-  assert.match(styles, /\.brand-strip-card__image \{[^}]*transform:\s*scale\(0\.6\)/);
+  assert.match(styles, /\.brand-strip-card__image \{[^}]*object-fit:\s*contain/);
+  assert.match(styles, /\.brand-strip-card__image \{[^}]*transform:\s*scale\(0\.68\)/);
+  assert.match(styles, /\.brand-strip-card__media \{[^}]*background:\s*#fefefe/);
   assert.match(styles, /\.brand-strip-card__media \{[^}]*aspect-ratio: 1 \/ 1/);
   assert.match(styles, /\.category-showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position: sticky;[^}]*top: 0;[^}]*\}/);
   assert.match(styles, /@media \(max-width:\s*1100px\) \{[^}]*#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);

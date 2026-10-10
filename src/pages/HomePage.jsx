@@ -41,18 +41,55 @@ export default function HomePage() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
 
+    const pageTop = (node) => {
+      let y = 0;
+      let current = node;
+      while (current) {
+        y += current.offsetTop;
+        current = current.offsetParent;
+      }
+      return y;
+    };
+
     const sync = () => {
       const edge = parseFloat(getComputedStyle(root).getPropertyValue('--brand-hero-edge')) || 0;
       const sections = [...root.querySelectorAll(':scope > .home-brand')];
       const enabled = desktop.matches && !reduced.matches;
+      const headerHidden = document.querySelector('.site-header.is-hidden');
+      const pin = headerHidden
+        ? 0
+        : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 0;
+      const scroll = document.scrollingElement?.scrollTop || 0;
+
+      sections.forEach((section) => {
+        const hero = section.querySelector(':scope > .brand-showcase');
+        if (!hero) return;
+        hero.style.removeProperty('position');
+        hero.style.removeProperty('top');
+        hero.style.removeProperty('z-index');
+      });
+
       sections.forEach((section, index) => {
+        const hero = section.querySelector(':scope > .brand-showcase');
+        if (!hero) return;
         if (!enabled || index === sections.length - 1) {
           section.style.removeProperty('--brand-runway');
           return;
         }
-        const hero = section.querySelector(':scope > .brand-showcase');
-        const height = hero?.offsetHeight || 0;
+        const height = hero.offsetHeight || 0;
         section.style.setProperty('--brand-runway', `${Math.max(0, Math.round(height - edge))}px`);
+        if (height === 0) return;
+
+        const visualTop = pageTop(hero) - scroll < pin - 0.5 ? pin : pageTop(hero) - scroll;
+        const strip = section.querySelector(':scope > .brand-strip');
+        if (strip) {
+          const stripTop = strip.getBoundingClientRect().top;
+          const peek = stripTop - visualTop;
+          if (peek > 0 && peek < height * 0.55) {
+            hero.style.position = 'relative';
+            hero.style.top = 'auto';
+          }
+        }
       });
     };
 
@@ -67,10 +104,12 @@ export default function HomePage() {
     sync();
     const observer = new ResizeObserver(schedule);
     root.querySelectorAll(':scope > .home-brand > .brand-showcase').forEach((hero) => observer.observe(hero));
+    window.addEventListener('scroll', schedule, { passive: true });
     desktop.addEventListener('change', schedule);
     reduced.addEventListener('change', schedule);
     return () => {
       window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
       observer.disconnect();
       desktop.removeEventListener('change', schedule);
       reduced.removeEventListener('change', schedule);

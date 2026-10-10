@@ -742,20 +742,20 @@ html[dir="rtl"] .brand-strip__track { animation-name: brand-strip-marquee-rtl; }
   aspect-ratio: 1 / 1;
   overflow: hidden;
   border-radius: 16px;
-  background: #f3f1ed;
+  background: #fefefe;
 }
 .brand-strip-card__image {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
-  /* 40% zoom out. The media box stays full size; only the picture scales. */
-  transform: scale(0.6);
+  /* Same framing as store .product-card__image: full picture, centered, not cropped. */
+  transform: scale(0.68);
   transform-origin: center;
-  transition: transform .5s cubic-bezier(.22,1,.36,1);
+  transition: transform .7s cubic-bezier(.22,1,.36,1);
 }
-.brand-strip-card:hover .brand-strip-card__image { transform: scale(0.63); }
+.brand-strip-card:hover .brand-strip-card__image { transform: scale(0.7); }
 .brand-strip-card__badge {
   position: absolute;
   top: 8px;
@@ -2297,14 +2297,13 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
 /* ============================================================
    HOME — one hero per brand section.
-   Each hero sticks only inside its .home-brand section. That
-   section keeps a runway of (hero height − 140px logo edge) and
-   pulls the next section back over the same distance, so the next
-   hero slides over the previous one like a card. Only that 140px
-   logo edge of the immediately previous hero stays visible, then
-   the previous hero leaves with its section. Older heroes do not
-   accumulate. Each product strip paints above every hero.
-   Tablet, mobile, and reduced motion use normal document flow.
+   Each hero sticks only inside its .home-brand section. The runway is
+   hero height minus --brand-hero-edge (140px), so the next hero covers
+   the previous real banner and leaves that 140px logo slice, then the
+   previous hero leaves with its section. HomePage returns a hero to
+   normal flow when only a partial banner would sit above its own
+   product strip. Strips paint above every hero. Older heroes do not
+   accumulate. Tablet, mobile, and reduced motion use normal flow.
    Scoped to #showcases (HomePage only).
    ============================================================ */
 #showcases { --brand-hero-edge: 140px; }
