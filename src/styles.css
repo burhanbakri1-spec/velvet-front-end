@@ -1224,11 +1224,11 @@ html[dir="rtl"] .brand-strip__track { animation-name: brand-strip-marquee-rtl; }
   .hero-scene__toy--two { left: auto; right: -6%; width: 105px; }
   .play-button { width: 74px; top: 47%; }
   .scroll-cue { display: none; }
-  .intro-section { min-height: auto; padding: 52px 22px 60px; display: block; }
+  .intro-section { min-height: auto; padding: 24px 22px 28px; display: block; }
   .intro-section h2 {
-    margin-bottom: 20px;
+    margin-bottom: 8px;
     max-width: 100%;
-    font-size: clamp(36px, 9.5vw, 48px);
+    font-size: clamp(28px, 7.2vw, 40px);
     line-height: 1.12;
     letter-spacing: -.04em;
     overflow-wrap: anywhere;
@@ -2241,21 +2241,25 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
 }
 
 .intro-section {
-  min-height: 411px;
-  margin: 75px 0 99px;
-  padding: 25px 64px;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-  align-items: center;
+  min-height: 0;
+  margin: 28px 0 36px;
+  padding: 0 64px 8px;
+  grid-template-columns: minmax(0, 560px);
+  justify-content: start;
+  gap: 8px;
+  align-items: start;
 }
 .intro-section h2 {
   font-family: Arial, Helvetica, sans-serif;
-  font-size: clamp(52px,4.86vw,70px);
-  line-height: 1.1;
+  font-size: clamp(36px, 2.9vw, 48px);
+  line-height: 1.08;
   text-transform: none;
-  letter-spacing: -.055em;
+  letter-spacing: -.045em;
+  margin: 0;
 }
-.intro-section__body p { max-width: 535px; font-size: 18px; line-height: 1.52; }
+.intro-section__body { padding-top: 0; }
+.intro-section__body p { max-width: 535px; margin: 0; font-size: 18px; line-height: 1.52; }
+.intro-section .intro-ctas { margin-top: 16px; }
 
 .brand-showcase { height: 100vh; min-height: 720px; max-height: 900px; background: #211a1d; }
 .brand-showcase::after { z-index: 0; content: none; display: none; }
@@ -2311,7 +2315,7 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
    contained logos in a single horizontal rail. Every hero pins at
    the same place, just under that rail, so the active banner stays
    full size and the next banner covers the previous one completely.
-   --brand-rail-height is 0 until a previous brand exists, then 80px.
+   --brand-rail-height is 0 until a previous brand exists, then 48px.
    Strips paint above the rail and the heroes. Tablet, mobile, and
    reduced motion use normal flow.
    Scoped to #showcases (HomePage only).
@@ -2349,10 +2353,10 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     height: var(--brand-rail-height, 0px);
     margin: 0;
-    padding: 0 24px;
+    padding: 0 16px;
     overflow-x: auto;
     overflow-y: hidden;
     overscroll-behavior-x: contain;
@@ -2368,12 +2372,12 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     flex: 0 0 auto;
     display: grid;
     place-items: center;
-    width: 168px;
-    height: 64px;
-    padding: 8px 12px;
-    border-radius: 12px;
+    width: 132px;
+    height: 40px;
+    padding: 2px 8px;
+    border-radius: 8px;
     background: #17151f;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.14);
   }
   .brand-logo-rail__item img {
     display: block;
@@ -2612,7 +2616,7 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
 .contact-form__actions { grid-column: 1; }
 
 @media (max-width: 1024px) {
-  .intro-section { margin: 55px 0 75px; padding-inline: 40px; }
+  .intro-section { margin: 24px 0 32px; padding-inline: 40px; }
   .brand-showcase__content { left: 40px; }
   .brand-showcase__brand-logo-frame {
     top: 22px;
@@ -2648,11 +2652,11 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
 
 @media (max-width: 760px) {
   html, body { overflow-x: clip; }
-  .intro-section { min-height: 0; margin: 0; padding: 48px 20px 56px; display: block; }
+  .intro-section { min-height: 0; margin: 0; padding: 24px 20px 28px; display: block; }
   .intro-section h2 {
-    margin-bottom: 18px;
+    margin-bottom: 8px;
     max-width: 100%;
-    font-size: clamp(36px, 10vw, 48px);
+    font-size: clamp(28px, 7.6vw, 36px);
     line-height: 1.12;
     letter-spacing: -.04em;
     overflow-wrap: anywhere;
@@ -4895,7 +4899,7 @@ html[dir="rtl"] .vlog-post-card__link i { transform: scaleX(-1); }
   }
   .intro-section h2 {
     max-width: 100%;
-    font-size: clamp(36px, 9.5vw, 48px) !important;
+    font-size: clamp(28px, 7.2vw, 40px) !important;
     line-height: 1.12;
     overflow-wrap: anywhere;
   }

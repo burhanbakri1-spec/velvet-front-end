@@ -16,7 +16,6 @@ export default function IntroSection() {
       <h2>{copy.home.introTitle[0]}<br />{copy.home.introTitle[1]}</h2>
       <div className="intro-section__body">
         <p>{copy.home.introP1}</p>
-        <p>{copy.home.introP2}</p>
         <div className="intro-ctas">
           <Link className="intro-cta intro-cta--primary" to="#showcases" onClick={scrollToShowcases}>
             <span className="intro-cta__copy">

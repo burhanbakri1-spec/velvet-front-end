@@ -42,7 +42,7 @@ export default function HomePage() {
     const desktop = window.matchMedia('(min-width: 1101px)');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
-    const railHeight = 80;
+    const railHeight = 48;
 
     const sync = () => {
       const enabled = desktop.matches && !reduced.matches;

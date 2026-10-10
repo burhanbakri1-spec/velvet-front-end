@@ -79,7 +79,7 @@ test('home intro heading and paragraphs stay unchanged', () => {
 
   assert.match(intro, /\{copy\.home\.introTitle\[0\]\}<br \/>\{copy\.home\.introTitle\[1\]\}/);
   assert.match(intro, /\{copy\.home\.introP1\}/);
-  assert.match(intro, /\{copy\.home\.introP2\}/);
+  assert.doesNotMatch(intro, /introP2/);
 
   assert.deepEqual(en.home.introTitle, ['Reimagining play,', 'every day.']);
   assert.equal(en.home.introP1, 'We build bright, surprising worlds that invite everyone to get curious, make a mess, and play their own way.');
