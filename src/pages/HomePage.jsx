@@ -4,7 +4,8 @@ import Header from '../components/Header';
 import Hero from '../components/Hero';
 import IntroSection from '../components/IntroSection';
 import BrandShowcase from '../components/BrandShowcase';
-import BrandLogoRail from '../components/BrandLogoRail';
+import BrandBannerStack from '../components/BrandBannerStack';
+import { BRAND_BANNER_STACK, brandBannerStackHeight } from '../components/brandBannerMetrics';
 import BrandProductStrip from '../components/BrandProductStrip';
 import CareersSection from '../components/CareersSection';
 import StoreReviewsSection from '../components/StoreReviewsSection';
@@ -42,27 +43,47 @@ export default function HomePage() {
     const desktop = window.matchMedia('(min-width: 1101px)');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
-    const railHeight = 48;
+    const motion = { y: window.scrollY, accum: 0, revealed: false, suspendUntil: 0 };
+    const threshold = BRAND_BANNER_STACK.scrollThreshold;
 
     const sync = () => {
       const enabled = desktop.matches && !reduced.matches;
       if (!enabled) {
+        motion.revealed = false;
+        motion.accum = 0;
         root.style.setProperty('--brand-rail-height', '0px');
         setActiveBrand((current) => (current === 0 ? current : 0));
         return;
       }
+      const y = window.scrollY;
+      const delta = y - motion.y;
+      motion.y = y;
+      if (performance.now() < motion.suspendUntil) {
+        motion.accum = motion.revealed ? -threshold : Math.max(0, motion.accum);
+      } else if (delta !== 0) {
+        motion.accum = motion.accum !== 0 && Math.sign(delta) !== Math.sign(motion.accum) ? delta : motion.accum + delta;
+      }
+      if (y <= 4 || motion.accum >= threshold) {
+        motion.revealed = false;
+        if (motion.accum > threshold) motion.accum = threshold;
+      } else if (motion.accum <= -threshold) {
+        motion.revealed = true;
+        if (motion.accum < -threshold) motion.accum = -threshold;
+      }
       const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
       const pin = document.querySelector('.site-header.is-hidden') ? 0 : headerH;
       const heroes = [...root.querySelectorAll(':scope > .home-brand > .brand-showcase')];
-      const railOn = root.style.getPropertyValue('--brand-rail-height') === `${railHeight}px`;
-      const line = pin + (railOn ? railHeight : 0);
+      const railHeight = parseFloat(root.style.getPropertyValue('--brand-rail-height')) || 0;
+      const line = pin + railHeight;
       let active = 0;
       heroes.forEach((hero, index) => {
         if (hero.getBoundingClientRect().top <= line + 2) active = index;
       });
-      const nextRail = active > 0 ? `${railHeight}px` : '0px';
+      const nextRail = motion.revealed && active > 0 ? `${brandBannerStackHeight(active)}px` : '0px';
       if (root.style.getPropertyValue('--brand-rail-height') !== nextRail) {
         root.style.setProperty('--brand-rail-height', nextRail);
+        motion.suspendUntil = performance.now() + 180;
+        motion.y = window.scrollY;
       }
       setActiveBrand((current) => (current === active ? current : active));
     };
@@ -112,7 +133,7 @@ export default function HomePage() {
         <Hero introActive={introActive} />
         <IntroSection />
         <section id="showcases" aria-label={copy.home.worlds}>
-          <BrandLogoRail brands={brands.slice(0, activeBrand)} />
+          <BrandBannerStack brands={brands.slice(0, activeBrand)} />
           {brands.map((brand, index) => (
             <section className="home-brand" key={brand.slug}>
               <BrandShowcase

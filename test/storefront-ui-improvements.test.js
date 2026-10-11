@@ -186,6 +186,11 @@ test('product details page uses soft #fdfdfd background only', () => {
 test('product details focal image stays contained and controlled', () => {
   assert.match(css, /\.product-detail-page\s+\.product-detail-focal/);
   assert.match(css, /object-fit:\s*contain/);
+  assert.match(css, /--pdp-media-w:\s*min\(390px,\s*calc\(100% - 100px\)\)/);
+  assert.match(css, /\.product-detail-page \.product-detail-stage \.category-product-showcase--detail \.category-product-showcase__media \{[^}]*width:\s*100%[^}]*height:\s*360px/);
+  assert.match(css, /\.product-card__media,\s*\.product-detail-page \.product-detail-focal[\s\S]{0,240}?background:\s*#fefefe/);
+  assert.match(css, /flex:\s*0 0 78px/);
+  assert.match(css, /\.product-detail-page \.product-detail-stage \.same-subcategory-products__track \{[^}]*gap:\s*12px/);
   assert.doesNotMatch(css, /\.product-main-gallery__frame/);
 });
 

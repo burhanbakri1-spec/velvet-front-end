@@ -1334,7 +1334,11 @@ html[dir="rtl"] .brand-strip__track { animation-name: brand-strip-marquee-rtl; }
 .product-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: clamp(18px,2vw,34px); }
 .product-card { min-width: 0; border-radius: 25px; background: #fefefe; overflow: hidden; box-shadow: none; transition: transform .45s cubic-bezier(.22,1,.36,1); }
 .product-card:hover { transform: translateY(-7px); box-shadow: none; }
-.product-card__media { aspect-ratio: 1 / 1.03; background: #fefefe; display: block; position: relative; overflow: hidden; }
+.product-card__media,
+.product-detail-page .product-detail-focal,
+.product-detail-page .category-product-showcase--detail .category-product-showcase__media,
+.product-detail-page .product-detail-focal__image { background: #fefefe; }
+.product-card__media { aspect-ratio: 1 / 1.03; display: block; position: relative; overflow: hidden; }
 .product-card__media-link { display: block; width: 100%; height: 100%; position: relative; }
 .product-card__image { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; transform: scale(.68); transition: transform .7s cubic-bezier(.22,1,.36,1); }
 .product-card:hover .product-card__image { transform: scale(.7); }
@@ -2313,17 +2317,15 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
 /* ============================================================
-   HOME — one logo rail above the active brand hero.
-   Desktop: previous brands leave the banner stack and appear as
-   contained logos in a single horizontal rail. Every hero pins at
-   the same place, just under that rail, so the active banner stays
-   full size and the next banner covers the previous one completely.
-   --brand-rail-height is 0 until a previous brand exists, then 48px.
-   Strips paint above the rail and the heroes. Tablet, mobile, and
-   reduced motion use normal flow.
+   HOME — previous-brand banner slices above the active hero.
+   Hidden while scrolling down: --brand-rail-height stays 0px, so the
+   stack reserves no space and the active hero stays full size.
+   Scrolling up by the threshold reveals compact overlapping slices
+   of each previous hero (real banner + logo). Strips paint above
+   the stack. Tablet, mobile, and reduced motion use normal flow.
    Scoped to #showcases (HomePage only).
    ============================================================ */
-#showcases { --brand-hero-edge: 140px; --brand-rail-height: 0px; }
+#showcases { --brand-hero-edge: 140px; --brand-rail-height: 0px; overflow-anchor: none; }
 #showcases > .home-brand { margin: 0; padding: 0; }
 #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
   position: sticky;
@@ -2342,59 +2344,71 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
   height: 0;
   pointer-events: none;
 }
-.brand-logo-rail { display: none; }
+.brand-banner-stack { display: none; }
 @media (min-width: 1101px) {
   #showcases > .home-brand { display: contents; }
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
     top: calc(var(--header-height) + var(--brand-rail-height, 0px));
     z-index: 1;
   }
-  #showcases > .brand-logo-rail {
+  #showcases > .brand-banner-stack {
     position: sticky;
     top: var(--header-height);
     z-index: 8;
     display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 6px;
+    flex-direction: column;
+    justify-content: flex-end;
     height: var(--brand-rail-height, 0px);
     margin: 0;
-    padding: 0 16px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    overscroll-behavior-x: contain;
-    background: rgba(255, 255, 255, 0.92);
-    scrollbar-width: thin;
-  }
-  #showcases > .brand-logo-rail[data-empty] {
-    height: 0;
-    padding: 0;
-    pointer-events: none;
-  }
-  .brand-logo-rail__item {
-    flex: 0 0 auto;
-    display: grid;
-    place-items: center;
-    width: 136px;
-    height: 42px;
     padding: 0;
     overflow: hidden;
+    pointer-events: none;
+    overflow-anchor: none;
     background: transparent;
-    box-shadow: none;
+    opacity: 1;
+    transition: opacity .35s ease;
   }
-  .brand-logo-rail__item img {
-    display: block;
+  #showcases > .brand-banner-stack[data-empty] {
+    height: 0;
+    padding: 0;
+    opacity: 0;
+  }
+  .brand-banner-slice {
+    position: relative;
+    flex: 0 0 auto;
+    height: 64px;
+    margin: 0 0 -30px;
+    overflow: hidden;
+    background: transparent;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, .16);
+  }
+  .brand-banner-slice:last-child { margin-bottom: 0; }
+  .brand-banner-slice__banner {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+  .brand-banner-slice__logo {
+    position: absolute;
+    z-index: 1;
+    top: 4px;
+    inset-inline-start: 16px;
     width: auto;
     height: auto;
-    max-width: 128px;
-    max-height: 36px;
+    max-width: 120px;
+    max-height: 26px;
     object-fit: contain;
     object-position: center;
+    background: transparent;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
   }
   #showcases > .home-brand > .brand-strip { z-index: 20; }
   #showcases > .home-brand > .home-brand__runway { height: 0; }
 }
-body:has(.site-header.is-hidden) #showcases > .brand-logo-rail { top: 0; }
+body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
 @media (max-width: 1100px) {
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
     position: static;
@@ -2405,7 +2419,7 @@ body:has(.site-header.is-hidden) #showcases > .brand-logo-rail { top: 0; }
   #showcases > .home-brand > .brand-strip { z-index: auto; }
   #showcases > .home-brand { margin-bottom: 0; }
   #showcases > .home-brand > .home-brand__runway { height: 0; }
-  #showcases > .brand-logo-rail { display: none; }
+  #showcases > .brand-banner-stack { display: none; height: 0; transition: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
@@ -2417,7 +2431,7 @@ body:has(.site-header.is-hidden) #showcases > .brand-logo-rail { top: 0; }
   #showcases > .home-brand > .brand-strip { z-index: auto; }
   #showcases > .home-brand { margin-bottom: 0; }
   #showcases > .home-brand > .home-brand__runway { height: 0; }
-  #showcases > .brand-logo-rail { display: none; }
+  #showcases > .brand-banner-stack { display: none; height: 0; transition: none; }
 }
 /* BrandPage Main Category banners reuse the exact same approved stack:
    pin the current category banner, let the next one rise from the bottom
@@ -4553,7 +4567,9 @@ html[dir="rtl"] .product-path-hero__copy {
   align-items: center;
 }
 .product-detail-page .product-detail-stage__gallery {
-  width: min(340px, 100%);
+  --pdp-media-w: min(390px, calc(100% - 100px));
+  --pdp-arrow: 40px;
+  width: min(490px, 100%);
   margin: 0 auto;
 }
 .product-detail-page .product-detail-stage .category-product-showcase.category-product-showcase--detail {
@@ -4561,49 +4577,57 @@ html[dir="rtl"] .product-path-hero__copy {
   padding: 0;
 }
 .product-detail-page .product-detail-stage .product-image-gallery--compact {
-  padding: 8px 0 0;
-  margin: 0;
+  width: min(390px, calc(100% - 100px));
+  padding: 0;
+  margin: 12px auto 0;
 }
 .product-detail-page .product-detail-stage .same-subcategory-products__viewport {
   padding: 0;
 }
 .product-detail-page .product-detail-stage .same-subcategory-products__track {
-  gap: 8px;
+  gap: 12px;
   justify-content: center;
 }
-.product-detail-page .product-detail-stage .product-image-gallery--compact .same-subcategory-products__slide,
+.product-detail-page .product-detail-stage .product-image-gallery--compact .same-subcategory-products__slide {
+  flex: 0 0 78px;
+  width: 78px;
+  height: 78px;
+  max-height: 78px;
+  aspect-ratio: 1;
+}
 .product-detail-page .product-detail-stage .product-image-gallery--compact .same-subcategory-products__slide img {
-  max-height: 72px;
+  max-height: 78px;
+  object-fit: contain;
 }
-.product-detail-page .product-detail-focal {
-  width: min(340px, 100%);
+.product-detail-page .product-detail-stage .product-detail-focal {
+  width: min(390px, calc(100% - 100px));
+  max-width: 390px;
 }
-.product-detail-page .category-product-showcase--detail .category-product-showcase__media {
+.product-detail-page .product-detail-stage .category-product-showcase--detail .category-product-showcase__media {
   width: 100%;
-  max-width: 340px;
-  height: 300px;
-  max-height: 300px;
+  max-width: 390px;
+  height: 360px;
+  max-height: 360px;
   aspect-ratio: auto;
-  background: #fff;
   margin-inline: auto;
 }
 .product-detail-page .product-detail-stage .product-showcase-nav__button {
   top: calc(50% - 20px);
-  width: 40px;
+  width: var(--pdp-arrow);
   font-size: 18px;
   background: rgba(255, 255, 255, .92);
 }
-.product-detail-page .product-detail-stage .product-showcase-nav__button--previous { left: 8px; right: auto; }
-.product-detail-page .product-detail-stage .product-showcase-nav__button--next { right: 8px; left: auto; }
-html[dir="rtl"] .product-detail-page .product-detail-stage .product-showcase-nav__button--previous { right: 8px; left: auto; }
-html[dir="rtl"] .product-detail-page .product-detail-stage .product-showcase-nav__button--next { left: 8px; right: auto; }
+.product-detail-page .product-detail-stage .product-showcase-nav__button--previous { left: 0; right: auto; }
+.product-detail-page .product-detail-stage .product-showcase-nav__button--next { right: 0; left: auto; }
+html[dir="rtl"] .product-detail-page .product-detail-stage .product-showcase-nav__button--previous { right: 0; left: auto; }
+html[dir="rtl"] .product-detail-page .product-detail-stage .product-showcase-nav__button--next { left: 0; right: auto; }
 .product-detail-page .category-product-showcase__copy {
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr) 40px;
   justify-items: center;
   row-gap: 6px;
   width: min(640px, 100%);
-  padding-top: 10px;
+  padding-top: 12px;
   text-align: center;
 }
 .product-detail-page .category-product-showcase__category,
@@ -4629,6 +4653,14 @@ html[dir="rtl"] .product-detail-page .product-detail-stage .product-showcase-nav
 .product-detail-page .product-detail-option legend { text-align: center; }
 .product-detail-page .product-detail-option .product-option__values { justify-content: center; }
 .product-detail-page .product-detail-buy { margin-top: 10px; }
+@media (max-width: 900px) {
+  .product-detail-page .product-detail-stage .product-detail-focal,
+  .product-detail-page .product-detail-stage .product-image-gallery--compact { width: min(320px, calc(100% - 100px)); }
+  .product-detail-page .product-detail-stage .category-product-showcase--detail .category-product-showcase__media {
+    height: 300px;
+    max-height: 300px;
+  }
+}
 html[dir="rtl"] .category-product-showcase__availability { padding-left: 0; padding-inline-start: 17px; }
 html[dir="rtl"] .category-product-showcase__availability::before { left: auto; inset-inline-start: 0; }
 .product-detail-commerce {

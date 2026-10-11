@@ -9,6 +9,7 @@ import {
   selectBrandStripProducts,
 } from '../src/data/brandProductStrip.js';
 import { clampStripScrollPosition, STRIP_GROUPS } from '../src/hooks/stripScroll.js';
+import { BRAND_BANNER_STACK, brandBannerStackHeight } from '../src/components/brandBannerMetrics.js';
 
 const read = (relative) => fs.readFileSync(new URL(`../src/${relative}`, import.meta.url), 'utf8');
 const homePath = new URL('../src/pages/HomePage.jsx', import.meta.url);
@@ -321,9 +322,10 @@ test('home brand banners stick as a scroll deck and the strip paints above its b
   assert.match(styles, /--brand-rail-height:\s*0px/);
   assert.match(styles, /@media \(min-width:\s*1101px\) \{\s*#showcases > \.home-brand \{[^}]*display:\s*contents/);
   assert.match(styles, /top:\s*calc\(var\(--header-height\) \+ var\(--brand-rail-height, 0px\)\)/);
-  assert.match(styles, /#showcases > \.brand-logo-rail \{[^}]*flex-wrap:\s*nowrap[^}]*overflow-x:\s*auto/);
-  assert.match(styles, /\.brand-logo-rail__item img \{[^}]*object-fit:\s*contain/);
-  assert.match(fs.readFileSync(homePath, 'utf8'), /BrandLogoRail/);
+  assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*height:\s*var\(--brand-rail-height, 0px\)[^}]*overflow:\s*hidden/);
+  assert.match(styles, /\.brand-banner-slice__banner \{[^}]*object-fit:\s*cover/);
+  assert.match(fs.readFileSync(homePath, 'utf8'), /BrandBannerStack/);
+  assert.match(fs.readFileSync(homePath, 'utf8'), /scrollThreshold/);
   assert.match(styles, /#showcases > \.home-brand > \.brand-strip \{ z-index:\s*20; \}/);
   assert.doesNotMatch(styles, /--brand-deck-slice|brand-deck-tab|is-collapsed/);
   assert.doesNotMatch(fs.readFileSync(homePath, 'utf8'), /brand-deck-tab|getBrandLogo|is-collapsed|is-upcoming/);
@@ -337,6 +339,22 @@ test('home brand banners stick as a scroll deck and the strip paints above its b
   assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[^}]*#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);
   assert.match(styles, /\.brand-strip \{[^}]*position: relative/);
   assert.match(styles, /#showcases \{[^}]*gap:\s*0/);
+});
+
+test('previous-brand banner stack stays compact and hidden until scroll-up', () => {
+  assert.equal(BRAND_BANNER_STACK.sliceHeight, 64);
+  assert.equal(BRAND_BANNER_STACK.peek, 34);
+  assert.equal(BRAND_BANNER_STACK.sliceHeight - BRAND_BANNER_STACK.peek, 30);
+  assert.equal(BRAND_BANNER_STACK.scrollThreshold, 36);
+  assert.equal(brandBannerStackHeight(0), 0);
+  assert.equal(brandBannerStackHeight(1), 64);
+  assert.equal(brandBannerStackHeight(3), 132);
+  assert.equal(brandBannerStackHeight(12), BRAND_BANNER_STACK.maxHeight);
+  const home = fs.readFileSync(homePath, 'utf8');
+  assert.match(home, /motion\.revealed && active > 0 \? `\$\{brandBannerStackHeight\(active\)\}px` : '0px'/);
+  const styles = fs.readFileSync(stylesPath, 'utf8');
+  assert.match(styles, /@media \(max-width:\s*1100px\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*display:\s*none[^}]*height:\s*0/);
+  assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*transition:\s*none/);
 });
 
 test('product selection stays isolated from velvetCatalog.js', () => {
