@@ -51,6 +51,7 @@ export default function HomePage() {
       if (!enabled) {
         motion.revealed = false;
         motion.accum = 0;
+        root.removeAttribute('data-stack-open');
         root.style.setProperty('--brand-rail-height', '0px');
         setActiveBrand((current) => (current === 0 ? current : 0));
         return;
@@ -70,18 +71,27 @@ export default function HomePage() {
         motion.revealed = true;
         if (motion.accum < -threshold) motion.accum = -threshold;
       }
-      const headerH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
-      const pin = document.querySelector('.site-header.is-hidden') ? 0 : headerH;
       const heroes = [...root.querySelectorAll(':scope > .home-brand > .brand-showcase')];
-      const railHeight = parseFloat(root.style.getPropertyValue('--brand-rail-height')) || 0;
-      const line = pin + railHeight;
+      const tops = heroes.map((hero) => hero.getBoundingClientRect().top);
+      const cluster = tops.length ? Math.min(...tops) : 0;
       let active = 0;
-      heroes.forEach((hero, index) => {
-        if (hero.getBoundingClientRect().top <= line + 2) active = index;
+      tops.forEach((top, index) => {
+        if (top <= cluster + 2) active = index;
       });
-      const nextRail = motion.revealed && active > 0 ? `${brandBannerStackHeight(active)}px` : '0px';
-      if (root.style.getPropertyValue('--brand-rail-height') !== nextRail) {
+      const stackOpen = motion.revealed && active > 0;
+      const nextRail = stackOpen ? `${brandBannerStackHeight(active)}px` : '0px';
+      const railChanged = root.style.getPropertyValue('--brand-rail-height') !== nextRail;
+      const stripChanged = root.hasAttribute('data-stack-open') !== stackOpen;
+      if (stackOpen) root.setAttribute('data-stack-open', '');
+      else root.removeAttribute('data-stack-open');
+      if (railChanged) {
+        const prevRail = parseFloat(root.style.getPropertyValue('--brand-rail-height')) || 0;
+        const nextRailPx = stackOpen ? brandBannerStackHeight(active) : 0;
         root.style.setProperty('--brand-rail-height', nextRail);
+        const shift = nextRailPx - prevRail;
+        if (shift > 0) document.scrollingElement.scrollTop += shift;
+      }
+      if (railChanged || stripChanged) {
         motion.suspendUntil = performance.now() + 180;
         motion.y = window.scrollY;
       }
@@ -135,7 +145,7 @@ export default function HomePage() {
         <section id="showcases" aria-label={copy.home.worlds}>
           <BrandBannerStack brands={brands.slice(0, activeBrand)} />
           {brands.map((brand, index) => (
-            <section className="home-brand" key={brand.slug}>
+            <section className="home-brand" data-active={index === activeBrand ? 'true' : undefined} key={brand.slug}>
               <BrandShowcase
                 variant="full-banner"
                 showBrandLogo

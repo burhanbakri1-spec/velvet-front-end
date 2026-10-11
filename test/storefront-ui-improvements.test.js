@@ -186,11 +186,13 @@ test('product details page uses soft #fdfdfd background only', () => {
 test('product details focal image stays contained and controlled', () => {
   assert.match(css, /\.product-detail-page\s+\.product-detail-focal/);
   assert.match(css, /object-fit:\s*contain/);
-  assert.match(css, /--pdp-media-w:\s*min\(390px,\s*calc\(100% - 100px\)\)/);
+  assert.match(css, /--pdp-media-w:\s*min\(390px,\s*calc\(100% - 106px\)\)/);
   assert.match(css, /\.product-detail-page \.product-detail-stage \.category-product-showcase--detail \.category-product-showcase__media \{[^}]*width:\s*100%[^}]*height:\s*360px/);
   assert.match(css, /\.product-card__media,\s*\.product-detail-page \.product-detail-focal[\s\S]{0,240}?background:\s*#fefefe/);
-  assert.match(css, /flex:\s*0 0 78px/);
+  assert.match(css, /flex:\s*0 0 calc\(\(100% - 36px\) \/ 4\)/);
   assert.match(css, /\.product-detail-page \.product-detail-stage \.same-subcategory-products__track \{[^}]*gap:\s*12px/);
+  assert.match(css, /\.product-detail-page \.category-product-showcase__copy h1 \{[^}]*font-size:\s*clamp\(21px,\s*1\.6vw,\s*25px\)/);
+  assert.match(css, /--pdp-arrow:\s*40px[^}]*--pdp-arrow-gap:\s*13px/);
   assert.doesNotMatch(css, /\.product-main-gallery__frame/);
 });
 

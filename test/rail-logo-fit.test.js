@@ -5,12 +5,16 @@ import { railLogoFit, railWordmarkNameSize, railWordmarkSvg, RAIL_WORDMARK } fro
 
 const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
 
-test('previous-brand slices use the real banner plus a transparent logo', () => {
+test('previous-brand slices crop the real hero instead of restyling a logo', () => {
+  const stack = fs.readFileSync(new URL('../src/components/BrandBannerStack.jsx', import.meta.url), 'utf8');
   assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*height:\s*var\(--brand-rail-height, 0px\)[^}]*overflow:\s*hidden[^}]*background:\s*transparent/);
-  assert.match(styles, /\.brand-banner-slice \{[^}]*height:\s*64px[^}]*margin:\s*0 0 -30px[^}]*background:\s*transparent/);
-  assert.match(styles, /\.brand-banner-slice__banner \{[^}]*object-fit:\s*cover[^}]*object-position:\s*center top/);
-  assert.match(styles, /\.brand-banner-slice__logo \{[^}]*max-height:\s*26px[^}]*object-fit:\s*contain[^}]*background:\s*transparent/);
-  assert.doesNotMatch(styles, /\.brand-banner-slice \{[^}]*(#17151f|#fff|#fefefe)/);
+  assert.match(styles, /\.brand-banner-slice \{[^}]*height:\s*118px[^}]*margin:\s*0 0 -4px[^}]*background:\s*transparent/);
+  assert.match(styles, /\.brand-banner-slice__stage \{[^}]*top:\s*-27px[^}]*width:\s*100%/);
+  assert.doesNotMatch(styles, /\.brand-banner-slice__stage \{[^}]*transform:\s*scale/);
+  assert.match(stack, /className="brand-showcase__image"/);
+  assert.match(stack, /brand-showcase__brand-logo-frame/);
+  assert.doesNotMatch(styles, /\.brand-banner-slice__logo/);
+  assert.doesNotMatch(stack, /brand-banner-slice__logo/);
 });
 
 test('padded logos scale to the same visual height and stay inside the max box', () => {

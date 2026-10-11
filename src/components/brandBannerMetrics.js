@@ -1,7 +1,7 @@
 export const BRAND_BANNER_STACK = Object.freeze({
-  sliceHeight: 64,
-  peek: 34,
-  maxHeight: 132,
+  sliceHeight: 118,
+  peek: 114,
+  maxHeight: 346,
   scrollThreshold: 36,
 });
 
