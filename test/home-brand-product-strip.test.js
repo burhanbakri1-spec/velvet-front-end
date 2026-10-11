@@ -31,7 +31,7 @@ test('each Home brand banner renders its own product strip directly after it', (
 
   assert.match(home, /import BrandProductStrip from '\.\.\/components\/BrandProductStrip'/);
   assert.match(home, /<section className="home-brand" data-active=\{index === activeBrand \? 'true' : undefined\} key=\{brand\.slug\}>/);
-  assert.match(home, /<BrandShowcase[\s\S]*deckIndex=\{index\}[\s\S]*?\/>\s*<BrandProductStrip brandSlug=\{brand\.slug\} deckIndex=\{index\} \/>/);
+  assert.match(home, /<BrandShowcase[\s\S]*deckIndex=\{index\}[\s\S]*?\/>\s*<BrandProductStrip[\s\S]*?brandSlug=\{brand\.slug\}[\s\S]*?deckIndex=\{index\}[\s\S]*?\/>/);
   assert.match(home, /<\/section>/);
   assert.doesNotMatch(home, /<BrandShowcase[\s\S]*?<BrandShowcase/, 'banners must not collapse into one another');
 });
@@ -322,8 +322,8 @@ test('home brand banners stick as a scroll deck and the strip paints above its b
   assert.match(styles, /--brand-rail-height:\s*0px/);
   assert.match(styles, /@media \(min-width:\s*1101px\) \{\s*#showcases > \.home-brand \{[^}]*display:\s*contents/);
   assert.match(styles, /top:\s*calc\(var\(--header-height\) \+ var\(--brand-rail-height, 0px\)\)/);
-  assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*height:\s*var\(--brand-rail-height, 0px\)[^}]*overflow:\s*hidden/);
-  assert.match(styles, /\.brand-banner-slice__stage \.brand-showcase__image \{[^}]*object-fit:\s*contain/);
+  assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*position:\s*fixed[^}]*overflow:\s*hidden/);
+  assert.match(styles, /\.brand-banner-slice__stage \.brand-showcase__image \{[^}]*object-fit:\s*cover/);
   assert.match(fs.readFileSync(homePath, 'utf8'), /BrandBannerStack/);
   assert.match(fs.readFileSync(homePath, 'utf8'), /scrollThreshold/);
   assert.match(styles, /#showcases > \.home-brand > \.brand-strip \{ z-index:\s*20; \}/);
@@ -355,7 +355,9 @@ test('previous-brand banner stack stays compact and hidden until scroll-up', () 
   assert.match(home, /const stackOpen = motion\.revealed && active > 0/);
   assert.match(home, /setAttribute\('data-stack-open'/);
   assert.equal((home.match(/addEventListener\('scroll'/g) || []).length, 1);
-  assert.match(styles, /#showcases\[data-stack-open\] > \.home-brand\[data-active\] > \.brand-strip \{[^}]*display:\s*none/);
+  assert.match(home, /concealed=\{stackOpen && index === activeBrand\}/);
+  assert.match(styles, /\.brand-strip\.is-concealed \{[^}]*visibility:\s*hidden/);
+  assert.doesNotMatch(home, /scrollTop \+= shift/);
   assert.match(styles, /@media \(max-width:\s*1100px\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*display:\s*none[^}]*height:\s*0/);
   assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*transition:\s*none/);
 });

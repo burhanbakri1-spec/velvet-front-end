@@ -471,6 +471,8 @@ export default function ProductDetailsPage({ slug }) {
           )}
         </div>
       </section>
+      </div>
+      </div>
 
       {hasGallery && (
         <section
@@ -508,7 +510,8 @@ export default function ProductDetailsPage({ slug }) {
           </div>
         </section>
       )}
-      </div>
+
+      <div className="product-detail-stage">
       <ProductDetailSlide {...slideProps} showMedia={false} showCopy interactive />
       </div>
 

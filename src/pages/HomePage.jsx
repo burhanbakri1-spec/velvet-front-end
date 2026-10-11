@@ -5,7 +5,7 @@ import Hero from '../components/Hero';
 import IntroSection from '../components/IntroSection';
 import BrandShowcase from '../components/BrandShowcase';
 import BrandBannerStack from '../components/BrandBannerStack';
-import { BRAND_BANNER_STACK, brandBannerStackHeight } from '../components/brandBannerMetrics';
+import { BRAND_BANNER_STACK } from '../components/brandBannerMetrics';
 import BrandProductStrip from '../components/BrandProductStrip';
 import CareersSection from '../components/CareersSection';
 import StoreReviewsSection from '../components/StoreReviewsSection';
@@ -17,6 +17,7 @@ export default function HomePage() {
   const previewTarget = new URLSearchParams(window.location.search).get('view');
   const [introActive, setIntroActive] = useState(!previewTarget);
   const [activeBrand, setActiveBrand] = useState(0);
+  const [stackOpen, setStackOpen] = useState(false);
   const { copy } = useI18n();
   const brands = [...velvetBrands].sort((a, b) => a.home.order - b.home.order);
 
@@ -53,6 +54,7 @@ export default function HomePage() {
         motion.accum = 0;
         root.removeAttribute('data-stack-open');
         root.style.setProperty('--brand-rail-height', '0px');
+        setStackOpen((current) => (current ? false : current));
         setActiveBrand((current) => (current === 0 ? current : 0));
         return;
       }
@@ -79,22 +81,10 @@ export default function HomePage() {
         if (top <= cluster + 2) active = index;
       });
       const stackOpen = motion.revealed && active > 0;
-      const nextRail = stackOpen ? `${brandBannerStackHeight(active)}px` : '0px';
-      const railChanged = root.style.getPropertyValue('--brand-rail-height') !== nextRail;
-      const stripChanged = root.hasAttribute('data-stack-open') !== stackOpen;
+      root.style.setProperty('--brand-rail-height', '0px');
       if (stackOpen) root.setAttribute('data-stack-open', '');
       else root.removeAttribute('data-stack-open');
-      if (railChanged) {
-        const prevRail = parseFloat(root.style.getPropertyValue('--brand-rail-height')) || 0;
-        const nextRailPx = stackOpen ? brandBannerStackHeight(active) : 0;
-        root.style.setProperty('--brand-rail-height', nextRail);
-        const shift = nextRailPx - prevRail;
-        if (shift > 0) document.scrollingElement.scrollTop += shift;
-      }
-      if (railChanged || stripChanged) {
-        motion.suspendUntil = performance.now() + 180;
-        motion.y = window.scrollY;
-      }
+      setStackOpen((current) => (current === stackOpen ? current : stackOpen));
       setActiveBrand((current) => (current === active ? current : active));
     };
 
@@ -154,7 +144,11 @@ export default function HomePage() {
                 mediaFetchPriority={index === 0 ? 'high' : undefined}
                 brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
               />
-              <BrandProductStrip brandSlug={brand.slug} deckIndex={index} />
+              <BrandProductStrip
+                brandSlug={brand.slug}
+                deckIndex={index}
+                concealed={stackOpen && index === activeBrand}
+              />
               <div className="home-brand__runway" aria-hidden="true" />
             </section>
           ))}

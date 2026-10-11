@@ -10,7 +10,7 @@ import { useI18n } from '../i18n/I18nContext';
 
 const RESUME_DELAY_MS = 3200;
 
-export default function BrandProductStrip({ brandSlug, deckIndex }) {
+export default function BrandProductStrip({ brandSlug, deckIndex, concealed = false }) {
   const { copy, locale } = useI18n();
   const arrow = locale === 'ar' ? '←' : '→';
   const source = velvetProducts;
@@ -71,7 +71,7 @@ export default function BrandProductStrip({ brandSlug, deckIndex }) {
 
   return (
     <section
-      className="brand-strip"
+      className={`brand-strip${concealed ? ' is-concealed' : ''}`}
       data-brand={brandSlug}
       aria-label={brandName ? `${copy.home.featuredPicks} · ${brandName}` : copy.home.featuredPicks}
       style={deckIndex == null ? undefined : { '--deck-index': deckIndex }}
