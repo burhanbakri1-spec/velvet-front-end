@@ -54,7 +54,7 @@ test('mobile product grid and Shop search/filter/sort/category controls are unch
   assert.match(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-2 \{[\s\S]*?repeat\(2,/);
   assert.match(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-3 \{[\s\S]*?repeat\(3,/);
 
-  // Search, Filter, Sort and the quick category chips still render and stay visible.
+  // Search, Filter, and Sort stay. Category chips no longer render in the filter bar.
   assert.match(styles, /@media \(max-width: 760px\) \{\s*\.shop-filter-bar__row\.shop-filter-bar__row--filter \{/);
   assert.match(styles, /\.shop-filter-bar__search-input \{/);
   assert.match(styles, /\.shop-filter-bar__sort \{/);
@@ -64,5 +64,5 @@ test('mobile product grid and Shop search/filter/sort/category controls are unch
   assert.match(filterBar, /type="search"/);
   assert.match(filterBar, /aria-expanded=\{open\}/);
   assert.match(filterBar, /onChange=\{\(event\) => onSortChange\(event\.target\.value\)\}/);
-  assert.match(filterBar, /shop-filter-bar__quick-chip/);
+  assert.doesNotMatch(filterBar, /shop-filter-bar__quick-chip/);
 });

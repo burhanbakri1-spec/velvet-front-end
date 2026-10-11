@@ -68,7 +68,8 @@ test('Filter control keeps its existing behavior', () => {
   assert.match(filterBar, /\{open && \(\s*<div className="shop-filter-panel"/);
   assert.match(filterBar, /onChange=\{\(event\) => onSortChange\(event\.target\.value\)\}/);
   assert.match(filterBar, /GridDensityControl/);
-  assert.match(filterBar, /shop-filter-bar__quick-chip/);
+  assert.doesNotMatch(filterBar, /shop-filter-quick-row|shop-filter-bar__quick-chip/);
+  assert.match(filterBar, /key: 'subcategory'/);
 });
 
 test('exactly one Shop-page search control, no duplicates', () => {

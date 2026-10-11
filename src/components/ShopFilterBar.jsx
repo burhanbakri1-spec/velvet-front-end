@@ -194,7 +194,6 @@ export default function ShopFilterBar({
     label: item.name[locale],
   }));
 
-  const quickCategories = hierarchyOptions('categories').slice(0, 8);
   const showDensity = typeof onGridColsChange === 'function';
 
   return (
@@ -260,27 +259,6 @@ export default function ShopFilterBar({
           </select>
         </label>
       </div>
-
-      {quickCategories.length > 0 && (
-        <div className="shop-filter-quick-row" aria-label={s.mainCategory}>
-          <div className="shop-filter-bar__quick">
-            {quickCategories.map((option) => {
-              const active = state.category === option.id;
-              return (
-                <button
-                  type="button"
-                  key={option.id}
-                  className={`shop-filter-bar__quick-chip${active ? ' is-active' : ''}`}
-                  aria-pressed={active}
-                  onClick={() => onSelect('category', active ? '' : option.id)}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {tags.length > 0 && (
         <div className="shop-filter-bar__chips" aria-label={s.activeFilters}>

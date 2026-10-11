@@ -47,9 +47,10 @@ test('the chip row scrolls horizontally by touch in RTL and LTR with no scrollba
 });
 
 test('category selection still filters products', () => {
-  assert.match(filterBar, /const active = state\.category === option\.id;/);
-  assert.match(filterBar, /onClick=\{\(\) => onSelect\('category', active \? '' : option\.id\)\}/);
-  assert.match(filterBar, /aria-pressed=\{active\}/);
+  assert.doesNotMatch(filterBar, /onClick=\{\(\) => onSelect\('category', active \? '' : option\.id\)\}/);
+  assert.match(filterBar, /onToggle=\{\(id\) => onSelect\(column\.key, selected\[0\] === id \? '' : id\)\}/);
+  assert.match(filterBar, /key: 'category'/);
+  assert.match(filterBar, /key: 'subcategory'/);
   assert.match(useShopState, /const select = useCallback\(\(key, value\) => go\(selectPathKey\(state, key, value\)\)/);
   assert.match(useShopState, /navigate\(localizePath\(`\/products\$\{query \? `\?\$\{query\}` : ''\}`, locale\)/);
 });

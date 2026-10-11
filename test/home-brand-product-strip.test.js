@@ -356,7 +356,8 @@ test('previous-brand banner stack stays compact and hidden until scroll-up', () 
   assert.match(home, /setAttribute\('data-stack-open'/);
   assert.equal((home.match(/addEventListener\('scroll'/g) || []).length, 1);
   assert.match(home, /concealed=\{stackOpen && index === activeBrand\}/);
-  assert.match(styles, /\.brand-strip\.is-concealed \{[^}]*opacity:\s*0/);
+  assert.match(home, /stripOverlaps/);
+  assert.match(styles, /\.brand-strip\.is-concealed \{[^}]*opacity:\s*0[^}]*visibility:\s*hidden[^}]*pointer-events:\s*none/);
   assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*transform:\s*translate3d\(0, -18px, 0\)/);
   assert.doesNotMatch(home, /scrollTop \+= shift/);
   assert.match(styles, /@media \(max-width:\s*1100px\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*display:\s*none[^}]*height:\s*0/);

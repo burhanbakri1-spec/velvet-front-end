@@ -233,7 +233,7 @@ test('shop filter layout keeps FILTER alone in bordered bar', () => {
   assert.match(filterBar, /className="shop-filter-bar"/);
   assert.match(filterBar, /shop-filter-bar__row--filter/);
   assert.match(filterBar, /shop-filter-tools/);
-  assert.match(filterBar, /shop-filter-quick-row/);
+  assert.doesNotMatch(filterBar, /shop-filter-quick-row/);
   assert.match(styles, /\.shop-filter-tools[\s\S]{0,120}?justify-content:\s*space-between/);
   assert.match(styles, /\.shop-filter-quick-row[\s\S]{0,120}?justify-content:\s*center/);
 });

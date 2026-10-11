@@ -73,13 +73,20 @@ export default function HomePage() {
         motion.revealed = true;
         if (motion.accum < -threshold) motion.accum = -threshold;
       }
-      const heroes = [...root.querySelectorAll(':scope > .home-brand > .brand-showcase')];
-      const tops = heroes.map((hero) => hero.getBoundingClientRect().top);
+      const sections = [...root.querySelectorAll(':scope > .home-brand')];
+      const tops = sections.map((section) => section.querySelector(':scope > .brand-showcase')?.getBoundingClientRect().top ?? 0);
       const cluster = tops.length ? Math.min(...tops) : 0;
       let active = 0;
       tops.forEach((top, index) => {
         if (top <= cluster + 2) active = index;
       });
+      const stripOverlaps = (section) => {
+        const strip = section?.querySelector(':scope > .brand-strip');
+        if (!strip) return false;
+        const rect = strip.getBoundingClientRect();
+        return rect.bottom > cluster + 24 && rect.top < window.innerHeight - 48;
+      };
+      while (active > 0 && stripOverlaps(sections[active - 1]) && !stripOverlaps(sections[active])) active -= 1;
       const stackOpen = motion.revealed && active > 0;
       root.style.setProperty('--brand-rail-height', '0px');
       if (stackOpen) root.setAttribute('data-stack-open', '');

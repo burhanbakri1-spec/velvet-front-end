@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import ShopFilterBar from '../components/ShopFilterBar';
+import BrandSelector from '../components/BrandSelector';
 import PageNavigation from '../components/PageNavigation';
 import { filterProducts, resolvePath, sortProducts } from '../data/velvetCatalog';
 import { getShopPriority, isExplicitCustomerSort, orderProductsByIds } from '../data/displayPriority';
@@ -44,6 +45,7 @@ export default function ProductsPage() {
   return (
     <div className="shop-page">
       <PageNavigation fallbackPath={fallback} breadcrumbs={breadcrumbs} />
+      <BrandSelector activeSlug={state.brand} />
 
       <ShopFilterBar
         state={state}
