@@ -342,13 +342,13 @@ test('home brand banners stick as a scroll deck and the strip paints above its b
 });
 
 test('previous-brand banner stack stays compact and hidden until scroll-up', () => {
-  assert.equal(BRAND_BANNER_STACK.sliceHeight, 118);
-  assert.equal(BRAND_BANNER_STACK.peek, 114);
+  assert.equal(BRAND_BANNER_STACK.sliceHeight, 148);
+  assert.equal(BRAND_BANNER_STACK.peek, 144);
   assert.equal(BRAND_BANNER_STACK.sliceHeight - BRAND_BANNER_STACK.peek, 4);
   assert.equal(BRAND_BANNER_STACK.scrollThreshold, 36);
   assert.equal(brandBannerStackHeight(0), 0);
-  assert.equal(brandBannerStackHeight(1), 118);
-  assert.equal(brandBannerStackHeight(3), 346);
+  assert.equal(brandBannerStackHeight(1), 148);
+  assert.equal(brandBannerStackHeight(3), 436);
   assert.equal(brandBannerStackHeight(12), BRAND_BANNER_STACK.maxHeight);
   const home = fs.readFileSync(homePath, 'utf8');
   const styles = fs.readFileSync(stylesPath, 'utf8');
@@ -356,7 +356,8 @@ test('previous-brand banner stack stays compact and hidden until scroll-up', () 
   assert.match(home, /setAttribute\('data-stack-open'/);
   assert.equal((home.match(/addEventListener\('scroll'/g) || []).length, 1);
   assert.match(home, /concealed=\{stackOpen && index === activeBrand\}/);
-  assert.match(styles, /\.brand-strip\.is-concealed \{[^}]*visibility:\s*hidden/);
+  assert.match(styles, /\.brand-strip\.is-concealed \{[^}]*opacity:\s*0/);
+  assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*transform:\s*translate3d\(0, -18px, 0\)/);
   assert.doesNotMatch(home, /scrollTop \+= shift/);
   assert.match(styles, /@media \(max-width:\s*1100px\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*display:\s*none[^}]*height:\s*0/);
   assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*transition:\s*none/);

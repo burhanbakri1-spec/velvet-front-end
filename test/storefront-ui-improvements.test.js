@@ -191,6 +191,7 @@ test('product details focal image stays contained and controlled', () => {
   assert.match(css, /\.product-card__media \{[^}]*background:\s*#fefefe/);
   assert.match(css, /\.product-detail-page \.product-detail-focal,\s*\.product-detail-page \.category-product-showcase--detail \.category-product-showcase__media[\s\S]{0,180}?background:\s*#fff/);
   assert.match(css, /\.product-image-gallery--compact \.same-subcategory-products__slide \{[^}]*--same-sub-visible:\s*4[^}]*max-height:\s*168px/);
+  assert.match(css, /\.product-detail-page \.product-image-gallery--compact \.same-subcategory-products__slide \{[^}]*height:\s*96px[^}]*max-height:\s*96px/);
   assert.doesNotMatch(css, /flex:\s*0 0 calc\(\(100% - 36px\) \/ 4\)/);
   assert.match(css, /\.product-detail-page \.category-product-showcase__copy h1 \{[^}]*font-size:\s*clamp\(21px,\s*1\.6vw,\s*25px\)/);
   assert.match(css, /--pdp-arrow:\s*40px[^}]*--pdp-arrow-gap:\s*36px/);

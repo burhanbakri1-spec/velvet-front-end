@@ -8,10 +8,12 @@ const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'u
 test('previous-brand slices crop the real hero instead of restyling a logo', () => {
   const stack = fs.readFileSync(new URL('../src/components/BrandBannerStack.jsx', import.meta.url), 'utf8');
   assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*position:\s*fixed[^}]*background:\s*transparent/);
-  assert.match(styles, /\.brand-banner-slice \{[^}]*height:\s*118px[^}]*overflow:\s*hidden/);
+  assert.match(styles, /\.brand-banner-slice \{[^}]*height:\s*148px[^}]*overflow:\s*hidden/);
   assert.match(styles, /\.brand-banner-slice__stage \.brand-showcase__image \{[^}]*object-fit:\s*cover[^}]*object-position:\s*center top/);
   assert.match(stack, /className="brand-showcase__image"/);
-  assert.doesNotMatch(stack, /brand-logo-frame|getBrandLogo|brand-banner-slice__logo/);
+  assert.match(stack, /getBrandLogo\(brand\.slug, locale\)/);
+  assert.match(stack, /brand-showcase__brand-logo-frame/);
+  assert.doesNotMatch(stack, /brand-banner-slice__logo/);
   assert.doesNotMatch(styles, /\.brand-banner-slice__logo/);
 });
 
