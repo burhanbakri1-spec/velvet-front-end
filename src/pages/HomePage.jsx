@@ -1,11 +1,10 @@
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import IntroLoader from '../components/IntroLoader';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
 import IntroSection from '../components/IntroSection';
 import BrandShowcase from '../components/BrandShowcase';
-import BrandBannerStack from '../components/BrandBannerStack';
-import { BRAND_BANNER_STACK } from '../components/brandBannerMetrics';
+import { heroStageMotion } from '../components/heroScrollProgress';
 import BrandProductStrip from '../components/BrandProductStrip';
 import CareersSection from '../components/CareersSection';
 import StoreReviewsSection from '../components/StoreReviewsSection';
@@ -16,10 +15,9 @@ import { useI18n } from '../i18n/I18nContext';
 export default function HomePage() {
   const previewTarget = new URLSearchParams(window.location.search).get('view');
   const [introActive, setIntroActive] = useState(!previewTarget);
-  const [activeBrand, setActiveBrand] = useState(0);
-  const [stackOpen, setStackOpen] = useState(false);
   const { copy } = useI18n();
   const brands = [...velvetBrands].sort((a, b) => a.home.order - b.home.order);
+  const syncHeroes = useRef(() => {});
 
   useEffect(() => {
     if (previewTarget) {
@@ -44,68 +42,69 @@ export default function HomePage() {
     const desktop = window.matchMedia('(min-width: 1101px)');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
-    const motion = { y: window.scrollY, accum: 0, revealed: false, suspendUntil: 0, held: 0 };
-    const threshold = BRAND_BANNER_STACK.scrollThreshold;
+
+    const readShift = (hero) => {
+      const transform = hero ? getComputedStyle(hero).transform : '';
+      if (!transform || transform === 'none') return 0;
+      const values = transform.slice(transform.indexOf('(') + 1, -1).split(',').map(Number);
+      return values.length === 16 ? values[13] : values[5] || 0;
+    };
+
+    const clearMotion = () => {
+      root.style.setProperty('--brand-rail-height', '0px');
+      root.querySelectorAll(':scope > .home-brand').forEach((section) => {
+        const hero = section.querySelector(':scope > .brand-showcase');
+        const strip = section.querySelector(':scope > .brand-strip');
+        if (hero) {
+          hero.style.transform = '';
+          hero.style.clipPath = '';
+        }
+        strip?.classList.remove('is-concealed');
+        section.removeAttribute('data-active');
+      });
+    };
 
     const sync = () => {
       const enabled = desktop.matches && !reduced.matches;
       if (!enabled) {
-        motion.revealed = false;
-        motion.accum = 0;
-        motion.held = 0;
-        root.removeAttribute('data-stack-open');
-        root.style.setProperty('--brand-rail-height', '0px');
-        setStackOpen((current) => (current ? false : current));
-        setActiveBrand((current) => (current === 0 ? current : 0));
+        clearMotion();
         return;
       }
-      const y = window.scrollY;
-      const delta = y - motion.y;
-      motion.y = y;
-      if (performance.now() < motion.suspendUntil) {
-        motion.accum = motion.revealed ? -threshold : Math.max(0, motion.accum);
-      } else if (delta !== 0) {
-        motion.accum = motion.accum !== 0 && Math.sign(delta) !== Math.sign(motion.accum) ? delta : motion.accum + delta;
-      }
-      if (y <= 4 || motion.accum >= threshold) {
-        motion.revealed = false;
-        if (motion.accum > threshold) motion.accum = threshold;
-      } else if (motion.accum <= -threshold) {
-        motion.revealed = true;
-        if (motion.accum < -threshold) motion.accum = -threshold;
-      }
       const sections = [...root.querySelectorAll(':scope > .home-brand')];
-      const tops = sections.map((section) => section.querySelector(':scope > .brand-showcase')?.getBoundingClientRect().top ?? 0);
-      const cluster = tops.length ? Math.min(...tops) : 0;
-      let stuck = 0;
-      tops.forEach((top, index) => {
-        if (top <= cluster + 2) stuck = index;
+      const heroes = sections.map((section) => {
+        const hero = section.querySelector(':scope > .brand-showcase');
+        const shift = readShift(hero);
+        const rect = hero?.getBoundingClientRect();
+        return {
+          top: rect ? rect.top + window.scrollY - shift : 0,
+          height: rect ? rect.height : 0,
+        };
       });
-      const stripOverlaps = (section) => {
-        const strip = section?.querySelector(':scope > .brand-strip');
-        if (!strip) return false;
-        const rect = strip.getBoundingClientRect();
-        return rect.bottom > cluster + 24 && rect.top < window.innerHeight - 48;
-      };
-      let active = stuck;
-      // Upward scroll releases the current sticky hero immediately, which would
-      // paint the previous full banner. Hold that hero and conceal the earlier bodies.
-      if (motion.revealed) {
-        const heldIndex = Math.min(sections.length - 1, Math.max(stuck, motion.held || 0));
-        const held = sections[heldIndex]?.querySelector(':scope > .brand-showcase')?.getBoundingClientRect();
-        const onStage = held && held.bottom > cluster + 64 && held.top < window.innerHeight * 0.92;
-        active = onStage ? heldIndex : stuck;
-        motion.held = active;
-      } else {
-        while (active > 0 && stripOverlaps(sections[active - 1]) && !stripOverlaps(sections[active])) active -= 1;
-        if (delta >= 0 || y <= 4) motion.held = stuck;
-      }
-      const stackOpen = motion.revealed && active > 0;
+      const header = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 0;
+      const motion = heroStageMotion({
+        heroes,
+        scrollY: window.scrollY,
+        header,
+        viewportHeight: window.innerHeight,
+      });
+      let active = 0;
+      const visualTops = heroes.map((hero, index) => hero.top - window.scrollY + (motion[index]?.shift || 0));
+      visualTops.forEach((top, index) => {
+        if (top <= header + 2) active = index;
+      });
+      sections.forEach((section, index) => {
+        const hero = section.querySelector(':scope > .brand-showcase');
+        const strip = section.querySelector(':scope > .brand-strip');
+        const shift = motion[index]?.shift || 0;
+        const clip = motion[index]?.clip || 0;
+        if (hero) {
+          hero.style.transform = shift ? `translate3d(0, ${shift}px, 0)` : '';
+          hero.style.clipPath = clip ? `inset(0 0 ${clip}px 0)` : '';
+        }
+        strip?.classList.toggle('is-concealed', Boolean(motion[index]?.stripHidden));
+        section.toggleAttribute('data-active', index === active);
+      });
       root.style.setProperty('--brand-rail-height', '0px');
-      if (stackOpen) root.setAttribute('data-stack-open', '');
-      else root.removeAttribute('data-stack-open');
-      setStackOpen((current) => (current === stackOpen ? current : stackOpen));
-      setActiveBrand((current) => (current === active ? current : active));
     };
 
     let again = false;
@@ -124,6 +123,7 @@ export default function HomePage() {
       frame = window.requestAnimationFrame(run);
     };
 
+    syncHeroes.current = sync;
     sync();
     const observer = new ResizeObserver(schedule);
     root.querySelectorAll(':scope > .home-brand > .brand-showcase').forEach((hero) => observer.observe(hero));
@@ -145,6 +145,10 @@ export default function HomePage() {
     };
   }, []);
 
+  useLayoutEffect(() => {
+    syncHeroes.current();
+  });
+
   return (
     <>
       <IntroLoader active={introActive} />
@@ -153,9 +157,8 @@ export default function HomePage() {
         <Hero introActive={introActive} />
         <IntroSection />
         <section id="showcases" aria-label={copy.home.worlds}>
-          <BrandBannerStack brands={brands.slice(0, activeBrand)} />
           {brands.map((brand, index) => (
-            <section className="home-brand" data-active={index === activeBrand ? 'true' : undefined} key={brand.slug}>
+            <section className="home-brand" key={brand.slug}>
               <BrandShowcase
                 variant="full-banner"
                 showBrandLogo
@@ -163,12 +166,10 @@ export default function HomePage() {
                 mediaLoading={index === 0 ? 'eager' : 'lazy'}
                 mediaFetchPriority={index === 0 ? 'high' : undefined}
                 brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
-                concealed={stackOpen && index < activeBrand}
               />
               <BrandProductStrip
                 brandSlug={brand.slug}
                 deckIndex={index}
-                concealed={stackOpen && index === activeBrand}
               />
               <div className="home-brand__runway" aria-hidden="true" />
             </section>

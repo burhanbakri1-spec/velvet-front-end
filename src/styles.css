@@ -2349,8 +2349,10 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
 @media (min-width: 1101px) {
   #showcases > .home-brand { display: contents; }
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
-    top: calc(var(--header-height) + var(--brand-rail-height, 0px));
-    z-index: 1;
+    position: relative;
+    top: auto;
+    z-index: 3;
+    transition: none;
   }
   #showcases > .brand-banner-stack {
     position: fixed;
@@ -2402,13 +2404,12 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     object-fit: cover;
     object-position: center top;
   }
-  #showcases > .home-brand > .brand-strip { z-index: 20; }
-  #showcases > .home-brand > .brand-strip { transition: opacity .45s ease; }
-  .brand-strip.is-concealed { opacity: 0; visibility: hidden; pointer-events: none; }
-  #showcases[data-stack-open] > .home-brand > .brand-showcase.brand-showcase--full-banner.is-concealed {
+  #showcases > .home-brand > .brand-strip { z-index: 1; }
+  #showcases > .home-brand > .brand-strip.is-concealed {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
+    transition: none;
   }
   #showcases > .home-brand > .home-brand__runway { height: 0; }
 }

@@ -30,7 +30,7 @@ test('each Home brand banner renders its own product strip directly after it', (
   const home = fs.readFileSync(homePath, 'utf8');
 
   assert.match(home, /import BrandProductStrip from '\.\.\/components\/BrandProductStrip'/);
-  assert.match(home, /<section className="home-brand" data-active=\{index === activeBrand \? 'true' : undefined\} key=\{brand\.slug\}>/);
+  assert.match(home, /<section className="home-brand" key=\{brand\.slug\}>/);
   assert.match(home, /<BrandShowcase[\s\S]*deckIndex=\{index\}[\s\S]*?\/>\s*<BrandProductStrip[\s\S]*?brandSlug=\{brand\.slug\}[\s\S]*?deckIndex=\{index\}[\s\S]*?\/>/);
   assert.match(home, /<\/section>/);
   assert.doesNotMatch(home, /<BrandShowcase[\s\S]*?<BrandShowcase/, 'banners must not collapse into one another');
@@ -321,12 +321,11 @@ test('home brand banners stick as a scroll deck and the strip paints above its b
   assert.match(styles, /--brand-hero-edge:\s*140px/);
   assert.match(styles, /--brand-rail-height:\s*0px/);
   assert.match(styles, /@media \(min-width:\s*1101px\) \{\s*#showcases > \.home-brand \{[^}]*display:\s*contents/);
-  assert.match(styles, /top:\s*calc\(var\(--header-height\) \+ var\(--brand-rail-height, 0px\)\)/);
+  assert.match(styles, /@media \(min-width:\s*1101px\) \{[\s\S]*?#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative[^}]*top:\s*auto[^}]*transition:\s*none/);
   assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*position:\s*fixed[^}]*overflow:\s*hidden/);
   assert.match(styles, /\.brand-banner-slice__stage \.brand-showcase__image \{[^}]*object-fit:\s*cover/);
-  assert.match(fs.readFileSync(homePath, 'utf8'), /BrandBannerStack/);
-  assert.match(fs.readFileSync(homePath, 'utf8'), /scrollThreshold/);
-  assert.match(styles, /#showcases > \.home-brand > \.brand-strip \{ z-index:\s*20; \}/);
+  assert.match(fs.readFileSync(homePath, 'utf8'), /heroStageMotion/);
+  assert.match(styles, /#showcases > \.home-brand > \.brand-strip \{ z-index:\s*1; \}/);
   assert.doesNotMatch(styles, /--brand-deck-slice|brand-deck-tab|is-collapsed/);
   assert.doesNotMatch(fs.readFileSync(homePath, 'utf8'), /brand-deck-tab|getBrandLogo|is-collapsed|is-upcoming/);
   assert.match(styles, /#showcases > \.home-brand > \.brand-strip \{[^}]*z-index:\s*2/);
@@ -353,15 +352,13 @@ test('previous-brand banner stack stays compact and hidden until scroll-up', () 
   assert.equal(brandBannerStackHeight(12), BRAND_BANNER_STACK.maxHeight);
   const home = fs.readFileSync(homePath, 'utf8');
   const styles = fs.readFileSync(stylesPath, 'utf8');
-  assert.match(home, /const stackOpen = motion\.revealed && active > 0/);
-  assert.match(home, /setAttribute\('data-stack-open'/);
+  assert.match(home, /heroStageMotion/);
+  assert.match(home, /translate3d/);
   assert.equal((home.match(/addEventListener\('scroll'/g) || []).length, 1);
-  assert.match(home, /concealed=\{stackOpen && index === activeBrand\}/);
-  assert.match(home, /concealed=\{stackOpen && index < activeBrand\}/);
-  assert.match(home, /motion\.held/);
-  assert.match(home, /stripOverlaps/);
-  assert.match(styles, /@media \(min-width:\s*1101px\) \{[\s\S]*?#showcases\[data-stack-open\] > \.home-brand > \.brand-showcase\.brand-showcase--full-banner\.is-concealed \{[^}]*opacity:\s*0[^}]*visibility:\s*hidden[^}]*pointer-events:\s*none/);
+  assert.match(home, /classList\.toggle\('is-concealed'/);
+  assert.doesNotMatch(home, /data-stack-open|motion\.held|stackOpen/);
   assert.match(styles, /\.brand-strip\.is-concealed \{[^}]*opacity:\s*0[^}]*visibility:\s*hidden[^}]*pointer-events:\s*none/);
+  assert.match(styles, /@media \(min-width:\s*1101px\) \{[\s\S]*?#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative[^}]*transition:\s*none/);
   assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*transform:\s*translate3d\(0, -18px, 0\)/);
   assert.doesNotMatch(home, /scrollTop \+= shift/);
   assert.match(styles, /@media \(max-width:\s*1100px\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*display:\s*none[^}]*height:\s*0/);

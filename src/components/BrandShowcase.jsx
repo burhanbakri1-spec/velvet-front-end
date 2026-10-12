@@ -11,7 +11,6 @@ export default function BrandShowcase({
   mediaLoading = 'lazy',
   mediaFetchPriority,
   deckIndex,
-  concealed = false,
 }) {
   const viewCursorRef = useRef(null);
   const { copy, locale } = useI18n();
@@ -35,7 +34,7 @@ export default function BrandShowcase({
 
   return (
     <article
-      className={`brand-showcase brand-showcase--${brand.scene}${isFullBanner ? ' brand-showcase--full-banner' : ''}${concealed ? ' is-concealed' : ''}`}
+      className={`brand-showcase brand-showcase--${brand.scene}${isFullBanner ? ' brand-showcase--full-banner' : ''}`}
       style={{
         '--c1': brand.palette[0],
         '--c2': brand.palette[1],
