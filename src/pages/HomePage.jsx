@@ -42,7 +42,7 @@ export default function HomePage() {
     const desktop = window.matchMedia('(min-width: 1101px)');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
-    const direction = { y: window.scrollY, mode: 'down', anchor: window.scrollY };
+    const direction = { y: window.scrollY, mode: 'down' };
 
     const readShift = (hero) => {
       const transform = hero ? getComputedStyle(hero).transform : '';
@@ -71,22 +71,14 @@ export default function HomePage() {
       if (!enabled) {
         direction.mode = 'down';
         direction.y = window.scrollY;
-        direction.anchor = direction.y;
         clearMotion();
         return;
       }
       const y = window.scrollY;
       const delta = y - direction.y;
       const nextMode = stepHeroDirection(direction.mode, delta);
-      if (nextMode !== 'up') {
-        direction.mode = 'down';
-        direction.y = y;
-        direction.anchor = y;
-        clearMotion();
-        return;
-      }
-      if (direction.mode !== 'up') direction.anchor = direction.y;
-      direction.mode = 'up';
+      direction.mode = nextMode;
+      if (direction.mode !== 'up') direction.mode = 'down';
       direction.y = y;
       const sections = [...root.querySelectorAll(':scope > .home-brand')];
       const heroes = sections.map((section) => {
@@ -104,9 +96,7 @@ export default function HomePage() {
         scrollY: y,
         header,
         viewportHeight: window.innerHeight,
-        mode: 'up',
-        distance: Math.max(0, direction.anchor - y),
-        anchorScrollY: direction.anchor,
+        mode: direction.mode,
       });
       let active = 0;
       const visualTops = heroes.map((hero, index) => hero.top - window.scrollY + (motion[index]?.shift || 0));

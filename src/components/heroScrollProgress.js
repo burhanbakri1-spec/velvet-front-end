@@ -1,10 +1,7 @@
-/** Visible height of each older card before the next one starts to appear. */
-export const HERO_DECK_PEEK = 100;
-
 /**
- * Scroll direction for the two desktop hero models.
- * Any downward delta leaves the deck immediately. Any upward delta enters it.
- * A zero delta keeps the current model, so a paused wheel does not change the frame.
+ * Scroll direction picks which desktop hero model runs.
+ * Any downward delta leaves the upward deck immediately.
+ * Any upward delta enters it. A zero delta keeps the current model.
  */
 export function stepHeroDirection(mode, delta) {
   if (delta > 0) return 'down';
@@ -17,16 +14,15 @@ function roundShift(value) {
 }
 
 /**
- * Desktop hero motion.
+ * Two desktop hero models. Scroll position picks the frame inside the model.
  *
- * Down is not handled here: the page stays in normal flow, so the current
- * hero travels up, the next hero enters from below, and each product strip
- * keeps its place. No overlap, clip, or leftover transform.
+ * Down is a vertical slide. The current hero travels up with the page and the
+ * next hero is brought up from below so they move together. A product strip
+ * between them stays concealed until that hero has arrived, then it is restored.
  *
- * Up is a deck reveal driven by `distance` (pixels scrolled up since the
- * direction changed). The nearest previous hero grows first. Each further
- * peek brings the next older hero in above it. The current hero moves down
- * with that same distance. Strips between those layers are concealed.
+ * Up is a full-card reverse. The current hero travels down with the page and
+ * only the immediate previous hero comes in from above. Older heroes stay in
+ * normal flow until that card has been passed. Nothing is cropped into a slice.
  */
 export function heroStageMotion({
   heroes,
@@ -34,62 +30,50 @@ export function heroStageMotion({
   header,
   viewportHeight,
   mode = 'down',
-  distance = 0,
-  anchorScrollY = scrollY,
 }) {
   const motion = heroes.map(() => ({ shift: 0, clip: 0, stripHidden: false }));
-  if (mode !== 'up' || distance <= 0 || viewportHeight <= 0) return motion;
-  if (!Array.isArray(heroes) || heroes.length < 2) return motion;
+  if (!Array.isArray(heroes) || heroes.length < 2 || viewportHeight <= 0) return motion;
 
-  const focus = anchorScrollY + header;
-  let current = -1;
-  for (let index = 0; index < heroes.length; index += 1) {
-    if (heroes[index].height > 0 && heroes[index].top <= focus + 0.5) current = index;
+  const focus = scrollY + header;
+  let pair = -1;
+  for (let index = 0; index < heroes.length - 1; index += 1) {
+    const start = heroes[index].top;
+    const end = heroes[index + 1].top;
+    if (focus >= start - 0.5 && focus < end - 0.5) {
+      pair = index;
+      break;
+    }
   }
-  if (current <= 0) return motion;
+  if (pair < 0) return motion;
 
-  const reveal = heroes.map(() => 0);
-  let budget = distance;
-  for (let index = current - 1; index >= 0 && budget > 0; index -= 1) {
-    const amount = Math.min(budget, HERO_DECK_PEEK);
-    reveal[index] = amount;
-    budget -= amount;
-  }
-  if (budget > 0) {
-    const lead = current - 1;
-    const room = Math.max(0, heroes[lead].height - reveal[lead]);
-    reveal[lead] += Math.min(budget, room);
-  }
-  const total = reveal.reduce((sum, value) => sum + value, 0);
+  const upper = heroes[pair];
+  const lower = heroes[pair + 1];
+  const span = lower.top - upper.top;
+  if (span <= 0 || upper.height <= 0 || lower.height <= 0) return motion;
 
-  for (let index = 0; index < current; index += 1) {
-    const natural = heroes[index].top - scrollY;
-    motion[index] = {
-      shift: roundShift(header - heroes[index].height - natural),
+  const gap = Math.max(0, span - upper.height);
+  const progress = Math.min(1, Math.max(0, (focus - upper.top) / span));
+
+  if (mode === 'up') {
+    const shift = roundShift(progress * gap);
+    motion[pair] = {
+      shift,
       clip: 0,
-      stripHidden: true,
+      stripHidden: gap > 0 && shift !== 0,
     };
+    return motion;
   }
 
-  let cursor = header;
-  for (let index = 0; index < current; index += 1) {
-    if (reveal[index] <= 0) continue;
-    const natural = heroes[index].top - scrollY;
-    motion[index] = {
-      shift: roundShift(cursor - natural),
-      clip: 0,
-      stripHidden: true,
-      z: 30 + index,
-    };
-    cursor += reveal[index];
-  }
-
-  const currentNatural = heroes[current].top - scrollY;
-  const meetShift = (header + total) - currentNatural;
-  motion[current] = {
-    shift: roundShift(Math.max(0, Math.min(meetShift, total))),
+  // 0 at both flush frames, so a finished hero sits in normal flow with its
+  // strip back in place. In between, the next hero leads the page and climbs
+  // over the current one. The lead stays monotonic: it never travels down.
+  const lead = Math.sin(Math.PI * progress) * (span / Math.PI) * 0.95;
+  const shift = roundShift(-lead);
+  motion[pair + 1] = {
+    shift,
     clip: 0,
     stripHidden: false,
   };
+  motion[pair].stripHidden = gap > 0 && shift !== 0;
   return motion;
 }
