@@ -2410,7 +2410,10 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
 body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
 @media (max-width: 1100px) {
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
-    position: static;
+    /* relative, not static: static is not a containing block, so the
+       absolute banner image/link/copy escape to the viewport and the
+       last brand paints over the hero after its image loads. */
+    position: relative;
     top: auto;
     z-index: auto;
     transition: none;
@@ -2422,7 +2425,7 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
-    position: static;
+    position: relative;
     top: auto;
     z-index: auto;
     transition: none;

@@ -335,8 +335,9 @@ test('home brand banners stick as a scroll deck and the strip paints above its b
   assert.match(styles, /\.brand-strip-card__media \{[^}]*background:\s*#fefefe/);
   assert.match(styles, /\.brand-strip-card__media \{[^}]*aspect-ratio: 1 \/ 1/);
   assert.match(styles, /\.category-showcases > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position: sticky;[^}]*top: 0;[^}]*\}/);
-  assert.match(styles, /@media \(max-width:\s*1100px\) \{[^}]*#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);
-  assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[^}]*#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);
+  assert.match(styles, /@media \(max-width:\s*1100px\) \{[^}]*#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative/);
+  assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[^}]*#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative/);
+  assert.doesNotMatch(styles, /@media \(max-width:\s*1100px\) \{[^}]*#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);
   assert.match(styles, /\.brand-strip \{[^}]*position: relative/);
   assert.match(styles, /#showcases \{[^}]*gap:\s*0/);
 });
