@@ -116,6 +116,18 @@ test('rapid next and previous settle on the last requested title', () => {
   assert.equal(titles[titleIndex], 'Build Club');
 });
 
+test('title slides use the same timing and direction as the image transition', () => {
+  const page = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
+  const slide = fs.readFileSync(new URL('../src/components/ProductDetailSlide.jsx', import.meta.url), 'utf8');
+  const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
+  assert.match(page, /titleMotion/);
+  assert.match(slide, /translate3d\(\$\{percent\}%, 0, 0\)/);
+  assert.match(slide, /PRODUCT_SWITCH_DURATION_MS/);
+  assert.match(styles, /\.product-detail-title__slide \{[^}]*width:\s*100%/);
+  assert.match(styles, /\.product-detail-title\.is-transitioning \.product-detail-title__slide \{[^}]*transform 500ms cubic-bezier\(0\.22, 1, 0\.36, 1\)/);
+  assert.match(styles, /\.product-switcher-viewport\.is-transitioning \.product-switcher-slide \{[^}]*transform 500ms cubic-bezier\(0\.22, 1, 0\.36, 1\)/);
+});
+
 test('thumbnail selection changes the image index and leaves the title index unchanged', () => {
   const page = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
   assert.match(page, /beginImageTransition\('next', true\)/);

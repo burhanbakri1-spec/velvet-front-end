@@ -7,7 +7,7 @@ import {
   getProductBadge,
   getProductName,
 } from '../data/products';
-import { getProductSlidePercent } from '../hooks/productSiblings';
+import { PRODUCT_SWITCH_DURATION_MS, getProductSlidePercent } from '../hooks/productSiblings';
 import { optionValueUnavailable, coerceSelectionsToValidVariant } from '../data/inventory';
 import { Link } from '../routing/Router';
 import { formatPrice } from '../data/currency';
@@ -42,7 +42,11 @@ export default function ProductDetailSlide({
     const opacity = titleMotion.animating
       ? (role === 'outgoing' ? 0 : 1)
       : (role === 'outgoing' ? 1 : 0);
-    return { transform: `translate3d(${percent}%, 0, 0)`, opacity };
+    return {
+      transform: `translate3d(${percent}%, 0, 0)`,
+      opacity,
+      transition: `transform ${PRODUCT_SWITCH_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1), opacity ${PRODUCT_SWITCH_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+    };
   };
   const optionDelta = product.options.reduce(
     (sum, option) => sum + Number(option.values.find((value) => value.label === selections[option.name])?.priceDelta || 0),

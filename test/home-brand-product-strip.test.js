@@ -353,8 +353,7 @@ test('previous-brand banner stack stays compact and hidden until scroll-up', () 
   const home = fs.readFileSync(homePath, 'utf8');
   const styles = fs.readFileSync(stylesPath, 'utf8');
   assert.match(home, /heroStageMotion/);
-  assert.match(home, /stepHeroScrollDirection/);
-  assert.match(home, /mode !== 'up'/);
+  assert.doesNotMatch(home, /stepHeroScrollDirection|mode !== 'up'/);
   assert.match(home, /hero\.style\.transform = ''/);
   assert.match(home, /hero\.style\.clipPath = ''/);
   assert.match(home, /classList\.remove\('is-concealed'\)/);

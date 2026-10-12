@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import Hero from '../components/Hero';
 import IntroSection from '../components/IntroSection';
 import BrandShowcase from '../components/BrandShowcase';
-import { heroStageMotion, stepHeroScrollDirection } from '../components/heroScrollProgress';
+import { heroStageMotion } from '../components/heroScrollProgress';
 import BrandProductStrip from '../components/BrandProductStrip';
 import CareersSection from '../components/CareersSection';
 import StoreReviewsSection from '../components/StoreReviewsSection';
@@ -42,7 +42,6 @@ export default function HomePage() {
     const desktop = window.matchMedia('(min-width: 1101px)');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
-    const direction = { y: window.scrollY, accum: 0, mode: 'down' };
 
     const readShift = (hero) => {
       const transform = hero ? getComputedStyle(hero).transform : '';
@@ -69,19 +68,6 @@ export default function HomePage() {
     const sync = () => {
       const enabled = desktop.matches && !reduced.matches;
       if (!enabled) {
-        direction.mode = 'down';
-        direction.accum = 0;
-        direction.y = window.scrollY;
-        clearMotion();
-        return;
-      }
-      const y = window.scrollY;
-      const delta = y - direction.y;
-      direction.y = y;
-      const nextDirection = stepHeroScrollDirection(direction, delta);
-      direction.mode = nextDirection.mode;
-      direction.accum = nextDirection.accum;
-      if (direction.mode !== 'up') {
         clearMotion();
         return;
       }
@@ -115,6 +101,7 @@ export default function HomePage() {
         if (hero) {
           hero.style.transform = shift ? `translate3d(0, ${shift}px, 0)` : '';
           hero.style.clipPath = clip ? `inset(0 0 ${clip}px 0)` : '';
+          hero.style.zIndex = motion[index]?.cover ? '4' : '';
         }
         strip?.classList.toggle('is-concealed', Boolean(motion[index]?.stripHidden));
         section.toggleAttribute('data-active', index === active);

@@ -1,74 +1,58 @@
-/** Upward travel required before reverse hero motion replaces normal flow. */
-export const HERO_DIRECTION_THRESHOLD = 36;
-
 /**
- * Scroll direction for desktop heroes. Tiny wheel deltas stay in the current
- * mode until they accumulate past the threshold, so the reverse effect cannot
- * leak into ordinary downward scrolling.
- */
-export function stepHeroScrollDirection(state, delta, threshold = HERO_DIRECTION_THRESHOLD) {
-  let accum = state?.accum || 0;
-  let mode = state?.mode === 'up' ? 'up' : 'down';
-  if (delta) {
-    accum = accum !== 0 && Math.sign(delta) !== Math.sign(accum) ? delta : accum + delta;
-  }
-  if (accum >= threshold) {
-    mode = 'down';
-    accum = threshold;
-  } else if (accum <= -threshold) {
-    mode = 'up';
-    accum = -threshold;
-  }
-  return { mode, accum };
-}
-
-/**
- * Desktop reverse motion for one hero pair. Scroll position alone decides the frame.
+ * One reversible desktop hero transition. Scroll position alone picks the frame,
+ * so upward and downward travel are the same motion played in opposite directions.
  *
- * The current hero is the first banner whose top is at or below the header.
- * Distance below that line is the shared progress:
- *   0 = current hero flush with the header
- *   previous height = previous hero fully revealed, 1:1 with that distance
- * The previous hero is shifted only enough to close the product-strip gap, so its
- * bottom meets the current hero and it enters from above immediately. It is never
- * clipped, and a hero the header still cuts through is left in normal flow.
- * Strip height delays only the next pair, after this one has reached its natural frame.
+ * The active pair is the two heroes whose document span contains the header.
+ * The exact flush frame belongs to the pair that just arrived, which seats the
+ * hero above behind the flush banner. The next upward pixel reveals it. The next
+ * downward pixel starts the following pair and brings the hero below in from the fold.
+ *
+ * Shared progress:
+ *   0 = upper hero flush with the header
+ *   1 = lower hero flush with the header
+ * Both visual tops move by the same amount. A banner taller than the viewport used
+ * to travel alone until its top reached the header; that extra distance is absorbed
+ * by the shift, so the neighbor enters on the first pixel and the last frame matches
+ * normal flow. The product strip between the pair is concealed only while that
+ * progress is between the two flush frames.
  */
 export function heroStageMotion({ heroes, scrollY, header, viewportHeight }) {
   const motion = heroes.map(() => ({ shift: 0, clip: 0, stripHidden: false }));
   if (!Array.isArray(heroes) || heroes.length < 2 || viewportHeight <= 0) return motion;
 
-  let active = -1;
-  for (let index = 0; index < heroes.length; index += 1) {
-    if (heroes[index].height > 0 && heroes[index].top - scrollY >= header - 0.5) {
-      active = index;
+  const visible = viewportHeight - header;
+  if (visible <= 0) return motion;
+
+  const focus = scrollY + header;
+  let pair = -1;
+  for (let index = 0; index < heroes.length - 1; index += 1) {
+    const start = heroes[index].top;
+    const end = heroes[index + 1].top;
+    if (focus >= start - 0.5 && focus <= end + 0.5) {
+      pair = index;
       break;
     }
   }
-  if (active <= 0) return motion;
+  if (pair < 0) return motion;
 
-  const current = heroes[active];
-  const previous = heroes[active - 1];
-  const height = previous.height;
-  if (height <= 0) return motion;
+  const upper = heroes[pair];
+  const lower = heroes[pair + 1];
+  const span = lower.top - upper.top;
+  if (span <= visible + 0.5 || upper.height <= 0 || lower.height <= 0) return motion;
 
-  const gap = Math.max(0, current.top - (previous.top + height));
-  const distance = (current.top - header) - scrollY;
-  if (distance <= 0.5 || distance > height + gap + 0.5) return motion;
-
-  const previousTop = previous.top - scrollY;
-  const seam = current.top - scrollY;
-  const headerCutsPrevious = previousTop < header - 0.5 && previousTop + height > header + 0.5;
-  // The header is still inside this hero, and the next seam is more than one
-  // hero below it. Leave that hero in normal flow instead of pinning or slicing it.
-  if (headerCutsPrevious && seam > header + height) return motion;
-
-  const settling = Math.max(0, distance - height);
-  const shift = Math.round(Math.max(0, gap - settling));
-  motion[active - 1] = {
-    shift,
+  const progress = Math.min(1, Math.max(0, (focus - upper.top) / span));
+  const gap = Math.max(0, lower.top - (upper.top + upper.height));
+  const roundShift = (value) => Math.round(value) || 0;
+  motion[pair] = {
+    shift: roundShift(progress * (span - visible)),
     clip: 0,
-    stripHidden: gap > 0 && distance < height + gap - 0.5,
+    stripHidden: gap > 0 && progress > 0.001 && progress < 0.999,
+  };
+  motion[pair + 1] = {
+    shift: roundShift((1 - progress) * (visible - span)),
+    clip: 0,
+    stripHidden: false,
+    cover: true,
   };
   return motion;
 }
