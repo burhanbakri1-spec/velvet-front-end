@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import Hero from '../components/Hero';
 import IntroSection from '../components/IntroSection';
 import BrandShowcase from '../components/BrandShowcase';
-import { heroStageMotion } from '../components/heroScrollProgress';
+import { heroStageMotion, stepHeroDirection } from '../components/heroScrollProgress';
 import BrandProductStrip from '../components/BrandProductStrip';
 import CareersSection from '../components/CareersSection';
 import StoreReviewsSection from '../components/StoreReviewsSection';
@@ -42,6 +42,7 @@ export default function HomePage() {
     const desktop = window.matchMedia('(min-width: 1101px)');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
+    const direction = { y: window.scrollY, mode: 'down', anchor: window.scrollY };
 
     const readShift = (hero) => {
       const transform = hero ? getComputedStyle(hero).transform : '';
@@ -68,9 +69,25 @@ export default function HomePage() {
     const sync = () => {
       const enabled = desktop.matches && !reduced.matches;
       if (!enabled) {
+        direction.mode = 'down';
+        direction.y = window.scrollY;
+        direction.anchor = direction.y;
         clearMotion();
         return;
       }
+      const y = window.scrollY;
+      const delta = y - direction.y;
+      const nextMode = stepHeroDirection(direction.mode, delta);
+      if (nextMode !== 'up') {
+        direction.mode = 'down';
+        direction.y = y;
+        direction.anchor = y;
+        clearMotion();
+        return;
+      }
+      if (direction.mode !== 'up') direction.anchor = direction.y;
+      direction.mode = 'up';
+      direction.y = y;
       const sections = [...root.querySelectorAll(':scope > .home-brand')];
       const heroes = sections.map((section) => {
         const hero = section.querySelector(':scope > .brand-showcase');
@@ -84,9 +101,12 @@ export default function HomePage() {
       const header = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
       const motion = heroStageMotion({
         heroes,
-        scrollY: window.scrollY,
+        scrollY: y,
         header,
         viewportHeight: window.innerHeight,
+        mode: 'up',
+        distance: Math.max(0, direction.anchor - y),
+        anchorScrollY: direction.anchor,
       });
       let active = 0;
       const visualTops = heroes.map((hero, index) => hero.top - window.scrollY + (motion[index]?.shift || 0));
@@ -101,7 +121,7 @@ export default function HomePage() {
         if (hero) {
           hero.style.transform = shift ? `translate3d(0, ${shift}px, 0)` : '';
           hero.style.clipPath = clip ? `inset(0 0 ${clip}px 0)` : '';
-          hero.style.zIndex = motion[index]?.cover ? '4' : '';
+          hero.style.zIndex = motion[index]?.z ? String(motion[index].z) : '';
         }
         strip?.classList.toggle('is-concealed', Boolean(motion[index]?.stripHidden));
         section.toggleAttribute('data-active', index === active);
