@@ -110,7 +110,7 @@ export default function HomePage() {
         const clip = motion[index]?.clip || 0;
         if (hero) {
           hero.style.transform = shift ? `translate3d(0, ${shift}px, 0)` : '';
-          hero.style.clipPath = clip ? `inset(0 0 ${clip}px 0)` : '';
+          hero.style.clipPath = clip ? `inset(${clip}px 0 0 0)` : '';
           hero.style.zIndex = motion[index]?.z ? String(motion[index].z) : '';
         }
         strip?.classList.toggle('is-concealed', Boolean(motion[index]?.stripHidden));
