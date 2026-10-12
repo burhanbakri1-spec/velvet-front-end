@@ -21,6 +21,38 @@ test('platform products map bilingual fields and absolute media URLs without ten
   assert.equal(product.categorySlug, 'creative');
 });
 
+test('platform products carry real galleryItems ids while gallery keeps its URL order', async () => {
+  const { resolveProductSlides, resolveSlideTitle } = await import('../src/data/slideTitles.js');
+  const category = { id: 'creative', slug: 'creative', nameEn: 'Creative', nameAr: 'إبداع' };
+  const mapped = mapPlatformProduct({
+    id: 'p1', slug: 'toy', name: { en: 'Toy', ar: 'لعبة' }, description: { en: 'Fun', ar: 'مرح' },
+    shortDescription: { en: 'Short', ar: 'قصير' }, image: '/uploads/one.jpg', categoryId: 'creative', price: 10,
+    gallery: ['/uploads/one.jpg', '/uploads/two.jpg', '/uploads/three.jpg'],
+    galleryItems: [
+      { id: 12, url: '/uploads/three.jpg', sortOrder: 4 },
+      { id: 11, url: '/uploads/one.jpg', sortOrder: 2 },
+    ],
+    slideTitles: [{ id: 't1', title: 'First slide', language: 'en', galleryImageId: '11', sortOrder: 0 }],
+    options: [],
+  }, [category], 'https://api.test');
+
+  assert.deepEqual(mapped.gallery, [
+    'https://api.test/uploads/one.jpg',
+    'https://api.test/uploads/two.jpg',
+    'https://api.test/uploads/three.jpg',
+  ]);
+  assert.deepEqual(mapped.galleryItems, [
+    { id: '12', url: 'https://api.test/uploads/three.jpg', sortOrder: 4 },
+    { id: '11', url: 'https://api.test/uploads/one.jpg', sortOrder: 2 },
+  ]);
+
+  const slides = resolveProductSlides(mapped, {});
+  assert.deepEqual(slides.map((slide) => slide.id), ['11', '', '12']);
+  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[0].id, locale: 'en' }), 'First slide');
+  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[1].id, locale: 'en' }), 'Toy');
+  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[1].id, locale: 'ar' }), 'لعبة');
+});
+
 test('canonical payload replaces the runtime catalog instead of silently merging static products', () => {
   applyPlatformContent({ site: { id: 'kids-velvet-storefront', companyId: 'kids-velvet' }, categories: [{ id: 'c1', slug: 'toys', name: { en: 'Toys', ar: 'ألعاب' }, description: { en: '', ar: '' }, image: '', sortOrder: 1 }], products: [{ id: 'p1', slug: 'toy', name: { en: 'Toy', ar: 'لعبة' }, description: { en: '', ar: '' }, shortDescription: { en: '', ar: '' }, categoryId: 'c1', image: 'https://assets.test/toy.svg', price: 12 }], texts: [], media: [{ sectionKey: 'home.hero.poster', image: '/uploads/hero.jpg' }] }, 'https://api.test');
   assert.deepEqual(products.map((item) => item.slug), ['toy']);

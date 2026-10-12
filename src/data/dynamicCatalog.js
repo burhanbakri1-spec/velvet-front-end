@@ -182,9 +182,35 @@ function buildCategory(raw, subs, apiUrl) {
   };
 }
 
-function mapGalleryItems(rawGallery, apiUrl) {
+// The gallery URL list is owned by `raw.gallery`: it is made absolute in the
+// order the API sent it and is never reordered or rebuilt from galleryItems.
+function mapGalleryUrls(rawGallery, apiUrl) {
   if (!Array.isArray(rawGallery)) return [];
   return rawGallery.map((item) => {
+    if (typeof item === 'string') return absoluteUrl(item, apiUrl);
+    if (!item || typeof item !== 'object') return '';
+    return absoluteUrl(item.url || item.image || item.src || '', apiUrl);
+  }).filter(Boolean);
+}
+
+// Slide ids come from `raw.galleryItems` (real gallery image ids) whenever the
+// payload carries them; they are never derived from a filename. Without
+// galleryItems the legacy URL-only list keeps empty ids so nothing is invented.
+function mapGalleryItems(raw, apiUrl) {
+  if (Array.isArray(raw.galleryItems)) {
+    return raw.galleryItems.map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const url = absoluteUrl(item.url || item.image || item.src || '', apiUrl);
+      if (!url) return null;
+      return {
+        id: String(item.id ?? ''),
+        url,
+        sortOrder: finiteNumber(item.sortOrder, 0),
+      };
+    }).filter(Boolean);
+  }
+  if (!Array.isArray(raw.gallery)) return [];
+  return raw.gallery.map((item) => {
     if (typeof item === 'string') {
       const url = absoluteUrl(item, apiUrl);
       return url ? { id: '', url } : null;
@@ -212,8 +238,8 @@ function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
   const nameAr = localized(raw.name, 'ar', nameEn);
   const h = hash(`${brandSlug}:${mainCategory?.slug || ''}:${subSlug}:${raw.slug || raw.id}`);
   const palette = PALETTES[h % PALETTES.length];
-  const galleryItems = mapGalleryItems(raw.gallery, apiUrl);
-  const gallery = galleryItems.map((item) => item.url);
+  const gallery = mapGalleryUrls(raw.gallery, apiUrl);
+  const galleryItems = mapGalleryItems(raw, apiUrl);
   const image = absoluteUrl(raw.image || raw.primaryImage, apiUrl) || gallery[0] || artwork(nameEn || raw.slug || 'Toy', palette, h % 6, 'transparent');
   const hoverImage = absoluteUrl(raw.hoverImage || raw.secondaryImage, apiUrl) || gallery[1] || image;
   const badge = localized(raw.badge, 'en', '');

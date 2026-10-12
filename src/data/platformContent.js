@@ -166,6 +166,34 @@ const absoluteUrl = (value, apiUrl) => {
 
 const localized = (value, locale, fallback = '') => String(value?.[locale] ?? value?.en ?? fallback);
 
+const galleryItemUrl = (item, apiUrl) => {
+  if (typeof item === 'string') return absoluteUrl(item, apiUrl);
+  if (!item || typeof item !== 'object') return '';
+  return absoluteUrl(item.url || item.image || item.src || '', apiUrl);
+};
+
+/**
+ * Gallery image ids come from the payload's `galleryItems` (real gallery image
+ * ids) whenever it is present; the URL list in `gallery` stays authoritative for
+ * order. Without `galleryItems` the legacy URL-only list keeps empty ids so an
+ * id is never invented from a filename.
+ */
+function mapPlatformGalleryItems(product, apiUrl) {
+  if (Array.isArray(product.galleryItems)) {
+    return product.galleryItems.map((item) => {
+      if (!item || typeof item !== 'object') return null;
+      const url = absoluteUrl(item.url || item.image || item.src || '', apiUrl);
+      return url ? { id: String(item.id ?? ''), url, sortOrder: Number(item.sortOrder ?? 0) || 0 } : null;
+    }).filter(Boolean);
+  }
+  return (product.gallery || []).map((item) => {
+    const url = galleryItemUrl(item, apiUrl);
+    if (!url) return null;
+    if (typeof item === 'string') return { id: '', url };
+    return { id: String(item?.id || item?.galleryImageId || ''), url };
+  }).filter(Boolean);
+}
+
 export function mapPlatformCategory(category, apiUrl, heroVideos = {}) {
   return {
     id: category.id,
@@ -204,18 +232,8 @@ export function mapPlatformProduct(product, categories, apiUrl) {
     availabilityAr: localized(product.availability, 'ar', 'متوفر'),
     image: absoluteUrl(product.image, apiUrl),
     hoverImage: absoluteUrl(product.hoverImage || product.image, apiUrl),
-    gallery: (product.gallery || []).map((item) => {
-      if (typeof item === 'string') return absoluteUrl(item, apiUrl);
-      return absoluteUrl(item?.url || item?.image || item?.src || '', apiUrl);
-    }).filter(Boolean),
-    galleryItems: (product.gallery || []).map((item) => {
-      if (typeof item === 'string') {
-        const url = absoluteUrl(item, apiUrl);
-        return url ? { id: '', url } : null;
-      }
-      const url = absoluteUrl(item?.url || item?.image || item?.src || '', apiUrl);
-      return url ? { id: String(item?.id || item?.galleryImageId || ''), url } : null;
-    }).filter(Boolean),
+    gallery: (product.gallery || []).map((item) => galleryItemUrl(item, apiUrl)).filter(Boolean),
+    galleryItems: mapPlatformGalleryItems(product, apiUrl),
     slideTitles: Array.isArray(product.slideTitles) ? product.slideTitles : [],
     slideTitleFallbacks: Array.isArray(product.slideTitleFallbacks) ? product.slideTitleFallbacks : [],
     usageVideo: absoluteUrl(product.usageVideo, apiUrl),
