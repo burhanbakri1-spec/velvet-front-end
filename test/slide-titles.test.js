@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import test from 'node:test';
 import { buildDynamicCatalog } from '../src/data/dynamicCatalog.js';
-import { gallerySlideDirection, resolveProductSlides, resolveSlideTitle } from '../src/data/slideTitles.js';
+import { buildProductTitleSequence, gallerySlideDirection, resolveProductSlides, stepTitleIndex } from '../src/data/slideTitles.js';
 
 const API = 'https://api.test';
 
@@ -34,65 +35,109 @@ const product = {
   variants: [],
 };
 
-test('saved slide titles resolve by gallery image id for Arabic and English', () => {
-  assert.equal(resolveSlideTitle({ product, galleryImageId: 'gallery-ar', locale: 'en' }), 'عنوان البناء');
-  assert.equal(resolveSlideTitle({ product, galleryImageId: 'gallery-en', locale: 'ar' }), 'Build Club');
-});
-
-test('three or more configured slide titles each stay independent', () => {
-  const titles = ['gallery-ar', 'gallery-en', 'gallery-extra', 'gallery-fourth']
-    .map((galleryImageId) => resolveSlideTitle({ product, galleryImageId, locale: 'en' }));
-  assert.deepEqual(titles, ['عنوان البناء', 'Build Club', 'Studio set', 'Fourth title']);
-  assert.equal(new Set(titles).size, 4);
-});
-
-test('missing explicit titles use the locale fallback, then the canonical name', () => {
-  assert.equal(resolveSlideTitle({ product, galleryImageId: 'gallery-missing', locale: 'ar' }), 'احتياطي');
-  assert.equal(resolveSlideTitle({ product, galleryImageId: 'gallery-missing', locale: 'en' }), 'Fallback kit');
-  assert.equal(resolveSlideTitle({ product, galleryImageId: '', locale: 'ar' }), 'طقم البناء');
-  assert.equal(resolveSlideTitle({ product, galleryImageId: 'unknown', locale: 'en' }), 'Build Club Maker Kit');
-});
-
-test('resolved titles are never Arabic and English concatenated', () => {
-  const title = resolveSlideTitle({ product, galleryImageId: 'gallery-ar', locale: 'en' });
-  assert.equal(title.includes('Build Club'), false);
-  assert.equal(title.includes('\n'), false);
-});
-
-test('gallery slides keep stable ids and arrows or thumbnails move the same title', () => {
-  const slides = resolveProductSlides(product, {});
-  assert.equal(slides[2].id, 'gallery-extra');
-  let index = 0;
-  const nextIndex = (index + 1) % slides.length;
-  assert.equal(gallerySlideDirection(index, nextIndex), 'next');
-  index = nextIndex;
-  const previousIndex = index - 1;
-  assert.equal(gallerySlideDirection(index, previousIndex), 'previous');
-  const thumbnailIndex = 3;
-  assert.equal(gallerySlideDirection(index, thumbnailIndex), 'next');
-  index = thumbnailIndex;
-  assert.equal(resolveSlideTitle({ product, galleryImageId: slides[index].id, locale: 'en' }), 'Fourth title');
-});
-
-test('rapid index changes settle on the last requested slide title', () => {
-  const slides = resolveProductSlides(product, {});
-  let index = 0;
-  [1, 3, 2].forEach((target) => {
-    gallerySlideDirection(index, target);
-    index = target;
+function walk(titles, directions) {
+  let titleIndex = 0;
+  let imageIndex = 0;
+  const imageCount = 4;
+  const frames = [{ imageIndex, title: titles[titleIndex] }];
+  directions.forEach((direction) => {
+    imageIndex = (imageIndex + (direction === 'next' ? 1 : -1) + imageCount) % imageCount;
+    titleIndex = stepTitleIndex(titleIndex, titles.length, direction);
+    frames.push({ imageIndex, title: titles[titleIndex] });
   });
-  assert.equal(index, 2);
-  assert.equal(resolveSlideTitle({ product, galleryImageId: slides[index].id, locale: 'en' }), 'Studio set');
+  return frames;
+}
+
+test('initial title is the Arabic canonical name, then English, then custom titles', () => {
+  const titles = buildProductTitleSequence(product);
+  assert.deepEqual(titles, ['طقم البناء', 'Build Club Maker Kit', 'عنوان البناء', 'Build Club', 'Studio set', 'Fourth title']);
+  assert.equal(titles[0], 'طقم البناء');
+  const frames = walk(titles, ['next', 'next', 'previous']);
+  assert.equal(frames[1].title, 'Build Club Maker Kit');
+  assert.equal(frames[2].title, 'عنوان البناء');
+  assert.equal(frames[3].title, 'Build Club Maker Kit');
 });
 
-test('url-only gallery items do not invent an id match', () => {
-  const bare = {
+test('four or more custom titles stay in sort order and ignore gallery image ids', () => {
+  const titles = buildProductTitleSequence({
     ...product,
-    galleryItems: product.gallery.map((url) => ({ id: '', url })),
-  };
-  const slides = resolveProductSlides(bare, {});
-  assert.ok(slides.every((slide) => slide.id === ''));
-  assert.equal(resolveSlideTitle({ product: bare, galleryImageId: slides[0].id, locale: 'en' }), 'Build Club Maker Kit');
+    slideTitles: [
+      { title: 'Fourth custom', galleryImageId: 'gallery-ar', sortOrder: 4 },
+      { title: 'Third custom', galleryImageId: 'gallery-fourth', sortOrder: 3 },
+      { title: 'First custom', galleryImageId: 'no-image', sortOrder: 1 },
+      { title: 'Second custom', galleryImageId: 'gallery-en', sortOrder: 2 },
+    ],
+  });
+  assert.deepEqual(titles.slice(2), ['First custom', 'Second custom', 'Third custom', 'Fourth custom']);
+});
+
+test('title index wraps independently when there are more images than titles', () => {
+  const titles = buildProductTitleSequence({
+    name: 'English kit',
+    nameAr: 'طقم',
+    slideTitles: [{ title: 'Custom line', sortOrder: 0 }],
+  });
+  const frames = walk(titles, ['next', 'next', 'next', 'next']);
+  assert.deepEqual(frames.map((frame) => frame.title), ['طقم', 'English kit', 'Custom line', 'طقم', 'English kit']);
+  assert.deepEqual(frames.map((frame) => frame.imageIndex), [0, 1, 2, 3, 0]);
+});
+
+test('title index wraps independently when there are more titles than images', () => {
+  const titles = buildProductTitleSequence(product);
+  let titleIndex = 0;
+  let imageIndex = 0;
+  const imageCount = 2;
+  for (let step = 0; step < 5; step += 1) {
+    imageIndex = (imageIndex + 1) % imageCount;
+    titleIndex = stepTitleIndex(titleIndex, titles.length, 'next');
+  }
+  assert.equal(imageIndex, 1);
+  assert.equal(titles[titleIndex], 'Fourth title');
+});
+
+test('a single valid title does not move when arrows are used', () => {
+  const titles = buildProductTitleSequence({ name: 'Only English', nameAr: 'Only English', slideTitles: [{ title: 'Only English', sortOrder: 0 }] });
+  assert.deepEqual(titles, ['Only English']);
+  assert.equal(stepTitleIndex(0, titles.length, 'next'), 0);
+  assert.equal(stepTitleIndex(0, titles.length, 'previous'), 0);
+});
+
+test('missing Arabic starts at English, and missing both names start at the first custom title', () => {
+  assert.equal(buildProductTitleSequence({ name: 'English only', nameAr: '', slideTitles: [{ title: 'Extra', sortOrder: 1 }] })[0], 'English only');
+  assert.deepEqual(buildProductTitleSequence({ name: ' ', nameAr: '', slideTitles: [{ title: 'Only custom', sortOrder: 2 }] }), ['Only custom']);
+});
+
+test('rapid next and previous settle on the last requested title', () => {
+  const titles = buildProductTitleSequence(product);
+  let titleIndex = 0;
+  ['next', 'next', 'next', 'previous', 'next'].forEach((direction) => {
+    titleIndex = stepTitleIndex(titleIndex, titles.length, direction);
+  });
+  assert.equal(titles[titleIndex], 'Build Club');
+});
+
+test('thumbnail selection changes the image index and leaves the title index unchanged', () => {
+  const page = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
+  assert.match(page, /beginImageTransition\('next', true\)/);
+  assert.match(page, /beginImageTransition\('previous', true\)/);
+  assert.match(page, /beginImageTransitionTo\(index, gallerySlideDirection\(imageIndex, index\)\)/);
+  let titleIndex = 2;
+  const thumbnailIndex = 0;
+  assert.equal(gallerySlideDirection(1, thumbnailIndex), 'previous');
+  assert.equal(titleIndex, 2);
+});
+
+test('canonical names that also appear in slide titles are not repeated', () => {
+  const titles = buildProductTitleSequence({
+    name: 'Build Club',
+    nameAr: 'طقم البناء',
+    slideTitles: [
+      { title: 'طقم البناء', sortOrder: 0 },
+      { title: '  Build Club  ', sortOrder: 1 },
+      { title: 'Studio set', sortOrder: 2 },
+    ],
+  });
+  assert.deepEqual(titles, ['طقم البناء', 'Build Club', 'Studio set']);
 });
 
 function buildMappedProduct(rawProduct) {
@@ -135,8 +180,7 @@ test('galleryItems in a different order than gallery still attach the correct id
 
   const slides = resolveProductSlides(mapped, {});
   assert.deepEqual(slides.map((slide) => slide.id), ['gi-a', 'gi-b', 'gi-c']);
-  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[1].id, locale: 'en' }), 'Middle slide');
-  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[2].id, locale: 'en' }), 'Gallery Map Set');
+  assert.deepEqual(buildProductTitleSequence(mapped), ['طقم الخريطة', 'Gallery Map Set', 'Middle slide']);
 });
 
 test('a gallery URL without a matching galleryItems URL keeps an empty id and the canonical name', () => {
@@ -153,9 +197,7 @@ test('a gallery URL without a matching galleryItems URL keeps an empty id and th
   const slides = resolveProductSlides(mapped, {});
   assert.equal(slides[0].id, '', 'the unmatched gallery URL must not borrow another item id');
   assert.equal(slides[1].id, 'gi-first');
-  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[0].id, locale: 'en' }), 'Partial Gallery Set');
-  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[0].id, locale: 'ar' }), 'طقم جزئي');
-  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[1].id, locale: 'en' }), 'Second slide');
+  assert.deepEqual(buildProductTitleSequence(mapped), ['طقم جزئي', 'Partial Gallery Set', 'Second slide']);
 });
 
 test('products without galleryItems keep the legacy URL-only ids', () => {
@@ -177,5 +219,5 @@ test('products without galleryItems keep the legacy URL-only ids', () => {
   ]);
   const slides = resolveProductSlides(mapped, {});
   assert.ok(slides.every((slide) => slide.id === ''));
-  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[0].id, locale: 'en' }), 'Legacy Gallery Set');
+  assert.deepEqual(buildProductTitleSequence(mapped), ['طقم قديم', 'Legacy Gallery Set']);
 });

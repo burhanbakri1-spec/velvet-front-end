@@ -22,7 +22,7 @@ test('platform products map bilingual fields and absolute media URLs without ten
 });
 
 test('platform products carry real galleryItems ids while gallery keeps its URL order', async () => {
-  const { resolveProductSlides, resolveSlideTitle } = await import('../src/data/slideTitles.js');
+  const { buildProductTitleSequence, resolveProductSlides } = await import('../src/data/slideTitles.js');
   const category = { id: 'creative', slug: 'creative', nameEn: 'Creative', nameAr: 'إبداع' };
   const mapped = mapPlatformProduct({
     id: 'p1', slug: 'toy', name: { en: 'Toy', ar: 'لعبة' }, description: { en: 'Fun', ar: 'مرح' },
@@ -48,9 +48,7 @@ test('platform products carry real galleryItems ids while gallery keeps its URL 
 
   const slides = resolveProductSlides(mapped, {});
   assert.deepEqual(slides.map((slide) => slide.id), ['11', '', '12']);
-  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[0].id, locale: 'en' }), 'First slide');
-  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[1].id, locale: 'en' }), 'Toy');
-  assert.equal(resolveSlideTitle({ product: mapped, galleryImageId: slides[1].id, locale: 'ar' }), 'لعبة');
+  assert.deepEqual(buildProductTitleSequence(mapped), ['لعبة', 'Toy', 'First slide']);
 });
 
 test('canonical payload replaces the runtime catalog instead of silently merging static products', () => {

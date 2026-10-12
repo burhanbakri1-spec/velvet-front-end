@@ -1,4 +1,4 @@
-import { getProductName, resolveProductImages } from './products.js';
+import { resolveProductImages } from './products.js';
 
 function normalizeEntries(entries) {
   if (!Array.isArray(entries)) return [];
@@ -16,28 +16,37 @@ function byOrder(left, right) {
   return left.sortOrder - right.sortOrder;
 }
 
-/**
- * One title for the active gallery image.
- * Saved slide titles win by galleryImageId, then locale-aware fallbacks,
- * then the localized canonical product name. Titles are never joined.
- */
-export function resolveSlideTitle({ product, galleryImageId, locale = 'en' } = {}) {
-  const id = String(galleryImageId || '');
-  if (id) {
-    const explicit = normalizeEntries(product?.slideTitles)
-      .filter((entry) => entry.galleryImageId === id)
-      .sort(byOrder);
-    if (explicit.length) return explicit[0].title;
+function normalizedTitle(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
 
-    const fallbacks = normalizeEntries(product?.slideTitleFallbacks)
-      .filter((entry) => entry.galleryImageId === id)
-      .sort(byOrder);
-    const fallback = fallbacks.find((entry) => entry.language === locale)
-      || fallbacks.find((entry) => entry.language === 'en')
-      || fallbacks[0];
-    if (fallback) return fallback.title;
-  }
-  return getProductName(product, locale);
+/**
+ * Ordered title slider, independent of gallery images.
+ * Arabic canonical, then English canonical, then slideTitles by sortOrder.
+ * Exact normalized text is kept once. galleryImageId is ignored.
+ */
+export function buildProductTitleSequence(product) {
+  const seen = new Set();
+  const sequence = [];
+  const push = (value) => {
+    const title = normalizedTitle(value);
+    if (!title || seen.has(title)) return;
+    seen.add(title);
+    sequence.push(title);
+  };
+  push(product?.nameAr);
+  push(product?.name);
+  normalizeEntries(product?.slideTitles).sort(byOrder).forEach((entry) => push(entry.title));
+  return sequence;
+}
+
+/** Title index wraps on its own length. A single title stays put. */
+export function stepTitleIndex(index, count, direction) {
+  const total = Number(count) || 0;
+  if (total <= 1) return 0;
+  const current = ((Number(index) || 0) % total + total) % total;
+  const step = direction === 'previous' ? -1 : 1;
+  return (current + step + total) % total;
 }
 
 /** Gallery slides in the same order as the image list, keeping a stable id when the API sent one. */

@@ -13,7 +13,7 @@ import {
   getCustomerFacingVariantLabels,
   getProductName,
 } from '../data/products';
-import { gallerySlideDirection, resolveProductSlides, resolveSlideTitle } from '../data/slideTitles';
+import { buildProductTitleSequence, gallerySlideDirection, resolveProductSlides, stepTitleIndex } from '../data/slideTitles';
 import {
   getBrand,
   getCategory,
@@ -83,6 +83,7 @@ export default function ProductDetailsPage({ slug }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [imageIndex, setImageIndex] = useState(0);
+  const [titleIndex, setTitleIndex] = useState(0);
   const [transition, setTransition] = useState(null);
   const [slideAnimating, setSlideAnimating] = useState(false);
   const [relatedPage, setRelatedPage] = useState(0);
@@ -94,6 +95,7 @@ export default function ProductDetailsPage({ slug }) {
     () => resolveProductSlides(routeProduct, selections),
     [routeProduct, selections],
   );
+  const titles = useMemo(() => buildProductTitleSequence(routeProduct), [routeProduct]);
   const images = useMemo(() => slides.map((slide) => slide.src), [slides]);
   const hasGallery = images.length > 1;
   const isTransitioning = Boolean(transition);
@@ -107,6 +109,7 @@ export default function ProductDetailsPage({ slug }) {
     setQuantity(1);
     setAdded(false);
     setImageIndex(0);
+    setTitleIndex(0);
     setTransition(null);
     setSlideAnimating(false);
     setRelatedPage(0);
@@ -189,7 +192,7 @@ export default function ProductDetailsPage({ slug }) {
     return subcategory?.name[locale] || category?.name[locale] || getVelvetPathLabel(item, locale) || getCategoryLabel(item.categoryId, locale);
   }, [locale]);
 
-  const beginImageTransitionTo = useCallback((nextIndex, direction) => {
+  const beginImageTransitionTo = useCallback((nextIndex, direction, nextTitleIndex = null) => {
     if (!hasGallery || isTransitioning || !routeProduct) return;
     if (nextIndex === imageIndex || nextIndex < 0 || nextIndex >= images.length) return;
 
@@ -198,24 +201,32 @@ export default function ProductDetailsPage({ slug }) {
       viewport.style.setProperty('--product-switcher-height', `${viewport.offsetHeight}px`);
     }
 
-    setTransition({ direction, fromIndex: imageIndex, toIndex: nextIndex });
+    setTransition({
+      direction,
+      fromIndex: imageIndex,
+      toIndex: nextIndex,
+      fromTitleIndex: titleIndex,
+      toTitleIndex: nextTitleIndex,
+    });
     setSlideAnimating(false);
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => setSlideAnimating(true));
     });
     window.setTimeout(() => {
       setImageIndex(nextIndex);
+      if (nextTitleIndex != null) setTitleIndex(nextTitleIndex);
       setTransition(null);
       setSlideAnimating(false);
       if (viewport) viewport.style.removeProperty('--product-switcher-height');
     }, PRODUCT_SWITCH_DURATION_MS);
-  }, [hasGallery, isTransitioning, routeProduct, imageIndex, images.length]);
+  }, [hasGallery, isTransitioning, routeProduct, imageIndex, images.length, titleIndex]);
 
-  const beginImageTransition = useCallback((direction) => {
+  const beginImageTransition = useCallback((direction, advanceTitle = false) => {
     const step = direction === 'next' ? 1 : -1;
     const nextIndex = (imageIndex + step + images.length) % images.length;
-    beginImageTransitionTo(nextIndex, direction);
-  }, [beginImageTransitionTo, imageIndex, images.length]);
+    const nextTitleIndex = advanceTitle ? stepTitleIndex(titleIndex, titles.length, direction) : null;
+    beginImageTransitionTo(nextIndex, direction, nextTitleIndex);
+  }, [beginImageTransitionTo, imageIndex, images.length, titleIndex, titles.length]);
 
   const handleAdd = (event) => {
     event.preventDefault();
@@ -320,16 +331,16 @@ export default function ProductDetailsPage({ slug }) {
     : null;
   const eyebrow = resolveEyebrow(routeProduct);
   const productName = getProductName(routeProduct, locale);
-  const titleForIndex = (index) => resolveSlideTitle({
-    product: routeProduct,
-    galleryImageId: slides[index]?.id,
-    locale,
-  });
-  const activeTitle = titleForIndex(imageIndex);
-  const titleMotion = transition ? {
+  const activeTitle = titles[titleIndex] || titles[0] || productName;
+  const titleChanges = Boolean(
+    transition
+    && transition.toTitleIndex != null
+    && transition.toTitleIndex !== transition.fromTitleIndex,
+  );
+  const titleMotion = titleChanges ? {
     direction: transition.direction,
-    fromTitle: titleForIndex(transition.fromIndex),
-    toTitle: titleForIndex(transition.toIndex),
+    fromTitle: titles[transition.fromTitleIndex] || '',
+    toTitle: titles[transition.toTitleIndex] || '',
     animating: slideAnimating,
     rtl,
   } : null;
@@ -443,8 +454,8 @@ export default function ProductDetailsPage({ slug }) {
       >
         {hasGallery && (
           <ProductShowcaseNavigation
-            onPrevious={() => beginImageTransition('previous')}
-            onNext={() => beginImageTransition('next')}
+            onPrevious={() => beginImageTransition('previous', true)}
+            onNext={() => beginImageTransition('next', true)}
             previousLabel={copy.detail.previousImage}
             nextLabel={copy.detail.nextImage}
             disabled={isTransitioning}
