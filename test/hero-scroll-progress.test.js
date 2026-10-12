@@ -24,19 +24,53 @@ test('a hero flush with the header leaves every banner in document flow', () => 
   assert.ok(motion.every((item) => item.shift === 0 && item.clip === 0 && item.stripHidden === false));
 });
 
-test('upward scroll reveals the previous hero from the header by exactly the scroll distance', () => {
-  const heroes = column(4);
-  const scrollY = heroes[2].top - header - 40;
-  const motion = heroStageMotion({ heroes, scrollY, header, viewportHeight });
-  const playTop = heroes[1].top - scrollY;
-  assert.equal(motion[1].shift, header - playTop);
-  assert.equal(motion[1].clip, heroHeight - 40);
-  assert.equal(motion[1].stripHidden, true);
-  assert.equal(motion[0].shift, 0);
-  assert.equal(motion[2].shift, 0);
+function pairColumn(count, pairGap = gap) {
+  const heroes = [];
+  let top = 1400;
+  for (let index = 0; index < count; index += 1) {
+    heroes.push({ top, height: heroHeight });
+    top += heroHeight + pairGap;
+  }
+  return heroes;
+}
+
+function visualBottom(hero, scrollY, shift) {
+  return hero.top - scrollY + shift + hero.height;
+}
+
+test('PLAY to KIDS, BUILD to PLAY, and KIDS to BABY move 1:1 from the first upward pixels', () => {
+  const heroes = pairColumn(4, 0);
+  [2, 3, 1].forEach((current) => {
+    [50, 150].forEach((distance) => {
+      const scrollY = heroes[current].top - header - distance;
+      const motion = heroStageMotion({ heroes, scrollY, header, viewportHeight });
+      assert.equal(motion[current - 1].clip, 0);
+      assert.equal(motion[current - 1].shift, 0);
+      assert.equal(motion[current].shift, 0);
+      assert.equal(motion[current].clip, 0);
+      assert.equal(Math.round(visualBottom(heroes[current - 1], scrollY, 0)), header + distance);
+      assert.ok(motion.every((item) => item.clip === 0));
+    });
+  });
 });
 
-test('a strip between heroes is absorbed before the next previous hero enters, with no jump at arrival', () => {
+test('stopping halfway is the same frame as arriving there quickly', () => {
+  const heroes = pairColumn(4, 0);
+  const scrollY = heroes[2].top - header - 320;
+  const slow = heroStageMotion({ heroes, scrollY, header, viewportHeight });
+  const fast = heroStageMotion({ heroes, scrollY, header, viewportHeight });
+  assert.deepEqual(slow, fast);
+  assert.equal(Math.round(visualBottom(heroes[1], scrollY, slow[1].shift)), header + 320);
+});
+
+test('a hero the header still cuts through is not clipped or pinned', () => {
+  const heroes = pairColumn(4, 0);
+  const scrollY = heroes[2].top - header + 220;
+  const motion = heroStageMotion({ heroes, scrollY, header, viewportHeight });
+  assert.ok(motion.every((item) => item.shift === 0 && item.clip === 0 && item.stripHidden === false));
+});
+
+test('a strip between heroes stays concealed during the handoff and returns at the natural frame', () => {
   const heroes = column(4);
   const at = (band) => heroStageMotion({
     heroes,
@@ -44,20 +78,24 @@ test('a strip between heroes is absorbed before the next previous hero enters, w
     header,
     viewportHeight,
   });
+  const early = at(50);
   const full = at(heroHeight);
-  const midway = at(heroHeight + gap / 2);
   const arrived = at(heroHeight + gap);
-  const next = at(heroHeight + gap + 40);
-  assert.equal(at(40)[1].stripHidden, true);
-  assert.equal(full[1].clip, 0);
-  assert.equal(full[1].stripHidden, false);
+  const next = at(heroHeight + gap + 50);
+  assert.equal(early[1].clip, 0);
+  assert.equal(early[1].shift, gap);
+  assert.equal(early[1].stripHidden, true);
+  assert.equal(early[2].shift, 0);
+  assert.equal(Math.round(visualBottom(heroes[1], heroes[2].top - header - 50, early[1].shift)), header + 50);
+  assert.equal(full[1].shift, gap);
+  assert.equal(full[1].stripHidden, true);
   assert.equal(full[0].shift, 0);
-  assert.equal(midway[1].shift, Math.round(header - (heroes[1].top - (heroes[2].top - header - (heroHeight + gap / 2)))));
-  assert.equal(midway[0].shift, 0);
   assert.equal(arrived[1].shift, 0);
-  assert.equal(arrived[0].shift, 0);
-  assert.equal(next[0].clip, heroHeight - 40);
+  assert.equal(arrived[1].stripHidden, false);
+  assert.equal(next[0].shift, gap);
+  assert.equal(next[0].stripHidden, true);
   assert.equal(next[1].shift, 0);
+  assert.equal(next[1].clip, 0);
 });
 
 test('downward scroll stays in normal flow until a clear upward threshold', () => {

@@ -23,51 +23,52 @@ export function stepHeroScrollDirection(state, delta, threshold = HERO_DIRECTION
 }
 
 /**
- * Desktop hero motion is a pure function of scroll position.
+ * Desktop reverse motion for one hero pair. Scroll position alone decides the frame.
  *
- * The hero just below the header is the moving hero. Scroll distance below
- * that line reveals earlier heroes from the header down. While a product
- * strip sits between them, that strip is covered and its distance is given
- * back before the next hero is allowed to enter, so the arriving hero meets
- * its natural position instead of jumping.
+ * The current hero is the first banner whose top is at or below the header.
+ * Distance below that line is the shared progress:
+ *   0 = current hero flush with the header
+ *   previous height = previous hero fully revealed, 1:1 with that distance
+ * The previous hero is shifted only enough to close the product-strip gap, so its
+ * bottom meets the current hero and it enters from above immediately. It is never
+ * clipped, and a hero the header still cuts through is left in normal flow.
+ * Strip height delays only the next pair, after this one has reached its natural frame.
  */
 export function heroStageMotion({ heroes, scrollY, header, viewportHeight }) {
   const motion = heroes.map(() => ({ shift: 0, clip: 0, stripHidden: false }));
-  if (heroes.length < 2 || viewportHeight <= 0) return motion;
+  if (!Array.isArray(heroes) || heroes.length < 2 || viewportHeight <= 0) return motion;
 
-  const tops = heroes.map((hero) => hero.top - scrollY);
-  let moving = -1;
-  let movingTop = Infinity;
-  tops.forEach((top, index) => {
-    if (heroes[index].height <= 0) return;
-    if (top >= header - 0.5 && top < movingTop) {
-      movingTop = top;
-      moving = index;
+  let active = -1;
+  for (let index = 0; index < heroes.length; index += 1) {
+    if (heroes[index].height > 0 && heroes[index].top - scrollY >= header - 0.5) {
+      active = index;
+      break;
     }
-  });
-  if (moving <= 0) return motion;
-
-  let band = movingTop - header;
-  for (let index = moving - 1; index >= 0 && band > 0.5; index -= 1) {
-    const height = heroes[index].height;
-    if (height <= 0) break;
-    const gap = Math.max(0, tops[index + 1] - (tops[index] + height));
-    const intoStrip = Math.max(0, band - height);
-    let visualTop = header + intoStrip;
-    if (gap > 0 && intoStrip > 0) {
-      const absorb = Math.min(1, intoStrip / gap);
-      visualTop += (tops[index] - visualTop) * absorb;
-    }
-    const revealed = Math.min(band, height);
-    const shift = Math.round(visualTop - tops[index]);
-    const clip = Math.round(Math.max(0, height - revealed));
-    motion[index] = {
-      shift,
-      clip,
-        stripHidden: clip !== 0,
-    };
-    band = Math.max(0, band - height - gap);
   }
+  if (active <= 0) return motion;
 
+  const current = heroes[active];
+  const previous = heroes[active - 1];
+  const height = previous.height;
+  if (height <= 0) return motion;
+
+  const gap = Math.max(0, current.top - (previous.top + height));
+  const distance = (current.top - header) - scrollY;
+  if (distance <= 0.5 || distance > height + gap + 0.5) return motion;
+
+  const previousTop = previous.top - scrollY;
+  const seam = current.top - scrollY;
+  const headerCutsPrevious = previousTop < header - 0.5 && previousTop + height > header + 0.5;
+  // The header is still inside this hero, and the next seam is more than one
+  // hero below it. Leave that hero in normal flow instead of pinning or slicing it.
+  if (headerCutsPrevious && seam > header + height) return motion;
+
+  const settling = Math.max(0, distance - height);
+  const shift = Math.round(Math.max(0, gap - settling));
+  motion[active - 1] = {
+    shift,
+    clip: 0,
+    stripHidden: gap > 0 && distance < height + gap - 0.5,
+  };
   return motion;
 }
