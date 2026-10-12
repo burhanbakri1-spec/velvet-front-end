@@ -1,3 +1,27 @@
+/** Upward travel required before reverse hero motion replaces normal flow. */
+export const HERO_DIRECTION_THRESHOLD = 36;
+
+/**
+ * Scroll direction for desktop heroes. Tiny wheel deltas stay in the current
+ * mode until they accumulate past the threshold, so the reverse effect cannot
+ * leak into ordinary downward scrolling.
+ */
+export function stepHeroScrollDirection(state, delta, threshold = HERO_DIRECTION_THRESHOLD) {
+  let accum = state?.accum || 0;
+  let mode = state?.mode === 'up' ? 'up' : 'down';
+  if (delta) {
+    accum = accum !== 0 && Math.sign(delta) !== Math.sign(accum) ? delta : accum + delta;
+  }
+  if (accum >= threshold) {
+    mode = 'down';
+    accum = threshold;
+  } else if (accum <= -threshold) {
+    mode = 'up';
+    accum = -threshold;
+  }
+  return { mode, accum };
+}
+
 /**
  * Desktop hero motion is a pure function of scroll position.
  *

@@ -204,7 +204,20 @@ export function mapPlatformProduct(product, categories, apiUrl) {
     availabilityAr: localized(product.availability, 'ar', 'متوفر'),
     image: absoluteUrl(product.image, apiUrl),
     hoverImage: absoluteUrl(product.hoverImage || product.image, apiUrl),
-    gallery: (product.gallery || []).map((url) => absoluteUrl(url, apiUrl)).filter(Boolean),
+    gallery: (product.gallery || []).map((item) => {
+      if (typeof item === 'string') return absoluteUrl(item, apiUrl);
+      return absoluteUrl(item?.url || item?.image || item?.src || '', apiUrl);
+    }).filter(Boolean),
+    galleryItems: (product.gallery || []).map((item) => {
+      if (typeof item === 'string') {
+        const url = absoluteUrl(item, apiUrl);
+        return url ? { id: '', url } : null;
+      }
+      const url = absoluteUrl(item?.url || item?.image || item?.src || '', apiUrl);
+      return url ? { id: String(item?.id || item?.galleryImageId || ''), url } : null;
+    }).filter(Boolean),
+    slideTitles: Array.isArray(product.slideTitles) ? product.slideTitles : [],
+    slideTitleFallbacks: Array.isArray(product.slideTitleFallbacks) ? product.slideTitleFallbacks : [],
     usageVideo: absoluteUrl(product.usageVideo, apiUrl),
     usageVideoPoster: absoluteUrl(product.usageVideoPoster, apiUrl),
     options: (product.options || []).map((option) => ({

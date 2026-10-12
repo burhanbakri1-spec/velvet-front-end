@@ -12,8 +12,8 @@ import {
   getCustomerFacingSelectionLabels,
   getCustomerFacingVariantLabels,
   getProductName,
-  resolveProductImages,
 } from '../data/products';
+import { gallerySlideDirection, resolveProductSlides, resolveSlideTitle } from '../data/slideTitles';
 import {
   getBrand,
   getCategory,
@@ -90,10 +90,11 @@ export default function ProductDetailsPage({ slug }) {
     typeof window === 'undefined' ? 4 : getRelatedPageSize(window.innerWidth)
   ));
 
-  const images = useMemo(
-    () => resolveProductImages(routeProduct, selections),
+  const slides = useMemo(
+    () => resolveProductSlides(routeProduct, selections),
     [routeProduct, selections],
   );
+  const images = useMemo(() => slides.map((slide) => slide.src), [slides]);
   const hasGallery = images.length > 1;
   const isTransitioning = Boolean(transition);
   const rtl = locale === 'ar';
@@ -188,11 +189,9 @@ export default function ProductDetailsPage({ slug }) {
     return subcategory?.name[locale] || category?.name[locale] || getVelvetPathLabel(item, locale) || getCategoryLabel(item.categoryId, locale);
   }, [locale]);
 
-  const beginImageTransition = useCallback((direction) => {
+  const beginImageTransitionTo = useCallback((nextIndex, direction) => {
     if (!hasGallery || isTransitioning || !routeProduct) return;
-    const step = direction === 'next' ? 1 : -1;
-    const nextIndex = (imageIndex + step + images.length) % images.length;
-    if (nextIndex === imageIndex) return;
+    if (nextIndex === imageIndex || nextIndex < 0 || nextIndex >= images.length) return;
 
     const viewport = switcherViewportRef.current;
     if (viewport) {
@@ -211,6 +210,12 @@ export default function ProductDetailsPage({ slug }) {
       if (viewport) viewport.style.removeProperty('--product-switcher-height');
     }, PRODUCT_SWITCH_DURATION_MS);
   }, [hasGallery, isTransitioning, routeProduct, imageIndex, images.length]);
+
+  const beginImageTransition = useCallback((direction) => {
+    const step = direction === 'next' ? 1 : -1;
+    const nextIndex = (imageIndex + step + images.length) % images.length;
+    beginImageTransitionTo(nextIndex, direction);
+  }, [beginImageTransitionTo, imageIndex, images.length]);
 
   const handleAdd = (event) => {
     event.preventDefault();
@@ -315,6 +320,19 @@ export default function ProductDetailsPage({ slug }) {
     : null;
   const eyebrow = resolveEyebrow(routeProduct);
   const productName = getProductName(routeProduct, locale);
+  const titleForIndex = (index) => resolveSlideTitle({
+    product: routeProduct,
+    galleryImageId: slides[index]?.id,
+    locale,
+  });
+  const activeTitle = titleForIndex(imageIndex);
+  const titleMotion = transition ? {
+    direction: transition.direction,
+    fromTitle: titleForIndex(transition.fromIndex),
+    toTitle: titleForIndex(transition.toIndex),
+    animating: slideAnimating,
+    rtl,
+  } : null;
   const pathHero = getPathHeroMedia(routeProduct);
   const heroTitle = pathHero.name?.[locale] || '';
   const showPathHero = Boolean(pathHero.image || pathHero.video || heroTitle);
@@ -499,7 +517,9 @@ export default function ProductDetailsPage({ slug }) {
                     aria-current={isActive ? 'true' : undefined}
                     aria-label={`${productName} image ${index + 1}`}
                     onClick={() => {
-                      if (!galleryDrag.current.dragged && !isTransitioning) setImageIndex(index);
+                      if (!galleryDrag.current.dragged && !isTransitioning) {
+                        beginImageTransitionTo(index, gallerySlideDirection(imageIndex, index));
+                      }
                     }}
                   >
                     <img src={image} alt="" draggable={false} />
@@ -512,7 +532,14 @@ export default function ProductDetailsPage({ slug }) {
       )}
 
       <div className="product-detail-stage">
-      <ProductDetailSlide {...slideProps} showMedia={false} showCopy interactive />
+      <ProductDetailSlide
+        {...slideProps}
+        showMedia={false}
+        showCopy
+        interactive
+        productTitle={activeTitle}
+        titleMotion={titleMotion}
+      />
       </div>
 
       <div className="product-detail-content" data-product-section="commerce">

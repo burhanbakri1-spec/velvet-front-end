@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { heroStageMotion } from '../src/components/heroScrollProgress.js';
+import { heroStageMotion, stepHeroScrollDirection } from '../src/components/heroScrollProgress.js';
 
 const header = 88;
 const viewportHeight = 900;
@@ -58,6 +58,26 @@ test('a strip between heroes is absorbed before the next previous hero enters, w
   assert.equal(arrived[0].shift, 0);
   assert.equal(next[0].clip, heroHeight - 40);
   assert.equal(next[1].shift, 0);
+});
+
+test('downward scroll stays in normal flow until a clear upward threshold', () => {
+  const start = { mode: 'down', accum: 0 };
+  const nudge = stepHeroScrollDirection(start, -8);
+  assert.equal(nudge.mode, 'down');
+  const up = stepHeroScrollDirection(nudge, -30);
+  assert.equal(up.mode, 'up');
+  const dip = stepHeroScrollDirection(up, 10);
+  assert.equal(dip.mode, 'up');
+  const down = stepHeroScrollDirection(dip, 40);
+  assert.equal(down.mode, 'down');
+});
+
+test('returning to down clears the reverse mode so product strips are not kept concealed', () => {
+  const up = stepHeroScrollDirection({ mode: 'down', accum: 0 }, -36);
+  assert.equal(up.mode, 'up');
+  const down = stepHeroScrollDirection(up, 80);
+  assert.equal(down.mode, 'down');
+  assert.equal(down.accum, 36);
 });
 
 test('the same scroll offset always returns the same motion, including a large jump', () => {

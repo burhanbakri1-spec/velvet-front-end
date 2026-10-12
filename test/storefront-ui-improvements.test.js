@@ -33,7 +33,7 @@ const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.m
 const sampleProduct = velvetProducts.find((item) => item.velvetPath?.subcategoryId);
 
 test('main gallery uses current product images only', () => {
-  assert.match(pageSource, /resolveProductImages\(routeProduct, selections\)/);
+  assert.match(pageSource, /resolveProductSlides\(routeProduct, selections\)/);
   assert.match(pageSource, /beginImageTransition/);
   assert.match(pageSource, /product-switcher-viewport/);
   assert.doesNotMatch(pageSource, /beginSiblingTransition/);

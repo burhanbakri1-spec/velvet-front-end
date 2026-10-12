@@ -7,6 +7,7 @@ import {
   getProductBadge,
   getProductName,
 } from '../data/products';
+import { getProductSlidePercent } from '../hooks/productSiblings';
 import { optionValueUnavailable, coerceSelectionsToValidVariant } from '../data/inventory';
 import { Link } from '../routing/Router';
 import { formatPrice } from '../data/currency';
@@ -30,8 +31,19 @@ export default function ProductDetailSlide({
   interactive = true,
   showMedia = true,
   showCopy = true,
+  productTitle,
+  titleMotion = null,
 }) {
-  const productName = getProductName(product, locale);
+  const productName = productTitle || getProductName(product, locale);
+  const titleStyle = (role) => {
+    if (!titleMotion) return undefined;
+    const { start, end } = getProductSlidePercent(titleMotion.direction, role, titleMotion.rtl);
+    const percent = titleMotion.animating ? end : start;
+    const opacity = titleMotion.animating
+      ? (role === 'outgoing' ? 0 : 1)
+      : (role === 'outgoing' ? 1 : 0);
+    return { transform: `translate3d(${percent}%, 0, 0)`, opacity };
+  };
   const optionDelta = product.options.reduce(
     (sum, option) => sum + Number(option.values.find((value) => value.label === selections[option.name])?.priceDelta || 0),
     0,
@@ -54,7 +66,16 @@ export default function ProductDetailSlide({
           {eyebrow}
           {product.badge && <span className="product-detail-badge">{getProductBadge(product, locale)}</span>}
         </span>
-        <h1>{productName}</h1>
+        <h1 className={`product-detail-title${titleMotion ? ' is-transitioning' : ''}`}>
+          {titleMotion ? (
+            <>
+              <span className="product-detail-title__slide" style={titleStyle('outgoing')}>{titleMotion.fromTitle}</span>
+              <span className="product-detail-title__slide" style={titleStyle('incoming')}>{titleMotion.toTitle}</span>
+            </>
+          ) : (
+            <span className="product-detail-title__slide">{productName}</span>
+          )}
+        </h1>
         <FavoriteButton productId={product.id} className="product-detail-favorite" />
         <div className="category-product-showcase__commerce">
           <div className="category-product-showcase__price">

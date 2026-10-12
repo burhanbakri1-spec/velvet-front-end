@@ -59,7 +59,7 @@ test('rtl flips slide transition offsets without reversing product order', () =>
 test('product details page uses current-product image switcher instead of sibling products', () => {
   const source = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
   assert.match(source, /beginImageTransition/);
-  assert.match(source, /resolveProductImages/);
+  assert.match(source, /resolveProductSlides/);
   assert.match(source, /getRelatedProducts/);
   assert.match(source, /product-switcher-viewport/);
   assert.doesNotMatch(source, /beginSiblingTransition/);
@@ -69,8 +69,8 @@ test('product details page uses current-product image switcher instead of siblin
 test('lower gallery strip shows current product images and does not navigate products', () => {
   const source = fs.readFileSync(new URL('../src/pages/ProductDetailsPage.jsx', import.meta.url), 'utf8');
   assert.match(source, /product-image-gallery/);
-  assert.match(source, /resolveProductImages\(routeProduct, selections\)/);
-  assert.match(source, /setImageIndex\(index\)/);
+  assert.match(source, /resolveProductSlides\(routeProduct, selections\)/);
+  assert.match(source, /beginImageTransitionTo\(index, gallerySlideDirection\(imageIndex, index\)\)/);
   assert.doesNotMatch(source, /sameSubcategory\.map/);
 });
 

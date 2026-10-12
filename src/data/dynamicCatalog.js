@@ -182,12 +182,38 @@ function buildCategory(raw, subs, apiUrl) {
   };
 }
 
+function mapGalleryItems(rawGallery, apiUrl) {
+  if (!Array.isArray(rawGallery)) return [];
+  return rawGallery.map((item) => {
+    if (typeof item === 'string') {
+      const url = absoluteUrl(item, apiUrl);
+      return url ? { id: '', url } : null;
+    }
+    if (!item || typeof item !== 'object') return null;
+    const url = absoluteUrl(item.url || item.image || item.src || '', apiUrl);
+    if (!url) return null;
+    return { id: String(item.id || item.galleryImageId || ''), url };
+  }).filter(Boolean);
+}
+
+function mapSlideTitleEntries(entries) {
+  if (!Array.isArray(entries)) return [];
+  return entries.map((entry) => ({
+    id: String(entry?.id || ''),
+    title: String(entry?.title || '').trim(),
+    language: String(entry?.language || ''),
+    galleryImageId: String(entry?.galleryImageId || ''),
+    sortOrder: Number(entry?.sortOrder ?? 0) || 0,
+  })).filter((entry) => entry.title);
+}
+
 function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
   const nameEn = localized(raw.name, 'en', '');
   const nameAr = localized(raw.name, 'ar', nameEn);
   const h = hash(`${brandSlug}:${mainCategory?.slug || ''}:${subSlug}:${raw.slug || raw.id}`);
   const palette = PALETTES[h % PALETTES.length];
-  const gallery = (Array.isArray(raw.gallery) ? raw.gallery.map((url) => absoluteUrl(url, apiUrl)) : []).filter(Boolean);
+  const galleryItems = mapGalleryItems(raw.gallery, apiUrl);
+  const gallery = galleryItems.map((item) => item.url);
   const image = absoluteUrl(raw.image || raw.primaryImage, apiUrl) || gallery[0] || artwork(nameEn || raw.slug || 'Toy', palette, h % 6, 'transparent');
   const hoverImage = absoluteUrl(raw.hoverImage || raw.secondaryImage, apiUrl) || gallery[1] || image;
   const badge = localized(raw.badge, 'en', '');
@@ -223,6 +249,9 @@ function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
     image,
     hoverImage,
     gallery,
+    galleryItems,
+    slideTitles: mapSlideTitleEntries(raw.slideTitles),
+    slideTitleFallbacks: mapSlideTitleEntries(raw.slideTitleFallbacks),
     colors: palette,
     options: buildOptions(raw.options, apiUrl),
     variants,
