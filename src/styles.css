@@ -2405,6 +2405,11 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
   #showcases > .home-brand > .brand-strip { z-index: 20; }
   #showcases > .home-brand > .brand-strip { transition: opacity .45s ease; }
   .brand-strip.is-concealed { opacity: 0; visibility: hidden; pointer-events: none; }
+  #showcases[data-stack-open] > .home-brand > .brand-showcase.brand-showcase--full-banner.is-concealed {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
   #showcases > .home-brand > .home-brand__runway { height: 0; }
 }
 body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }

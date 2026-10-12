@@ -44,7 +44,7 @@ export default function HomePage() {
     const desktop = window.matchMedia('(min-width: 1101px)');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
-    const motion = { y: window.scrollY, accum: 0, revealed: false, suspendUntil: 0 };
+    const motion = { y: window.scrollY, accum: 0, revealed: false, suspendUntil: 0, held: 0 };
     const threshold = BRAND_BANNER_STACK.scrollThreshold;
 
     const sync = () => {
@@ -52,6 +52,7 @@ export default function HomePage() {
       if (!enabled) {
         motion.revealed = false;
         motion.accum = 0;
+        motion.held = 0;
         root.removeAttribute('data-stack-open');
         root.style.setProperty('--brand-rail-height', '0px');
         setStackOpen((current) => (current ? false : current));
@@ -76,9 +77,9 @@ export default function HomePage() {
       const sections = [...root.querySelectorAll(':scope > .home-brand')];
       const tops = sections.map((section) => section.querySelector(':scope > .brand-showcase')?.getBoundingClientRect().top ?? 0);
       const cluster = tops.length ? Math.min(...tops) : 0;
-      let active = 0;
+      let stuck = 0;
       tops.forEach((top, index) => {
-        if (top <= cluster + 2) active = index;
+        if (top <= cluster + 2) stuck = index;
       });
       const stripOverlaps = (section) => {
         const strip = section?.querySelector(':scope > .brand-strip');
@@ -86,7 +87,19 @@ export default function HomePage() {
         const rect = strip.getBoundingClientRect();
         return rect.bottom > cluster + 24 && rect.top < window.innerHeight - 48;
       };
-      while (active > 0 && stripOverlaps(sections[active - 1]) && !stripOverlaps(sections[active])) active -= 1;
+      let active = stuck;
+      // Upward scroll releases the current sticky hero immediately, which would
+      // paint the previous full banner. Hold that hero and conceal the earlier bodies.
+      if (motion.revealed) {
+        const heldIndex = Math.min(sections.length - 1, Math.max(stuck, motion.held || 0));
+        const held = sections[heldIndex]?.querySelector(':scope > .brand-showcase')?.getBoundingClientRect();
+        const onStage = held && held.bottom > cluster + 64 && held.top < window.innerHeight * 0.92;
+        active = onStage ? heldIndex : stuck;
+        motion.held = active;
+      } else {
+        while (active > 0 && stripOverlaps(sections[active - 1]) && !stripOverlaps(sections[active])) active -= 1;
+        if (delta >= 0 || y <= 4) motion.held = stuck;
+      }
       const stackOpen = motion.revealed && active > 0;
       root.style.setProperty('--brand-rail-height', '0px');
       if (stackOpen) root.setAttribute('data-stack-open', '');
@@ -150,6 +163,7 @@ export default function HomePage() {
                 mediaLoading={index === 0 ? 'eager' : 'lazy'}
                 mediaFetchPriority={index === 0 ? 'high' : undefined}
                 brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
+                concealed={stackOpen && index < activeBrand}
               />
               <BrandProductStrip
                 brandSlug={brand.slug}
