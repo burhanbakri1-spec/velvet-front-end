@@ -61,6 +61,46 @@ export function latchStageMode(mode, delta, previousPos, pos, slides) {
  * @param {number} local scroll distance into the stage, in px
  * @param {'down' | 'up'} mode
  */
+function slideLength(slide, stageHeight) {
+  if (slide?.kind === 'strip') {
+    const height = Math.round(Number(slide.height));
+    if (height > 0) return height;
+  }
+  return stageHeight;
+}
+
+/** Cumulative travel for a downward sequence. Heroes use the stage; strips use their own height. */
+export function stageGeometry(slides, stageHeight) {
+  const lengths = [];
+  const offsets = [];
+  let cursor = 0;
+  (Array.isArray(slides) ? slides : []).forEach((slide) => {
+    offsets.push(cursor);
+    const length = slideLength(slide, stageHeight);
+    lengths.push(length);
+    cursor += length;
+  });
+  return { lengths, offsets, span: offsets.length ? offsets[offsets.length - 1] : 0 };
+}
+
+/** Slide index plus progress through that slide. Hero indexes stay the equal-slot positions the deck uses. */
+export function stageSlidePos(slides, local, stageHeight) {
+  if (!Array.isArray(slides) || slides.length === 0 || stageHeight <= 0) return 0;
+  const { lengths, offsets, span } = stageGeometry(slides, stageHeight);
+  const travel = Math.min(Math.max(0, local), span);
+  const maxIndex = slides.length - 1;
+  let index = maxIndex;
+  for (let i = 0; i < maxIndex; i += 1) {
+    if (travel < offsets[i + 1]) {
+      index = i;
+      break;
+    }
+  }
+  const length = lengths[index] || stageHeight;
+  const unit = index >= maxIndex || length <= 0 ? 0 : (travel - offsets[index]) / length;
+  return index + unit;
+}
+
 export function heroStageMotion({
   slides,
   local = 0,
@@ -68,9 +108,39 @@ export function heroStageMotion({
   mode = 'down',
 }) {
   if (!Array.isArray(slides) || slides.length === 0 || stageHeight <= 0) return [];
-  const travel = Math.min(Math.max(0, local), Math.max(0, (slides.length - 1) * stageHeight));
-  if (mode === 'up') return upDeck(slides, travel, stageHeight);
-  return downSlider(slides, travel, stageHeight);
+  if (mode === 'up') {
+    const pos = stageSlidePos(slides, local, stageHeight);
+    const travel = Math.min(Math.max(0, (slides.length - 1) * stageHeight), pos * stageHeight);
+    return upDeck(slides, travel, stageHeight);
+  }
+  return downSequence(slides, local, stageHeight);
+}
+
+function downSequence(slides, local, stageHeight) {
+  const pose = slides.map(() => blank(stageHeight));
+  const { lengths, offsets, span } = stageGeometry(slides, stageHeight);
+  const travel = Math.min(Math.max(0, local), span);
+  const maxIndex = slides.length - 1;
+  let index = maxIndex;
+  for (let i = 0; i < maxIndex; i += 1) {
+    if (travel < offsets[i + 1]) {
+      index = i;
+      break;
+    }
+  }
+  const length = lengths[index] || stageHeight;
+  const unit = index >= maxIndex || length <= 0 ? 0 : (travel - offsets[index]) / length;
+  const t = unit <= HERO_HOLD ? 0 : (unit - HERO_HOLD) / (1 - HERO_HOLD);
+  const outgoing = roundPx(-t * length);
+  const origin = offsets[index];
+  slides.forEach((slide, slideIndex) => {
+    const y = roundPx(offsets[slideIndex] - origin) + outgoing;
+    let z = 1;
+    if (slideIndex === index) z = 2;
+    else if (slideIndex === index + 1) z = 3;
+    pose[slideIndex] = { y, clipTop: 0, clipBottom: 0, hidden: false, z };
+  });
+  return pose;
 }
 
 function downSlider(slides, travel, stageHeight) {

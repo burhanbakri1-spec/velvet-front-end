@@ -2436,12 +2436,23 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     z-index: 2;
   }
   #showcases > .hero-stage-shell > .hero-stage > .home-brand { display: contents; }
-  #showcases > .hero-stage-shell > .hero-stage .brand-showcase.brand-showcase--full-banner,
-  #showcases > .hero-stage-shell > .hero-stage .brand-strip {
+  #showcases > .hero-stage-shell > .hero-stage .brand-showcase.brand-showcase--full-banner {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
+    max-height: none;
+    margin: 0;
+    transition: none;
+  }
+  #showcases > .hero-stage-shell > .hero-stage .brand-strip {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: 100%;
+    height: auto;
     max-height: none;
     margin: 0;
     transition: none;

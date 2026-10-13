@@ -6,6 +6,8 @@ import {
   HERO_SLICE_OVERLAP,
   heroStageMotion,
   latchStageMode,
+  stageGeometry,
+  stageSlidePos,
   stepHeroDirection,
 } from '../src/components/heroScrollProgress.js';
 
@@ -129,6 +131,62 @@ test('the same scroll position is the same frame', () => {
   const held = heroStageMotion({ slides: list, local: stageHeight * 0.2, stageHeight, mode: 'down' });
   const origin = heroStageMotion({ slides: list, local: 0, stageHeight, mode: 'down' });
   assert.deepEqual(held, origin);
+});
+
+test('a short product strip keeps the next hero on its own height', () => {
+  const stripHeight = 280;
+  const list = [
+    { kind: 'hero' },
+    { kind: 'strip', height: stripHeight },
+    { kind: 'hero' },
+  ];
+  const geometry = stageGeometry(list, stageHeight);
+  assert.deepEqual(geometry.lengths, [stageHeight, stripHeight, stageHeight]);
+  assert.equal(geometry.span, stageHeight + stripHeight);
+
+  const hold = heroStageMotion({
+    slides: list,
+    local: stageHeight + stripHeight * 0.2,
+    stageHeight,
+    mode: 'down',
+  });
+  assert.equal(hold[1].y, 0);
+  assert.equal(hold[2].y, stripHeight);
+  assert.ok(hold[2].y < stageHeight);
+
+  const unit = 0.7;
+  const t = (unit - HERO_HOLD) / (1 - HERO_HOLD);
+  const shift = Math.round(-t * stripHeight);
+  const sliding = heroStageMotion({
+    slides: list,
+    local: stageHeight + stripHeight * unit,
+    stageHeight,
+    mode: 'down',
+  });
+  assert.equal(sliding[1].y, shift);
+  assert.equal(sliding[2].y - sliding[1].y, stripHeight);
+
+  const into = heroStageMotion({
+    slides: list,
+    local: stageHeight * 0.7,
+    stageHeight,
+    mode: 'down',
+  });
+  assert.equal(into[1].y - into[0].y, stageHeight);
+  assert.equal(into[2].y - into[1].y, stripHeight);
+
+  const plain = slides(['hero', 'strip', 'hero', 'hero']);
+  const short = [
+    { kind: 'hero' },
+    { kind: 'strip', height: stripHeight },
+    { kind: 'hero' },
+    { kind: 'hero' },
+  ];
+  const original = heroStageMotion({ slides: plain, local: stageHeight * 2.5, stageHeight, mode: 'up' });
+  const local = stageHeight + stripHeight + stageHeight * 0.5;
+  assert.equal(stageSlidePos(short, local, stageHeight), 2.5);
+  const mapped = heroStageMotion({ slides: short, local, stageHeight, mode: 'up' });
+  assert.deepEqual(mapped, original);
 });
 
 test('direction changes only when a hero boundary is crossed', () => {

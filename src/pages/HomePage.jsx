@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import Hero from '../components/Hero';
 import IntroSection from '../components/IntroSection';
 import BrandShowcase from '../components/BrandShowcase';
-import { heroStageMotion, latchStageMode, stepHeroDirection } from '../components/heroScrollProgress';
+import { heroStageMotion, latchStageMode, stageGeometry, stageSlidePos, stepHeroDirection } from '../components/heroScrollProgress';
 import BrandProductStrip from '../components/BrandProductStrip';
 import CareersSection from '../components/CareersSection';
 import StoreReviewsSection from '../components/StoreReviewsSection';
@@ -84,13 +84,26 @@ export default function HomePage() {
         const hero = section.querySelector(':scope > .brand-showcase');
         const strip = section.querySelector(':scope > .brand-strip');
         if (hero) slides.push({ kind: 'hero', heroIndex, el: hero, section });
-        if (strip) slides.push({ kind: 'strip', heroIndex, el: strip, section });
+        if (strip) {
+          const height = strip.offsetHeight;
+          slides.push({
+            kind: 'strip',
+            heroIndex,
+            el: strip,
+            section,
+            height: height > 0 ? height : undefined,
+          });
+        }
       });
       if (shell) shellTop = shell.getBoundingClientRect().top + window.scrollY;
       const stageEl = root.querySelector('.hero-stage');
       const enabled = desktop.matches && !reduced.matches && slides.length > 0;
       if (shell && stageEl && enabled) {
-        shell.style.setProperty('--hero-stage-span', `${slides.length * stageHeight}px`);
+        const span = stageGeometry(slides, stageHeight).span + stageHeight;
+        const nextSpan = `${span}px`;
+        if (shell.style.getPropertyValue('--hero-stage-span') !== nextSpan) {
+          shell.style.setProperty('--hero-stage-span', nextSpan);
+        }
         stageEl.style.top = `${headerOffset}px`;
         stageEl.style.height = `${stageHeight}px`;
       } else if (shell || stageEl) {
@@ -113,9 +126,9 @@ export default function HomePage() {
       const y = window.scrollY;
       const delta = y - direction.y;
       const nextMode = stepHeroDirection(direction.mode, delta);
-      const span = Math.max(0, (slides.length - 1) * stageHeight);
+      const span = stageGeometry(slides, stageHeight).span;
       const local = Math.min(span, Math.max(0, y - (shellTop - headerOffset)));
-      const pos = local / stageHeight;
+      const pos = stageSlidePos(slides, local, stageHeight);
       direction.mode = latchStageMode(direction.mode, delta, direction.pos, pos, slides);
       if (direction.mode !== 'up') direction.mode = 'down';
       if (nextMode === direction.mode) direction.mode = nextMode;
@@ -169,12 +182,14 @@ export default function HomePage() {
     const stageObserver = new MutationObserver(onLayout);
     if (stage) stageObserver.observe(stage, { childList: true, subtree: true });
     window.addEventListener('scroll', onScroll, { passive: true });
+    stage?.addEventListener('load', onLayout, true);
     window.addEventListener('resize', onLayout);
     desktop.addEventListener('change', onLayout);
     reduced.addEventListener('change', onLayout);
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener('scroll', onScroll);
+      stage?.removeEventListener('load', onLayout, true);
       window.removeEventListener('resize', onLayout);
       observer.disconnect();
       stageObserver.disconnect();
