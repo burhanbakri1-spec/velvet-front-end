@@ -13,6 +13,13 @@ export function stepHeroDirection(mode, delta) {
 /** Fraction of each slide's scroll that holds the slide still. */
 export const HERO_HOLD = 0.4;
 
+/**
+ * How far the outgoing hero drifts up while the next slide covers it.
+ * The drift stays well below a full stage so the pair overlaps instead of
+ * butting into a scrolling column.
+ */
+export const HERO_COVER_DRIFT = 0.12;
+
 /** Visible height of an older logo slice. */
 export const HERO_SLICE = 64;
 
@@ -116,6 +123,10 @@ export function heroStageMotion({
   return downSequence(slides, local, stageHeight);
 }
 
+function progressOf(unit) {
+  return unit <= HERO_HOLD ? 0 : (unit - HERO_HOLD) / (1 - HERO_HOLD);
+}
+
 function downSequence(slides, local, stageHeight) {
   const pose = slides.map(() => blank(stageHeight));
   const { lengths, offsets, span } = stageGeometry(slides, stageHeight);
@@ -130,14 +141,37 @@ function downSequence(slides, local, stageHeight) {
   }
   const length = lengths[index] || stageHeight;
   const unit = index >= maxIndex || length <= 0 ? 0 : (travel - offsets[index]) / length;
-  const t = unit <= HERO_HOLD ? 0 : (unit - HERO_HOLD) / (1 - HERO_HOLD);
-  const outgoing = roundPx(-t * length);
+  const progress = progressOf(unit);
   const origin = offsets[index];
+
+  // A strip is shorter than the stage. It and the next hero stay one piece
+  // and travel that real height, so the seam cannot open into a white gap.
+  if (slides[index]?.kind === 'strip') {
+    const shift = roundPx(progress * length);
+    slides.forEach((slide, slideIndex) => {
+      const y = roundPx(offsets[slideIndex] - origin) - shift;
+      let z = 1;
+      if (slideIndex === index) z = 2;
+      else if (slideIndex === index + 1) z = 3;
+      pose[slideIndex] = { y, clipTop: 0, clipBottom: 0, hidden: false, z };
+    });
+    return pose;
+  }
+
+  // Cover: one progress drives both heroes. The next slide travels the full
+  // stage from below and paints over the current hero. The current hero only
+  // drifts, so the two overlap in the same stage instead of forming a column.
+  const drift = roundPx(progress * stageHeight * HERO_COVER_DRIFT);
+  const nextY = roundPx((1 - progress) * stageHeight);
+  const incoming = Math.min(index + 1, maxIndex);
   slides.forEach((slide, slideIndex) => {
-    const y = roundPx(offsets[slideIndex] - origin) + outgoing;
+    const y = slideIndex <= index
+      ? roundPx(offsets[slideIndex] - origin) - drift
+      : nextY + roundPx(offsets[slideIndex] - offsets[incoming]);
     let z = 1;
     if (slideIndex === index) z = 2;
-    else if (slideIndex === index + 1) z = 3;
+    else if (slideIndex === incoming) z = 4;
+    else if (slideIndex > incoming) z = 3;
     pose[slideIndex] = { y, clipTop: 0, clipBottom: 0, hidden: false, z };
   });
   return pose;

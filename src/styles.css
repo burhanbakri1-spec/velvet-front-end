@@ -2467,6 +2467,7 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     height: 100%;
     object-fit: cover;
     object-position: center top;
+    transition: none;
   }
   #showcases > .hero-stage-shell > .hero-stage .brand-strip {
     overflow: hidden;

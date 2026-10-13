@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  HERO_COVER_DRIFT,
   HERO_HOLD,
   HERO_SLICE,
   HERO_SLICE_OVERLAP,
@@ -25,9 +26,13 @@ function frame(pattern, local, mode) {
   return { motion, visibleTop, visibleHeight };
 }
 
-function transitionY(unit) {
-  const t = unit <= HERO_HOLD ? 0 : (unit - HERO_HOLD) / (1 - HERO_HOLD);
-  return Math.round(-t * stageHeight);
+function coverAt(unit) {
+  const progress = unit <= HERO_HOLD ? 0 : (unit - HERO_HOLD) / (1 - HERO_HOLD);
+  return {
+    progress,
+    currentY: -(Math.round(progress * stageHeight * HERO_COVER_DRIFT) || 0),
+    nextY: Math.round((1 - progress) * stageHeight) || 0,
+  };
 }
 
 test('down holds the slide, then slides it in one flush push', () => {
@@ -44,13 +49,20 @@ test('down holds the slide, then slides it in one flush push', () => {
   assert.equal(held.motion[1].y, stageHeight);
 
   const early = frame(pattern, stageHeight * 0.5, 'down');
-  assert.ok(Math.abs(early.motion[0].y) < stageHeight / 2);
-  assert.equal(early.motion[0].y + stageHeight, early.motion[1].y);
+  const earlyCover = coverAt(0.5);
+  assert.equal(early.motion[0].y, earlyCover.currentY);
+  assert.equal(early.motion[1].y, earlyCover.nextY);
+  assert.ok(early.motion[0].y + stageHeight > early.motion[1].y);
+  assert.ok(early.motion[1].z > early.motion[0].z);
 
   const mid = frame(pattern, stageHeight * 0.7, 'down');
-  const expected = transitionY(0.7);
-  assert.equal(mid.motion[0].y, expected);
-  assert.equal(mid.motion[1].y, expected + stageHeight);
+  const midCover = coverAt(0.7);
+  assert.ok(Math.abs(midCover.progress - 0.5) < 1e-9);
+  assert.equal(mid.motion[0].y, midCover.currentY);
+  assert.equal(mid.motion[1].y, stageHeight / 2);
+  assert.ok(mid.motion[0].y > -stageHeight * 0.25);
+  assert.ok(mid.motion[1].y > stageHeight * 0.4 && mid.motion[1].y < stageHeight * 0.6);
+  assert.ok(mid.motion[0].y + stageHeight > mid.motion[1].y);
 
   const arrived = frame(pattern, stageHeight, 'down');
   const before = frame(pattern, stageHeight - 1, 'down');
@@ -68,12 +80,16 @@ test('a product strip is its own hold-and-slide and a missing strip is skipped',
   assert.equal(heldStrip.motion[1].hidden, false);
 
   const sliding = frame(pattern, stageHeight * 0.7, 'down');
-  assert.equal(sliding.motion[0].y + stageHeight, sliding.motion[1].y);
+  const cover = coverAt(0.7);
+  assert.equal(sliding.motion[0].y, cover.currentY);
+  assert.equal(sliding.motion[1].y, cover.nextY);
   assert.equal(sliding.motion[1].hidden, false);
+  assert.ok(sliding.motion[1].z > sliding.motion[0].z);
 
   const heroesOnly = frame(['hero', 'hero'], stageHeight * 0.7, 'down');
   assert.equal(heroesOnly.motion.length, 2);
-  assert.equal(heroesOnly.motion[0].y + stageHeight, heroesOnly.motion[1].y);
+  assert.equal(heroesOnly.motion[1].y, cover.nextY);
+  assert.ok(heroesOnly.motion[0].y + stageHeight > heroesOnly.motion[1].y);
 });
 
 test('up stacks previous heroes as top logo slices under the current hero', () => {
@@ -126,7 +142,10 @@ test('the same scroll position is the same frame', () => {
   const second = heroStageMotion({ slides: list, local: stageHeight * 2.4, stageHeight, mode: 'up' });
   assert.deepEqual(first, second);
   const down = heroStageMotion({ slides: list, local: stageHeight * 0.7, stageHeight, mode: 'down' });
-  assert.equal(down[0].y + stageHeight, down[1].y);
+  const cover = coverAt(0.7);
+  assert.equal(down[0].y, cover.currentY);
+  assert.equal(down[1].y, cover.nextY);
+  assert.ok(down[0].y + stageHeight > down[1].y);
   assert.ok(down.every((item) => item.hidden === false && item.clipTop === 0));
   const held = heroStageMotion({ slides: list, local: stageHeight * 0.2, stageHeight, mode: 'down' });
   const origin = heroStageMotion({ slides: list, local: 0, stageHeight, mode: 'down' });
@@ -172,8 +191,11 @@ test('a short product strip keeps the next hero on its own height', () => {
     stageHeight,
     mode: 'down',
   });
-  assert.equal(into[1].y - into[0].y, stageHeight);
+  const cover = coverAt(0.7);
+  assert.equal(into[0].y, cover.currentY);
+  assert.equal(into[1].y, cover.nextY);
   assert.equal(into[2].y - into[1].y, stripHeight);
+  assert.ok(into[0].y + stageHeight > into[1].y);
 
   const plain = slides(['hero', 'strip', 'hero', 'hero']);
   const short = [
