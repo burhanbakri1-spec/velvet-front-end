@@ -2,6 +2,7 @@
  * Scroll direction picks which desktop hero model runs.
  * Any downward delta leaves the upward deck immediately.
  * Any upward delta enters it. A zero delta keeps the current model.
+ * Positions come only from the caller's cached document tops.
  */
 export function stepHeroDirection(mode, delta) {
   if (delta > 0) return 'down';
@@ -9,14 +10,32 @@ export function stepHeroDirection(mode, delta) {
   return mode === 'up' ? 'up' : 'down';
 }
 
-/** Thin card height for an older hero in the upward deck. */
-export const HERO_SLICE = 96;
+/** Visible card edge for an older hero in the upward deck. */
+export const HERO_SLICE = 72;
 
 /** How far each older card tucks under the card below it. */
 export const HERO_SLICE_OVERLAP = 8;
 
+/**
+ * The brand title sits about 73px above the banner bottom.
+ * This keeps that title inside the thin slice instead of leaving a blank color band.
+ */
+export const HERO_SLICE_FOOT = 36;
+
+/** How strongly a downward span lingers, then sweeps. Stays below 1 so the column never reverses. */
+const SLIDE_WEIGHT = 0.82;
+
 function roundShift(value) {
   return Math.round(value) || 0;
+}
+
+function sliceFrame(height, visible) {
+  const room = Math.max(0, height - visible);
+  const foot = Math.min(HERO_SLICE_FOOT, room);
+  return {
+    clip: roundShift(Math.max(0, height - foot - visible)),
+    foot: roundShift(foot),
+  };
 }
 
 function clamp01(value) {
@@ -29,16 +48,24 @@ function smoothstep(value) {
 }
 
 /**
- * Down is a vertical slide. Every hero shares one temporary upward offset,
- * and each product strip is translated by that same amount, so the column
- * stays glued. The offset is zero, with zero slope, at both ends of a span.
- * Mid-span the column travels faster than document scroll.
+ * Visual travel through one downward span, as a fraction of that span.
+ * 0 at the start, 1 at the end, slope 1 at both ends.
+ * The first half moves slower than the scrollbar so the current hero lingers.
+ * The second half moves faster, so the strip and the next hero sweep in.
+ */
+export function heroSlideTravel(progress) {
+  const turn = 2 * Math.PI * clamp01(progress);
+  return clamp01(progress) - (SLIDE_WEIGHT / (2 * Math.PI)) * (1 - Math.cos(turn));
+}
+
+/**
+ * Down is a viewport slider. The outgoing hero and its product strip linger,
+ * then sweep upward. The next hero starts at the fold and slides up from
+ * below until it meets that strip. Shift is zero at every hero boundary.
  *
- * Up is a deck. The full hero is the first banner still below the header.
- * Earlier heroes are thin slices stacked under the header. They slide in
- * from height zero. The nearest slice keeps growing until it is the full
- * hero. Older slices stay thin, then slide up under the header instead of
- * popping away. The full hero is pushed down by the stack.
+ * Up is a deck of thin card edges under the header. The nearest edge grows
+ * into the full hero. Older edges stay one slice tall. The full hero sits
+ * on the stack, so native scroll is cancelled and cannot fight the deck.
  */
 export function heroStageMotion({
   heroes,
@@ -60,18 +87,34 @@ function downSlide(heroes, scrollY, header, viewportHeight, motion) {
   if (visible <= 0) return motion;
 
   for (let index = 1; index < heroes.length; index += 1) {
-    const previous = heroes[index - 1];
-    const span = heroes[index].top - previous.top;
-    if (span <= 0 || previous.height <= 0) continue;
-    if (focus < previous.top || focus >= heroes[index].top) continue;
-    const progress = clamp01((focus - previous.top) / span);
-    // Zero slope at both ends, so the column is moving at normal scroll
-    // speed when a hero arrives and when it leaves. The sine hump makes
-    // the whole column — hero, strip, next hero — travel faster mid-span.
-    const wave = Math.sin(Math.PI * progress) ** 2;
-    const travel = Math.min(span, visible) * 0.2;
-    const shift = roundShift(-travel * wave);
-    for (let cursor = 0; cursor < heroes.length; cursor += 1) motion[cursor].shift = shift;
+    const outgoing = heroes[index - 1];
+    const incoming = heroes[index];
+    const span = incoming.top - outgoing.top;
+    if (span <= 0 || outgoing.height <= 0) continue;
+    if (focus < outgoing.top || focus >= incoming.top) continue;
+
+    const progress = clamp01((focus - outgoing.top) / span);
+    const travel = heroSlideTravel(progress);
+    const columnShift = (progress - travel) * span;
+    const strip = Math.max(0, span - outgoing.height);
+    const slack = Math.max(0, visible - outgoing.height - strip);
+    const approach = smoothstep(progress / 0.55);
+    const entrance = slack * (1 - approach);
+    let nextSlack = 0;
+    if (index + 1 < heroes.length && heroes[index].height > 0) {
+      const following = heroes[index + 1];
+      const nextSpan = following.top - incoming.top;
+      const nextStrip = Math.max(0, nextSpan - incoming.height);
+      nextSlack = Math.max(0, visible - incoming.height - nextStrip);
+    }
+    const park = nextSlack * approach;
+
+    for (let cursor = 0; cursor < heroes.length; cursor += 1) {
+      let extra = 0;
+      if (cursor === index) extra = entrance;
+      else if (cursor > index) extra = entrance + park;
+      motion[cursor].shift = roundShift(columnShift + extra);
+    }
     break;
   }
   return motion;
@@ -94,19 +137,16 @@ function upDeck(heroes, scrollY, header, motion) {
   if (span <= 0 || heroes[nearest].height <= 0 || distance <= 0.5) return motion;
 
   const opened = clamp01(distance / span);
-  const gap = Math.max(0, span - heroes[nearest].height);
-  const growRoom = Math.max(1, span - HERO_SLICE);
-  const thin = Math.min(HERO_SLICE, distance);
-  const grow = clamp01((distance - HERO_SLICE) / growRoom);
-  const nearestHeight = Math.min(
-    heroes[nearest].height,
-    thin + grow * (heroes[nearest].height - thin),
-  );
+  const grow = smoothstep((opened - 0.5) / 0.5);
+  const nearestHeight = distance <= HERO_SLICE
+    ? distance
+    : Math.min(heroes[nearest].height, HERO_SLICE + grow * (heroes[nearest].height - HERO_SLICE));
+
   const heights = heroes.map(() => 0);
   for (let index = 0; index < nearest; index += 1) {
     if (heroes[index].height <= 0) continue;
     const order = nearest - 1 - index;
-    const start = order * (HERO_SLICE * 0.5);
+    const start = (order + 1) * HERO_SLICE * 0.55;
     const local = clamp01((distance - start) / HERO_SLICE);
     heights[index] = local * Math.min(HERO_SLICE, heroes[index].height);
   }
@@ -119,37 +159,37 @@ function upDeck(heroes, scrollY, header, motion) {
     if (seenOlder > 0) olderStack -= HERO_SLICE_OVERLAP;
     seenOlder += 1;
   }
-  const lift = smoothstep((opened - 0.55) / 0.45) * olderStack;
-  let cursor = header - lift;
-  let placed = 0;
+  const liftStack = Math.max(0, olderStack - (seenOlder > 0 ? HERO_SLICE_OVERLAP : 0));
+  let cursor = header - grow * liftStack;
 
   for (let index = 0; index < nearest; index += 1) {
     const visible = heights[index];
     motion[index].stripHidden = true;
     if (visible < 1) continue;
     const natural = heroes[index].top - scrollY;
+    const frame = sliceFrame(heroes[index].height, visible);
     motion[index] = {
-      shift: roundShift(cursor - (natural + heroes[index].height - visible)),
-      clip: roundShift(heroes[index].height - visible),
+      shift: roundShift(cursor - natural - frame.clip),
+      clip: frame.clip,
+      foot: frame.foot,
       stripHidden: true,
       z: 4 + index,
     };
-    placed += 1;
-    cursor += visible - (placed < seenOlder ? HERO_SLICE_OVERLAP : 0);
+    cursor += visible - HERO_SLICE_OVERLAP;
   }
 
   const nearestNatural = heroes[nearest].top - scrollY;
-  const nearestClip = Math.max(0, heroes[nearest].height - nearestHeight);
+  const nearestFrame = sliceFrame(heroes[nearest].height, nearestHeight);
   motion[nearest] = {
-    shift: roundShift(cursor - nearestNatural - nearestClip),
-    clip: roundShift(nearestClip),
+    shift: roundShift(cursor - nearestNatural - nearestFrame.clip),
+    clip: nearestFrame.clip,
+    foot: nearestFrame.foot,
     stripHidden: true,
     z: 4 + nearest,
   };
+  cursor += nearestHeight;
 
-  const featuredTop = cursor + nearestHeight + opened * gap;
-  const featuredNatural = heroes[featured].top - scrollY;
-  const featuredShift = roundShift(featuredTop - featuredNatural);
+  const featuredShift = roundShift(cursor - (heroes[featured].top - scrollY));
   for (let index = featured; index < heroes.length; index += 1) {
     motion[index].shift = featuredShift;
   }

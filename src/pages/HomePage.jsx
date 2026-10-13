@@ -42,13 +42,13 @@ export default function HomePage() {
     const desktop = window.matchMedia('(min-width: 1101px)');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
+    let needsMeasure = true;
     const direction = { y: window.scrollY, mode: 'down' };
+    let layout = [];
 
-    const readShift = (hero) => {
-      const transform = hero ? getComputedStyle(hero).transform : '';
-      if (!transform || transform === 'none') return 0;
-      const values = transform.slice(transform.indexOf('(') + 1, -1).split(',').map(Number);
-      return values.length === 16 ? values[13] : values[5] || 0;
+    const inlineShift = (hero) => {
+      const match = /translate3d\(\s*0(?:px)?,\s*(-?\d+(?:\.\d+)?)px/i.exec(hero?.style.transform || '');
+      return match ? Number(match[1]) : 0;
     };
 
     const clearMotion = () => {
@@ -69,7 +69,19 @@ export default function HomePage() {
       });
     };
 
-    const sync = () => {
+    const measure = () => {
+      layout = [...root.querySelectorAll(':scope > .home-brand')].map((section) => {
+        const hero = section.querySelector(':scope > .brand-showcase');
+        if (!hero) return { top: 0, height: 0 };
+        const rect = hero.getBoundingClientRect();
+        return {
+          top: rect.top + window.scrollY - inlineShift(hero),
+          height: rect.height,
+        };
+      });
+    };
+
+    const apply = () => {
       const enabled = desktop.matches && !reduced.matches;
       if (!enabled) {
         direction.mode = 'down';
@@ -83,29 +95,20 @@ export default function HomePage() {
       direction.mode = nextMode;
       if (direction.mode !== 'up') direction.mode = 'down';
       direction.y = y;
-      const sections = [...root.querySelectorAll(':scope > .home-brand')];
-      const heroes = sections.map((section) => {
-        const hero = section.querySelector(':scope > .brand-showcase');
-        const shift = readShift(hero);
-        const rect = hero?.getBoundingClientRect();
-        return {
-          top: rect ? rect.top + window.scrollY - shift : 0,
-          height: rect ? rect.height : 0,
-        };
-      });
       const header = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
       const motion = heroStageMotion({
-        heroes,
+        heroes: layout,
         scrollY: y,
         header,
         viewportHeight: window.innerHeight,
         mode: direction.mode,
       });
+      const focus = y + header;
       let active = 0;
-      const visualTops = heroes.map((hero, index) => hero.top - window.scrollY + (motion[index]?.shift || 0));
-      visualTops.forEach((top, index) => {
-        if (top <= header + 2) active = index;
+      layout.forEach((hero, index) => {
+        if (hero.top <= focus + 2) active = index;
       });
+      const sections = [...root.querySelectorAll(':scope > .home-brand')];
       sections.forEach((section, index) => {
         const hero = section.querySelector(':scope > .brand-showcase');
         const strip = section.querySelector(':scope > .brand-strip');
@@ -113,7 +116,8 @@ export default function HomePage() {
         const clip = motion[index]?.clip || 0;
         if (hero) {
           hero.style.transform = shift ? `translate3d(0, ${shift}px, 0)` : '';
-          hero.style.clipPath = clip ? `inset(${clip}px 0 0 0)` : '';
+          const foot = motion[index]?.foot || 0;
+          hero.style.clipPath = (clip || foot) ? `inset(${clip}px 0 ${foot}px 0)` : '';
           hero.style.zIndex = motion[index]?.z ? String(motion[index].z) : '';
         }
         if (strip) {
@@ -125,41 +129,41 @@ export default function HomePage() {
       root.style.setProperty('--brand-rail-height', '0px');
     };
 
-    let again = false;
-    const schedule = () => {
-      if (frame) {
-        again = true;
-        return;
-      }
-      const run = () => {
+    const schedule = (measureFirst) => {
+      needsMeasure = needsMeasure || measureFirst;
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
         frame = 0;
-        sync();
-        if (!again) return;
-        again = false;
-        frame = window.requestAnimationFrame(run);
-      };
-      frame = window.requestAnimationFrame(run);
+        if (needsMeasure) {
+          needsMeasure = false;
+          measure();
+        }
+        apply();
+      });
     };
 
-    syncHeroes.current = sync;
-    sync();
-    const observer = new ResizeObserver(schedule);
+    const onScroll = () => schedule(false);
+    const onLayout = () => schedule(true);
+    syncHeroes.current = apply;
+    measure();
+    apply();
+    const observer = new ResizeObserver(onLayout);
     root.querySelectorAll(':scope > .home-brand > .brand-showcase').forEach((hero) => observer.observe(hero));
     const header = document.querySelector('.site-header');
-    const headerObserver = new MutationObserver(schedule);
+    const headerObserver = new MutationObserver(onLayout);
     if (header) headerObserver.observe(header, { attributes: true, attributeFilter: ['class'] });
-    window.addEventListener('scroll', schedule, { passive: true });
-    window.addEventListener('resize', schedule);
-    desktop.addEventListener('change', schedule);
-    reduced.addEventListener('change', schedule);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onLayout);
+    desktop.addEventListener('change', onLayout);
+    reduced.addEventListener('change', onLayout);
     return () => {
       window.cancelAnimationFrame(frame);
-      window.removeEventListener('scroll', schedule);
-      window.removeEventListener('resize', schedule);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onLayout);
       observer.disconnect();
       headerObserver.disconnect();
-      desktop.removeEventListener('change', schedule);
-      reduced.removeEventListener('change', schedule);
+      desktop.removeEventListener('change', onLayout);
+      reduced.removeEventListener('change', onLayout);
     };
   }, []);
 
