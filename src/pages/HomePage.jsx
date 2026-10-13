@@ -61,7 +61,10 @@ export default function HomePage() {
           hero.style.clipPath = '';
           hero.style.zIndex = '';
         }
-        strip?.classList.remove('is-concealed');
+        if (strip) {
+          strip.style.transform = '';
+          strip.classList.remove('is-concealed');
+        }
         section.removeAttribute('data-active');
       });
     };
@@ -113,7 +116,10 @@ export default function HomePage() {
           hero.style.clipPath = clip ? `inset(${clip}px 0 0 0)` : '';
           hero.style.zIndex = motion[index]?.z ? String(motion[index].z) : '';
         }
-        strip?.classList.toggle('is-concealed', Boolean(motion[index]?.stripHidden));
+        if (strip) {
+          strip.style.transform = shift ? `translate3d(0, ${shift}px, 0)` : '';
+          strip.classList.toggle('is-concealed', Boolean(motion[index]?.stripHidden));
+        }
         section.toggleAttribute('data-active', index === active);
       });
       root.style.setProperty('--brand-rail-height', '0px');
