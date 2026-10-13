@@ -2,123 +2,120 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   HERO_SLICE,
+  HERO_SLICE_OVERLAP,
   heroStageMotion,
+  latchStageMode,
   stepHeroDirection,
 } from '../src/components/heroScrollProgress.js';
 
-const header = 88;
-const viewportHeight = 900;
-const heroHeight = 668;
+const stageHeight = 812;
 
-function column(count, gaps = [], height = heroHeight) {
-  const heroes = [];
-  let top = 2400;
-  for (let index = 0; index < count; index += 1) {
-    heroes.push({ top, height });
-    top += height + (gaps[index] ?? 0);
-  }
-  return heroes;
+function slides(pattern) {
+  return pattern.map((kind) => ({ kind }));
 }
 
-function frame(heroes, scrollY, mode) {
-  const motion = heroStageMotion({ heroes, scrollY, header, viewportHeight, mode });
-  const boxTop = (index) => heroes[index].top - scrollY + motion[index].shift;
-  const visibleTop = (index) => boxTop(index) + (motion[index].clip || 0);
-  const visibleHeight = (index) => heroes[index].height - (motion[index].clip || 0) - (motion[index].foot || 0);
-  return { motion, boxTop, visibleTop, visibleHeight };
+function frame(pattern, local, mode) {
+  const list = slides(pattern);
+  const motion = heroStageMotion({ slides: list, local, stageHeight, mode });
+  const visibleTop = (index) => motion[index].y + motion[index].clipTop;
+  const visibleHeight = (index) => stageHeight - motion[index].clipTop - motion[index].clipBottom;
+  return { motion, visibleTop, visibleHeight };
 }
 
-test('downward stage heroes slide flush, with the next section entering from the fold', () => {
-  const stage = viewportHeight - header;
-  const heroes = column(4, [], stage);
-  const flushY = heroes[0].top - header;
-  const start = frame(heroes, flushY, 'down');
-  assert.equal(start.boxTop(0), header);
-  assert.equal(start.boxTop(1), viewportHeight);
-  assert.ok(start.motion.every((item) => item.shift === 0 && item.clip === 0 && item.foot === 0 && item.stripHidden === false));
+test('down is a linear stage push with the next slide entering from below', () => {
+  const pattern = ['hero', 'hero', 'hero', 'hero'];
+  const start = frame(pattern, 0, 'down');
+  assert.equal(start.motion[0].y, 0);
+  assert.equal(start.motion[1].y, stageHeight);
+  assert.ok(start.motion.every((item) => item.clipTop === 0 && item.clipBottom === 0 && item.hidden === false));
 
-  for (const distance of [1, 40, 200, 500, stage]) {
-    const current = frame(heroes, flushY + distance, 'down');
-    assert.equal(current.boxTop(0), header - distance);
-    assert.equal(current.boxTop(1), current.boxTop(0) + stage);
-    assert.ok(current.boxTop(1) < viewportHeight);
-    assert.ok(current.motion.every((item) => item.shift === 0 && item.stripHidden === false && item.clip === 0));
-  }
+  const mid = frame(pattern, stageHeight / 2, 'down');
+  assert.equal(mid.motion[0].y, -stageHeight / 2);
+  assert.equal(mid.motion[1].y, stageHeight / 2);
+  assert.equal(mid.motion[0].y + stageHeight, mid.motion[1].y);
 
-  const arrived = frame(heroes, heroes[1].top - header, 'down');
-  const before = frame(heroes, heroes[1].top - header - 1, 'down');
-  assert.equal(arrived.boxTop(1), header);
-  assert.equal(before.boxTop(2), arrived.boxTop(2) + 1);
+  const arrived = frame(pattern, stageHeight, 'down');
+  const before = frame(pattern, stageHeight - 1, 'down');
+  assert.equal(arrived.motion[1].y, 0);
+  assert.equal(arrived.motion[2].y, stageHeight);
+  assert.equal(arrived.motion[0].y, -stageHeight);
+  assert.ok(Math.abs(before.motion[1].y - arrived.motion[1].y) <= 1);
 });
 
-test('a product strip stays between heroes on the way down', () => {
-  const stage = viewportHeight - header;
-  const heroes = column(3, [280, 0], stage);
-  const flushY = heroes[0].top - header;
-  for (const distance of [0, 120, 280, 500, 800]) {
-    const current = frame(heroes, flushY + distance, 'down');
-    const visualGap = current.boxTop(1) - (current.boxTop(0) + stage);
-    assert.equal(visualGap, 280, `distance=${distance}: strip collapsed to ${visualGap}`);
-    assert.ok(current.motion.every((item) => item.stripHidden === false && item.clip === 0 && item.shift === 0));
+test('a product strip is its own slide and a missing strip is skipped', () => {
+  const pattern = ['hero', 'strip', 'hero'];
+  for (const distance of [0, 200, stageHeight, stageHeight + 300]) {
+    const current = frame(pattern, distance, 'down');
+    const index = Math.min(2, Math.floor(distance / stageHeight));
+    const progress = distance / stageHeight - index;
+    if (index < 2) {
+      assert.equal(current.motion[index].y + stageHeight, current.motion[index + 1].y);
+      assert.ok(Math.abs(current.motion[index].y - Math.round(-progress * stageHeight)) <= 1);
+    }
+    assert.equal(current.motion[1].hidden, false);
   }
+  const heroesOnly = frame(['hero', 'hero'], stageHeight / 2, 'down');
+  assert.equal(heroesOnly.motion.length, 2);
+  assert.equal(heroesOnly.motion[0].y + stageHeight, heroesOnly.motion[1].y);
 });
 
-test('upward slices show the top edge and sit under the header', () => {
-  const heroes = column(4);
-  const play = 2;
-  const opened = frame(heroes, heroes[play].top - header - 180, 'up');
-  assert.ok(opened.visibleHeight(0) > 20 && opened.visibleHeight(0) <= HERO_SLICE);
-  assert.ok(opened.visibleHeight(1) > 20 && opened.visibleHeight(1) <= HERO_SLICE);
-  assert.ok(opened.motion[0].clip > 0 && opened.motion[0].clip <= 34);
-  assert.ok(opened.motion[1].clip > 0 && opened.motion[1].clip <= 34);
-  assert.ok(opened.motion[0].foot > heroHeight - HERO_SLICE - 40);
-  assert.ok(Math.abs(opened.visibleTop(0) - header) <= 1);
+test('up stacks previous heroes as top logo slices under the current hero', () => {
+  const pattern = ['hero', 'hero', 'hero', 'hero'];
+  const learn = 3 * stageHeight;
+  const opened = frame(pattern, learn - 220, 'up');
+  assert.ok(opened.visibleHeight(0) >= 55 && opened.visibleHeight(0) <= 70);
+  assert.ok(opened.visibleHeight(1) >= 55 && opened.visibleHeight(1) <= 70);
+  assert.ok(opened.visibleHeight(2) >= 55 && opened.visibleHeight(2) <= 70);
+  assert.equal(opened.motion[0].clipTop, 30);
+  assert.ok(opened.motion[0].clipBottom > stageHeight - HERO_SLICE - 40);
+  assert.equal(opened.visibleTop(0), 0);
   assert.ok(opened.visibleTop(1) > opened.visibleTop(0));
   assert.ok(opened.visibleTop(1) < opened.visibleTop(0) + HERO_SLICE);
-  assert.equal(opened.motion[play].clip, 0);
-  assert.equal(opened.motion[play].foot, 0);
-  assert.ok(Math.abs(opened.boxTop(play) - (opened.visibleTop(1) + opened.visibleHeight(1))) <= 2);
-  assert.equal(opened.motion[0].stripHidden, true);
-  assert.equal(opened.motion[1].stripHidden, true);
-  assert.equal(opened.motion[play].stripHidden, false);
+  assert.equal(opened.motion[3].clipTop, 0);
+  assert.equal(opened.motion[3].clipBottom, 0);
+  assert.ok(opened.motion[3].y > HERO_SLICE);
+  assert.equal(opened.motion[3].y, opened.visibleTop(2) + opened.visibleHeight(2));
 });
 
-test('the nearest top edge grows into the full hero while older edges stay thin', () => {
-  const heroes = column(4);
-  const kidsFlush = heroes[1].top - header;
-  const early = frame(heroes, heroes[2].top - header - 180, 'up');
-  const later = frame(heroes, heroes[2].top - header - 560, 'up');
-  assert.ok(later.visibleHeight(1) > early.visibleHeight(1) + 80);
+test('the nearest slice grows while older slices stay thin', () => {
+  const pattern = ['hero', 'hero', 'hero', 'hero'];
+  const early = frame(pattern, 3 * stageHeight - 180, 'up');
+  const later = frame(pattern, 3 * stageHeight - stageHeight * 0.8, 'up');
+  assert.ok(later.visibleHeight(2) > early.visibleHeight(2) + 80);
   assert.ok(later.visibleHeight(0) <= HERO_SLICE);
-  assert.ok(later.motion[0].clip > 0 && later.motion[0].clip <= 34);
-  assert.ok(later.boxTop(2) > early.boxTop(2));
+  assert.ok(later.motion[3].y > early.motion[3].y);
 
-  const arrived = frame(heroes, kidsFlush, 'up');
-  assert.ok(arrived.motion.every((item) => item.shift === 0 && item.clip === 0 && item.foot === 0 && item.stripHidden === false));
+  const settled = frame(pattern, 2 * stageHeight, 'up');
+  const down = frame(pattern, 2 * stageHeight, 'down');
+  assert.deepEqual(settled.motion, down.motion);
 
-  const above = frame(heroes, kidsFlush - 48, 'up');
-  assert.ok(above.visibleHeight(0) > 20 && above.visibleHeight(0) <= HERO_SLICE);
-  assert.ok(above.motion[0].clip > 0);
-  assert.ok(above.motion[0].foot > 0);
-  assert.equal(above.motion[1].foot, 0);
-  assert.ok(above.boxTop(1) > header);
+  const above = frame(pattern, 2 * stageHeight - 48, 'up');
+  assert.ok(above.visibleHeight(1) > 20 && above.visibleHeight(1) <= HERO_SLICE);
+  assert.ok(above.motion[1].clipTop > 0);
+  assert.equal(above.motion[2].clipTop, 0);
+  assert.ok(above.motion[2].y > 0);
+  assert.ok(HERO_SLICE_OVERLAP >= 4 && HERO_SLICE_OVERLAP <= 8);
 });
 
-test('the same scroll position is the same frame, and down restores every strip', () => {
-  const heroes = column(4);
-  const scrollY = heroes[2].top - header - 180;
-  const slow = heroStageMotion({ heroes, scrollY, header, viewportHeight, mode: 'up' });
-  const fast = heroStageMotion({ heroes, scrollY, header, viewportHeight, mode: 'up' });
-  assert.deepEqual(slow, fast);
-  const down = heroStageMotion({ heroes, scrollY, header, viewportHeight, mode: 'down' });
-  assert.ok(down.every((item) => item.clip === 0 && item.foot === 0 && item.stripHidden === false));
-  assert.notDeepEqual(down.map((item) => item.shift), slow.map((item) => item.shift));
+test('the same scroll position is the same frame', () => {
+  const list = slides(['hero', 'strip', 'hero', 'hero']);
+  const first = heroStageMotion({ slides: list, local: stageHeight * 2.4, stageHeight, mode: 'up' });
+  const second = heroStageMotion({ slides: list, local: stageHeight * 2.4, stageHeight, mode: 'up' });
+  assert.deepEqual(first, second);
+  const down = heroStageMotion({ slides: list, local: stageHeight * 1.5, stageHeight, mode: 'down' });
+  assert.equal(down[1].y + stageHeight, down[2].y);
+  assert.ok(down.every((item) => item.hidden === false && item.clipTop === 0));
 });
 
-test('a downward delta leaves the upward model and an upward delta enters it', () => {
+test('direction changes only when a hero boundary is crossed', () => {
+  const list = slides(['hero', 'strip', 'hero']);
+  assert.equal(latchStageMode('down', -20, 0.4, 0.2, list), 'down');
+  assert.equal(latchStageMode('down', -20, 0.05, -0.02, list), 'up');
+  assert.equal(latchStageMode('up', 30, 1.2, 1.6, list), 'up');
+  assert.equal(latchStageMode('up', 30, 1.9, 2.1, list), 'down');
   assert.equal(stepHeroDirection('down', -12), 'up');
   assert.equal(stepHeroDirection('up', 4), 'down');
   assert.equal(stepHeroDirection('up', 0), 'up');
   assert.equal(stepHeroDirection('down', 0), 'down');
-  assert.ok(HERO_SLICE >= 50 && HERO_SLICE <= 70);
+  assert.ok(HERO_SLICE >= 55 && HERO_SLICE <= 70);
 });

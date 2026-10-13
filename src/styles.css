@@ -2351,6 +2351,8 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
   pointer-events: none;
 }
 .brand-banner-stack { display: none; }
+#showcases > .hero-stage-shell,
+#showcases > .hero-stage-shell > .hero-stage { display: contents; }
 @media (min-width: 1101px) {
   #showcases > .home-brand { display: contents; }
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
@@ -2358,18 +2360,6 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     top: auto;
     z-index: 3;
     transition: none;
-    height: calc(100svh - var(--header-height));
-    min-height: calc(100svh - var(--header-height));
-    max-height: none;
-    overflow: hidden;
-  }
-  #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center top;
   }
   #showcases > .brand-banner-stack {
     position: fixed;
@@ -2430,6 +2420,50 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
   }
   #showcases > .home-brand > .home-brand__runway { height: 0; }
 }
+@media (min-width: 1101px) and (prefers-reduced-motion: no-preference) {
+  #showcases > .hero-stage-shell {
+    display: block;
+    position: relative;
+    height: var(--hero-stage-span, auto);
+  }
+  #showcases > .hero-stage-shell > .hero-stage {
+    display: block;
+    position: sticky;
+    top: var(--header-height);
+    height: calc(100svh - var(--header-height));
+    overflow: hidden;
+    background: #fff;
+    z-index: 2;
+  }
+  #showcases > .hero-stage-shell > .hero-stage > .home-brand { display: contents; }
+  #showcases > .hero-stage-shell > .hero-stage .brand-showcase.brand-showcase--full-banner,
+  #showcases > .hero-stage-shell > .hero-stage .brand-strip {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    transition: none;
+  }
+  #showcases > .hero-stage-shell > .hero-stage .brand-showcase.brand-showcase--full-banner {
+    overflow: hidden;
+  }
+  #showcases > .hero-stage-shell > .hero-stage .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+  }
+  #showcases > .hero-stage-shell > .hero-stage .brand-strip {
+    overflow: hidden;
+    background: #fff;
+  }
+  #showcases > .hero-stage-shell > .hero-stage .home-brand__runway { display: none; }
+}
+body.hero-stage-pin .site-header.is-hidden { transform: none; }
 body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
 @media (max-width: 1100px) {
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {

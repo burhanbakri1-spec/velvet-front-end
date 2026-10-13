@@ -4,7 +4,7 @@ import Header from '../components/Header';
 import Hero from '../components/Hero';
 import IntroSection from '../components/IntroSection';
 import BrandShowcase from '../components/BrandShowcase';
-import { heroStageMotion, stepHeroDirection } from '../components/heroScrollProgress';
+import { heroStageMotion, latchStageMode, stepHeroDirection } from '../components/heroScrollProgress';
 import BrandProductStrip from '../components/BrandProductStrip';
 import CareersSection from '../components/CareersSection';
 import StoreReviewsSection from '../components/StoreReviewsSection';
@@ -43,17 +43,22 @@ export default function HomePage() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     let needsMeasure = true;
-    const direction = { y: window.scrollY, mode: 'down', returnTop: null };
-    let layout = [];
-
-    const inlineShift = (hero) => {
-      const match = /translate3d\(\s*0(?:px)?,\s*(-?\d+(?:\.\d+)?)px/i.exec(hero?.style.transform || '');
-      return match ? Number(match[1]) : 0;
-    };
+    const direction = { y: window.scrollY, mode: 'down', pos: 0 };
+    let shellTop = 0;
+    let stageHeight = 812;
+    let headerOffset = 88;
+    let slides = [];
 
     const clearMotion = () => {
       root.style.setProperty('--brand-rail-height', '0px');
-      root.querySelectorAll(':scope > .home-brand').forEach((section) => {
+      document.body.classList.remove('hero-stage-pin');
+      root.querySelector('.hero-stage-shell')?.style.removeProperty('--hero-stage-span');
+      const stage = root.querySelector('.hero-stage');
+      if (stage) {
+        stage.style.top = '';
+        stage.style.height = '';
+      }
+      root.querySelectorAll('.home-brand').forEach((section) => {
         const hero = section.querySelector(':scope > .brand-showcase');
         const strip = section.querySelector(':scope > .brand-strip');
         if (hero) {
@@ -70,22 +75,37 @@ export default function HomePage() {
     };
 
     const measure = () => {
-      layout = [...root.querySelectorAll(':scope > .home-brand')].map((section) => {
+      const shell = root.querySelector('.hero-stage-shell');
+      const stage = root.querySelector('.hero-stage');
+      headerOffset = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
+      stageHeight = Math.max(1, Math.round(window.innerHeight - headerOffset));
+      slides = [];
+      stage?.querySelectorAll(':scope > .home-brand').forEach((section, heroIndex) => {
         const hero = section.querySelector(':scope > .brand-showcase');
-        if (!hero) return { top: 0, height: 0 };
-        const rect = hero.getBoundingClientRect();
-        return {
-          top: rect.top + window.scrollY - inlineShift(hero),
-          height: rect.height,
-        };
+        const strip = section.querySelector(':scope > .brand-strip');
+        if (hero) slides.push({ kind: 'hero', heroIndex, el: hero, section });
+        if (strip) slides.push({ kind: 'strip', heroIndex, el: strip, section });
       });
+      if (shell) shellTop = shell.getBoundingClientRect().top + window.scrollY;
+      const stageEl = root.querySelector('.hero-stage');
+      const enabled = desktop.matches && !reduced.matches && slides.length > 0;
+      if (shell && stageEl && enabled) {
+        shell.style.setProperty('--hero-stage-span', `${slides.length * stageHeight}px`);
+        stageEl.style.top = `${headerOffset}px`;
+        stageEl.style.height = `${stageHeight}px`;
+      } else if (shell || stageEl) {
+        shell?.style.removeProperty('--hero-stage-span');
+        if (stageEl) {
+          stageEl.style.top = '';
+          stageEl.style.height = '';
+        }
+      }
     };
 
     const apply = () => {
-      const enabled = desktop.matches && !reduced.matches;
+      const enabled = desktop.matches && !reduced.matches && slides.length > 0;
       if (!enabled) {
         direction.mode = 'down';
-        direction.returnTop = null;
         direction.y = window.scrollY;
         clearMotion();
         return;
@@ -93,49 +113,36 @@ export default function HomePage() {
       const y = window.scrollY;
       const delta = y - direction.y;
       const nextMode = stepHeroDirection(direction.mode, delta);
-      direction.mode = nextMode;
+      const span = Math.max(0, (slides.length - 1) * stageHeight);
+      const local = Math.min(span, Math.max(0, y - (shellTop - headerOffset)));
+      const pos = local / stageHeight;
+      direction.mode = latchStageMode(direction.mode, delta, direction.pos, pos, slides);
       if (direction.mode !== 'up') direction.mode = 'down';
+      if (nextMode === direction.mode) direction.mode = nextMode;
+      direction.pos = pos;
       direction.y = y;
-      const header = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
-      const focus = y + header;
-      if (delta < 0) {
-        const featured = layout.find((hero) => hero.height > 0 && hero.top >= focus - 0.5);
-        direction.returnTop = featured ? featured.top : null;
-      } else if (delta > 0 && direction.returnTop != null && focus < direction.returnTop - 0.5) {
-        direction.mode = 'up';
-      } else if (direction.mode === 'down') {
-        direction.returnTop = null;
-      }
       const motion = heroStageMotion({
-        heroes: layout,
-        scrollY: y,
-        header,
-        viewportHeight: window.innerHeight,
+        slides,
+        local,
+        stageHeight,
         mode: direction.mode,
       });
-      let active = 0;
-      layout.forEach((hero, index) => {
-        if (hero.top <= focus + 2) active = index;
+      const pin = y >= shellTop - headerOffset && y <= shellTop - headerOffset + span;
+      if (document.body.classList.contains('hero-stage-pin') !== pin) {
+        document.body.classList.toggle('hero-stage-pin', pin);
+      }
+      const activeHero = slides.reduce((best, slide, index) => (
+        slide.kind === 'hero' && index <= Math.round(pos) ? slide.heroIndex : best
+      ), 0);
+      slides.forEach((slide, index) => {
+        const pose = motion[index] || { y: stageHeight, clipTop: 0, clipBottom: 0, hidden: false, z: 1 };
+        const clip = (pose.clipTop || pose.clipBottom) ? `inset(${pose.clipTop}px 0 ${pose.clipBottom}px 0)` : '';
+        slide.el.style.transform = `translate3d(0, ${pose.y}px, 0)`;
+        slide.el.style.clipPath = clip;
+        slide.el.style.zIndex = String(pose.z || 1);
+        if (slide.kind === 'strip') slide.el.classList.toggle('is-concealed', Boolean(pose.hidden));
+        if (slide.kind === 'hero' && slide.heroIndex === activeHero) slide.section.setAttribute('data-active', '');
       });
-      const sections = [...root.querySelectorAll(':scope > .home-brand')];
-      sections.forEach((section, index) => {
-        const hero = section.querySelector(':scope > .brand-showcase');
-        const strip = section.querySelector(':scope > .brand-strip');
-        const shift = motion[index]?.shift || 0;
-        const clip = motion[index]?.clip || 0;
-        if (hero) {
-          hero.style.transform = shift ? `translate3d(0, ${shift}px, 0)` : '';
-          const foot = motion[index]?.foot || 0;
-          hero.style.clipPath = (clip || foot) ? `inset(${clip}px 0 ${foot}px 0)` : '';
-          hero.style.zIndex = motion[index]?.z ? String(motion[index].z) : '';
-        }
-        if (strip) {
-          strip.style.transform = shift ? `translate3d(0, ${shift}px, 0)` : '';
-          strip.classList.toggle('is-concealed', Boolean(motion[index]?.stripHidden));
-        }
-        section.toggleAttribute('data-active', index === active);
-      });
-      root.style.setProperty('--brand-rail-height', '0px');
     };
 
     const schedule = (measureFirst) => {
@@ -157,10 +164,10 @@ export default function HomePage() {
     measure();
     apply();
     const observer = new ResizeObserver(onLayout);
-    root.querySelectorAll(':scope > .home-brand > .brand-showcase').forEach((hero) => observer.observe(hero));
-    const header = document.querySelector('.site-header');
-    const headerObserver = new MutationObserver(onLayout);
-    if (header) headerObserver.observe(header, { attributes: true, attributeFilter: ['class'] });
+    if (root.parentElement) observer.observe(root.parentElement);
+    const stage = root.querySelector('.hero-stage');
+    const stageObserver = new MutationObserver(onLayout);
+    if (stage) stageObserver.observe(stage, { childList: true, subtree: true });
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onLayout);
     desktop.addEventListener('change', onLayout);
@@ -170,7 +177,8 @@ export default function HomePage() {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onLayout);
       observer.disconnect();
-      headerObserver.disconnect();
+      stageObserver.disconnect();
+      document.body.classList.remove('hero-stage-pin');
       desktop.removeEventListener('change', onLayout);
       reduced.removeEventListener('change', onLayout);
     };
@@ -188,6 +196,8 @@ export default function HomePage() {
         <Hero introActive={introActive} />
         <IntroSection />
         <section id="showcases" aria-label={copy.home.worlds}>
+          <div className="hero-stage-shell">
+            <div className="hero-stage">
           {brands.map((brand, index) => (
             <section className="home-brand" key={brand.slug}>
               <BrandShowcase
@@ -205,6 +215,8 @@ export default function HomePage() {
               <div className="home-brand__runway" aria-hidden="true" />
             </section>
           ))}
+            </div>
+          </div>
         </section>
         <StoreReviewsSection />
         <CareersSection />
