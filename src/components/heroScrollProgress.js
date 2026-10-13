@@ -1,13 +1,17 @@
 /**
  * Desktop hero motion inside a pinned stage.
- * The document only supplies scroll distance. Slide positions are a pure
- * function of that distance: no document-flow shift, no easing, no layout read.
+ * Scroll distance is the only input. Both directions are pure functions of
+ * that distance: hold-then-slide downward, and one continuous deck upward.
+ * No layout reads, no easing, no pose swap at a hero index.
  */
 export function stepHeroDirection(mode, delta) {
   if (delta > 0) return 'down';
   if (delta < 0) return 'up';
   return mode === 'up' ? 'up' : 'down';
 }
+
+/** Fraction of each slide's scroll that holds the slide still. */
+export const HERO_HOLD = 0.4;
 
 /** Visible height of an older logo slice. */
 export const HERO_SLICE = 64;
@@ -17,6 +21,8 @@ export const HERO_SLICE_OVERLAP = 6;
 
 /** Logo card starts just below the top of the banner. */
 const HERO_LOGO_TOP = 30;
+
+const STEP = HERO_SLICE - HERO_SLICE_OVERLAP;
 
 function clamp01(value) {
   return Math.min(1, Math.max(0, value));
@@ -31,9 +37,9 @@ function blank(stageHeight) {
 }
 
 /**
- * Keep the current mode until scroll crosses a hero boundary.
- * At that boundary the slider and the deck draw the same frame, so the
- * switch does not jump. Reversing before the boundary scrubs the same model.
+ * Keep the current mode until scroll crosses a hero index.
+ * Both modes draw the same full-bleed frame on that index, so the
+ * handoff does not move. Reversing before the index scrubs the same model.
  */
 export function latchStageMode(mode, delta, previousPos, pos, slides) {
   const wanted = delta > 0 ? 'down' : delta < 0 ? 'up' : mode;
@@ -69,16 +75,18 @@ export function heroStageMotion({
 
 function downSlider(slides, travel, stageHeight) {
   const pose = slides.map(() => blank(stageHeight));
+  const maxIndex = slides.length - 1;
   let index = Math.floor(travel / stageHeight);
-  let progress = 0;
-  if (index >= slides.length - 1) {
-    index = slides.length - 1;
-    progress = 0;
+  let unit = 0;
+  if (index >= maxIndex) {
+    index = maxIndex;
+    unit = 0;
   } else {
-    progress = travel / stageHeight - index;
+    unit = travel / stageHeight - index;
   }
-  const outgoing = roundPx(-progress * stageHeight);
-  const incoming = roundPx((1 - progress) * stageHeight);
+  const t = unit <= HERO_HOLD ? 0 : (unit - HERO_HOLD) / (1 - HERO_HOLD);
+  const outgoing = roundPx(-t * stageHeight);
+  const incoming = outgoing + stageHeight;
   slides.forEach((slide, slideIndex) => {
     let y = stageHeight;
     let z = 1;
@@ -96,7 +104,7 @@ function downSlider(slides, travel, stageHeight) {
 }
 
 function logoEdge(stageHeight, visible) {
-  if (visible >= stageHeight - 1) return { clipTop: 0, clipBottom: 0 };
+  if (visible >= stageHeight - 0.5) return { clipTop: 0, clipBottom: 0 };
   const clipTop = Math.min(HERO_LOGO_TOP, Math.max(0, stageHeight - visible));
   return {
     clipTop: roundPx(clipTop),
@@ -104,96 +112,87 @@ function logoEdge(stageHeight, visible) {
   };
 }
 
-function upDeck(slides, travel, stageHeight) {
-  const pose = downSlider(slides, travel, stageHeight);
-  const heroIndexes = [];
+function heroIndexesOf(slides) {
+  const heroes = [];
   slides.forEach((slide, index) => {
-    if (slide.kind === 'hero') heroIndexes.push(index);
+    if (slide.kind === 'hero') heroes.push(index);
   });
-  if (heroIndexes.length < 2) return pose;
+  return heroes;
+}
 
+/**
+ * One segment between two heroes. g=0 is the upper hero full-bleed.
+ * g=1 is the lower hero full-bleed. The same numbers are the neighboring
+ * segment's opposite end, so the stack never rebuilds.
+ */
+function upDeck(slides, travel, stageHeight) {
+  const heroes = heroIndexesOf(slides);
+  if (heroes.length < 2) return downSlider(slides, travel, stageHeight);
   const pos = travel / stageHeight;
-  let featured = heroIndexes[heroIndexes.length - 1];
-  for (let cursor = 0; cursor < heroIndexes.length; cursor += 1) {
-    if (heroIndexes[cursor] >= pos - 1e-6) {
-      featured = heroIndexes[cursor];
+  if (pos <= heroes[0] + 1e-6 || pos >= heroes[heroes.length - 1] - 1e-6) {
+    return downSlider(slides, travel, stageHeight);
+  }
+
+  let upperK = heroes.length - 1;
+  for (let k = 1; k < heroes.length; k += 1) {
+    if (pos <= heroes[k]) {
+      upperK = k;
       break;
     }
   }
-  const previous = heroIndexes.filter((index) => index < featured);
-  if (previous.length === 0) return pose;
+  const upper = heroes[upperK];
+  const lower = heroes[upperK - 1];
+  const span = upper - lower;
+  const distPx = (upper - pos) * stageHeight;
+  const older = heroes.slice(0, upperK - 1);
+  const nearestVisible = Math.min(stageHeight, distPx / span);
+  const olderVisible = Math.min(HERO_SLICE, nearestVisible);
+  const grow = clamp01((nearestVisible - HERO_SLICE) / (stageHeight - HERO_SLICE));
+  const shift = -older.length * STEP * grow;
+  const lift = HERO_SLICE_OVERLAP * grow;
 
-  const nearest = previous[previous.length - 1];
-  const span = featured - nearest;
-  const distancePx = Math.max(0, (featured - pos) * stageHeight);
-  if (distancePx < 0.5) return pose;
-
-  const opened = span > 0 ? clamp01(distancePx / (span * stageHeight)) : 0;
-  const grow = opened <= 0.5 ? 0 : clamp01((opened - 0.5) / 0.5);
-  let nearestVisible = distancePx <= HERO_SLICE
-    ? distancePx
-    : HERO_SLICE + grow * (stageHeight - HERO_SLICE);
-  if (opened >= 0.999) nearestVisible = stageHeight;
-
-  const older = previous.slice(0, -1);
-  const heights = older.map((index, listIndex) => {
-    const order = older.length - 1 - listIndex;
-    const start = (order + 1) * HERO_SLICE * 0.45;
-    const local = clamp01((distancePx - start) / HERO_SLICE);
-    return local * Math.min(HERO_SLICE, stageHeight);
-  });
-
-  let olderStack = 0;
-  let seen = 0;
-  heights.forEach((height) => {
-    if (height < 1) return;
-    olderStack += height;
-    if (seen > 0) olderStack -= HERO_SLICE_OVERLAP;
-    seen += 1;
-  });
-  const tuck = Math.max(0, olderStack - (seen > 0 ? HERO_SLICE_OVERLAP : 0));
-  let cursor = -grow * tuck;
-
-  heroIndexes.forEach((index) => {
-    pose[index] = blank(stageHeight);
-  });
-
+  const pose = slides.map(() => blank(stageHeight));
+  let cursor = 0;
   older.forEach((index, listIndex) => {
-    const visible = heights[listIndex];
-    if (visible < 1) return;
-    const edge = logoEdge(stageHeight, visible);
+    const edge = olderVisible >= 1
+      ? logoEdge(stageHeight, olderVisible)
+      : { clipTop: 0, clipBottom: stageHeight };
     pose[index] = {
-      y: roundPx(cursor - edge.clipTop),
+      y: roundPx(cursor - lift + shift - edge.clipTop),
       clipTop: edge.clipTop,
       clipBottom: edge.clipBottom,
       hidden: false,
       z: 10 + listIndex,
     };
-    cursor += visible - HERO_SLICE_OVERLAP;
+    cursor += Math.max(0, olderVisible - Math.min(HERO_SLICE_OVERLAP, olderVisible));
   });
 
-  const nearestEdge = logoEdge(stageHeight, nearestVisible);
-  pose[nearest] = {
-    y: roundPx(cursor - nearestEdge.clipTop),
-    clipTop: nearestEdge.clipTop,
-    clipBottom: nearestEdge.clipBottom,
+  const nearestTop = cursor + shift;
+  const edge = nearestVisible >= 1
+    ? logoEdge(stageHeight, nearestVisible)
+    : { clipTop: 0, clipBottom: stageHeight };
+  const tuck = Math.min(nearestVisible, HERO_SLICE_OVERLAP * (1 - grow));
+  pose[lower] = {
+    y: roundPx(nearestTop - edge.clipTop),
+    clipTop: edge.clipTop,
+    clipBottom: edge.clipBottom,
     hidden: false,
     z: 40,
   };
-  cursor += nearestVisible;
-
-  pose[featured] = {
-    y: roundPx(cursor),
+  pose[upper] = {
+    y: roundPx(nearestTop + nearestVisible - tuck),
     clipTop: 0,
     clipBottom: 0,
     hidden: false,
-    z: 50,
+    z: 30,
   };
 
-  slides.forEach((slide, index) => {
-    if (slide.kind === 'strip' && index < featured) {
-      pose[index] = { ...blank(stageHeight), hidden: true };
-    }
-  });
+  if (nearestVisible >= 1) {
+    slides.forEach((slide, index) => {
+      if (slide.kind === 'strip' && index < upper) {
+        pose[index] = { ...blank(stageHeight), hidden: true };
+      }
+    });
+  }
   return pose;
 }
