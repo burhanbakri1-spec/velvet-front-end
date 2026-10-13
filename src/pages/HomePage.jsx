@@ -43,7 +43,7 @@ export default function HomePage() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0;
     let needsMeasure = true;
-    const direction = { y: window.scrollY, mode: 'down' };
+    const direction = { y: window.scrollY, mode: 'down', returnTop: null };
     let layout = [];
 
     const inlineShift = (hero) => {
@@ -85,6 +85,7 @@ export default function HomePage() {
       const enabled = desktop.matches && !reduced.matches;
       if (!enabled) {
         direction.mode = 'down';
+        direction.returnTop = null;
         direction.y = window.scrollY;
         clearMotion();
         return;
@@ -96,6 +97,15 @@ export default function HomePage() {
       if (direction.mode !== 'up') direction.mode = 'down';
       direction.y = y;
       const header = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
+      const focus = y + header;
+      if (delta < 0) {
+        const featured = layout.find((hero) => hero.height > 0 && hero.top >= focus - 0.5);
+        direction.returnTop = featured ? featured.top : null;
+      } else if (delta > 0 && direction.returnTop != null && focus < direction.returnTop - 0.5) {
+        direction.mode = 'up';
+      } else if (direction.mode === 'down') {
+        direction.returnTop = null;
+      }
       const motion = heroStageMotion({
         heroes: layout,
         scrollY: y,
@@ -103,7 +113,6 @@ export default function HomePage() {
         viewportHeight: window.innerHeight,
         mode: direction.mode,
       });
-      const focus = y + header;
       let active = 0;
       layout.forEach((hero, index) => {
         if (hero.top <= focus + 2) active = index;
