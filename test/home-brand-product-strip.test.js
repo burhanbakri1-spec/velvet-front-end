@@ -373,6 +373,16 @@ test('previous-brand banner stack stays compact and hidden until scroll-up', () 
   assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*transition:\s*none/);
 });
 
+test('mobile motion stage uses the pre-stage banner height', () => {
+  const motion = fs.readFileSync(new URL('../src/components/useHeroStageMotion.js', import.meta.url), 'utf8');
+  const styles = fs.readFileSync(stylesPath, 'utf8');
+  assert.match(motion, /window\.innerWidth <= 760 \? 2 : 3/);
+  assert.match(motion, /Math\.max\(160, Math\.round\(\(viewportHeight - headerOffset\) \/ divisor\)\)/);
+  assert.match(motion, /desktop\.matches\) \{\s*stageHeight = Math\.max\(1, Math\.round\(viewportHeight - headerOffset\)\)/);
+  assert.match(styles, /@media \(max-width:\s*760px\) and \(prefers-reduced-motion:\s*no-preference\) \{[^}]*#showcases\[data-hero-motion\] > \.hero-stage-shell > \.hero-stage \{[^}]*height:\s*calc\(\(100svh - var\(--header-height\)\) \/ 2\)/);
+  assert.match(styles, /@media \(min-width:\s*1101px\) and \(prefers-reduced-motion:\s*no-preference\) \{[\s\S]*?#showcases > \.hero-stage-shell > \.hero-stage \{[^}]*height:\s*calc\(100svh - var\(--header-height\)\)/);
+});
+
 test('product selection stays isolated from velvetCatalog.js', () => {
   const helper = fs.readFileSync(helperPath, 'utf8');
   const catalog = read('data/velvetCatalog.js');

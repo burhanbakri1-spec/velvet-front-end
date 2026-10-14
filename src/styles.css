@@ -2503,7 +2503,8 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
     display: block;
     position: sticky;
     top: var(--header-height);
-    height: calc(100svh - var(--header-height));
+    height: calc((100svh - var(--header-height)) / 3);
+    min-height: 160px;
     overflow: hidden;
     background: #fff;
     z-index: 2;
@@ -2525,7 +2526,7 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center top;
+    object-position: center;
     transition: none;
   }
   #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage .brand-strip {
@@ -2543,6 +2544,12 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
     transition: none;
   }
   #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage .home-brand__runway { display: none; }
+}
+@media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
+  #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage {
+    height: calc((100svh - var(--header-height)) / 2);
+    min-height: 160px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {

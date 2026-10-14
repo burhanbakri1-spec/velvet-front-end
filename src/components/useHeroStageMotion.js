@@ -55,7 +55,13 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const shell = root.querySelector('.hero-stage-shell');
       const stage = root.querySelector('.hero-stage');
       headerOffset = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
-      stageHeight = Math.max(1, Math.round(window.innerHeight - headerOffset));
+      const viewportHeight = window.innerHeight;
+      if (desktop.matches) {
+        stageHeight = Math.max(1, Math.round(viewportHeight - headerOffset));
+      } else {
+        const divisor = window.innerWidth <= 760 ? 2 : 3;
+        stageHeight = Math.max(160, Math.round((viewportHeight - headerOffset) / divisor));
+      }
       slides = [];
       stage?.querySelectorAll(':scope > .home-brand').forEach((section, heroIndex) => {
         const hero = section.querySelector(':scope > .brand-showcase');
