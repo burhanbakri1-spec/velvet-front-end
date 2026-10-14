@@ -2503,8 +2503,8 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
     display: block;
     position: sticky;
     top: var(--header-height);
-    height: calc((100svh - var(--header-height)) / 3);
-    min-height: 160px;
+    height: calc(100svh - var(--header-height));
+    min-height: 0;
     overflow: hidden;
     background: #fff;
     z-index: 2;
@@ -2512,9 +2512,13 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
   #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage > .home-brand { display: contents; }
   #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage .brand-showcase.brand-showcase--full-banner {
     position: absolute;
-    inset: 0;
+    top: 0;
+    right: 0;
+    bottom: auto;
+    left: 0;
     width: 100%;
-    height: 100%;
+    height: calc((100svh - var(--header-height)) / 3);
+    min-height: 160px;
     max-height: none;
     margin: 0;
     overflow: hidden;
@@ -2547,6 +2551,9 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
 }
 @media (max-width: 760px) and (prefers-reduced-motion: no-preference) {
   #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage {
+    height: calc(100svh - var(--header-height));
+  }
+  #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage .brand-showcase.brand-showcase--full-banner {
     height: calc((100svh - var(--header-height)) / 2);
     min-height: 160px;
   }

@@ -56,11 +56,14 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const stage = root.querySelector('.hero-stage');
       headerOffset = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
       const viewportHeight = window.innerHeight;
+      let pinHeight;
       if (desktop.matches) {
         stageHeight = Math.max(1, Math.round(viewportHeight - headerOffset));
+        pinHeight = stageHeight;
       } else {
         const divisor = window.innerWidth <= 760 ? 2 : 3;
         stageHeight = Math.max(160, Math.round((viewportHeight - headerOffset) / divisor));
+        pinHeight = Math.max(stageHeight, Math.round(viewportHeight - headerOffset));
       }
       slides = [];
       stage?.querySelectorAll(':scope > .home-brand').forEach((section, heroIndex) => {
@@ -82,13 +85,13 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const stageEl = root.querySelector('.hero-stage');
       const enabled = motionEnabled();
       if (shell && stageEl && enabled) {
-        const span = stageGeometry(slides, stageHeight).span + stageHeight;
+        const span = stageGeometry(slides, stageHeight).span + pinHeight;
         const nextSpan = `${span}px`;
         if (shell.style.getPropertyValue('--hero-stage-span') !== nextSpan) {
           shell.style.setProperty('--hero-stage-span', nextSpan);
         }
         stageEl.style.top = `${headerOffset}px`;
-        stageEl.style.height = `${stageHeight}px`;
+        stageEl.style.height = `${pinHeight}px`;
       } else if (shell || stageEl) {
         shell?.style.removeProperty('--hero-stage-span');
         if (stageEl) {
