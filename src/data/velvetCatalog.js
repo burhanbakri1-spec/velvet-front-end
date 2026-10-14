@@ -32,7 +32,7 @@ import {
   normalizeFilterDefinitions,
   productMatchesAttributeFilter,
 } from './classificationFilter.js';
-import { artwork, products } from './products.js';
+import { artwork, getProductName, products } from './products.js';
 import { getFacetHierarchyOptions } from './shopFacets.js';
 import { getPlatformBrandAbout, getPlatformMedia } from './platformContent.js';
 import {
@@ -684,8 +684,8 @@ export function sortProducts(products, sort = '', locale = 'en') {
   if (sort === 'newest') return list.sort((a, b) => Number(b.sortOrder || 0) - Number(a.sortOrder || 0));
   if (sort === 'name') {
     return list.sort((a, b) => {
-      const left = locale === 'ar' ? (a.nameAr || a.name || '') : (a.name || '');
-      const right = locale === 'ar' ? (b.nameAr || b.name || '') : (b.name || '');
+      const left = getProductName(a, locale);
+      const right = getProductName(b, locale);
       return String(left).localeCompare(String(right), locale === 'ar' ? 'ar' : 'en');
     });
   }

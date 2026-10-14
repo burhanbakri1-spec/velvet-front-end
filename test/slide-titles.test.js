@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import test from 'node:test';
 import { buildDynamicCatalog } from '../src/data/dynamicCatalog.js';
+import { getProductName, readCanonicalName } from '../src/data/products.js';
 import { buildProductTitleSequence, gallerySlideDirection, resolveProductSlides, stepTitleIndex } from '../src/data/slideTitles.js';
 
 const API = 'https://api.test';
@@ -210,6 +211,50 @@ test('a gallery URL without a matching galleryItems URL keeps an empty id and th
   assert.equal(slides[0].id, '', 'the unmatched gallery URL must not borrow another item id');
   assert.equal(slides[1].id, 'gi-first');
   assert.deepEqual(buildProductTitleSequence(mapped), ['طقم جزئي', 'Partial Gallery Set', 'Second slide']);
+});
+
+test('canonical Arabic and English stay independent and titles follow Arabic, English, then custom slides', () => {
+  const monopoly = { name: 'Monopoly', nameAr: 'مونوبولي', sku: 'VELVET-173-MONOPOLY' };
+  const sponge = { name: 'Sponge Ball and Cube', nameAr: 'كرة ومكعب اسفنج', sku: 'VELVET-104' };
+  assert.equal(getProductName(monopoly, 'ar'), 'مونوبولي');
+  assert.equal(getProductName(monopoly, 'en'), 'Monopoly');
+  assert.equal(getProductName(sponge, 'ar'), 'كرة ومكعب اسفنج');
+  assert.equal(getProductName(sponge, 'en'), 'Sponge Ball and Cube');
+  assert.equal(getProductName({ name: 'Monopoly', nameAr: '' }, 'ar'), 'Monopoly');
+  assert.equal(getProductName({ name: '', nameAr: 'مونوبولي' }, 'en'), 'مونوبولي');
+  assert.equal(readCanonicalName({ en: 'Monopoly' }, 'ar'), '');
+  assert.notEqual(readCanonicalName({ en: 'Monopoly', ar: 'مونوبولي' }, 'ar'), 'Monopoly');
+
+  const mapped = buildMappedProduct({
+    id: 'velvet-173',
+    slug: 'velvet-173-monopoly',
+    sku: 'VELVET-173-MONOPOLY',
+    name: { en: 'Monopoly', ar: 'مونوبولي' },
+    brandId: 'b1',
+    mainCategoryId: 'c1',
+    slideTitles: [
+      { title: 'Custom #2', sortOrder: 2 },
+      { title: 'Custom #1', sortOrder: 1 },
+      { title: 'مونوبولي', sortOrder: 0 },
+    ],
+  });
+  assert.equal(mapped.name, 'Monopoly');
+  assert.equal(mapped.nameAr, 'مونوبولي');
+  assert.deepEqual(buildProductTitleSequence(mapped), ['مونوبولي', 'Monopoly', 'Custom #1', 'Custom #2']);
+  assert.deepEqual(buildProductTitleSequence({
+    name: 'Sponge Ball and Cube',
+    nameAr: 'كرة ومكعب اسفنج',
+  }), ['كرة ومكعب اسفنج', 'Sponge Ball and Cube']);
+
+  const englishOnly = buildMappedProduct({
+    id: 'en-only',
+    slug: 'en-only',
+    name: { en: 'English only' },
+    brandId: 'b1',
+    mainCategoryId: 'c1',
+  });
+  assert.equal(englishOnly.nameAr, '');
+  assert.equal(getProductName(englishOnly, 'ar'), 'English only');
 });
 
 test('products without galleryItems keep the legacy URL-only ids', () => {

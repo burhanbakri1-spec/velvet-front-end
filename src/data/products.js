@@ -108,7 +108,32 @@ export const products = productSeeds.map((seed, index) => {
 export const getCategoryBySlug = (slug) => productCategories.find((category) => category.slug === slug) || productCategories[0];
 export const getProductsByCategory = (categoryId) => products.filter((product) => product.categoryId === categoryId);
 export const getCategoryLabel = (categoryId, locale) => productCategories.find((category) => category.id === categoryId)?.name[locale] || '';
-export const getProductName = (product, locale) => (locale === 'ar' ? (product.nameAr || product.name) : product.name) || '';
+
+/** One locale from an API name object. A missing side stays empty. */
+export function readCanonicalName(value, locale) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return String(value[locale] ?? '').trim();
+  }
+  if (locale === 'en') return String(value ?? '').trim();
+  return '';
+}
+
+/** Stored canonical names only. Does not invent the missing language. */
+export function canonicalProductNames(product) {
+  const rawName = product?.name;
+  const nested = rawName && typeof rawName === 'object' && !Array.isArray(rawName) ? rawName : null;
+  return {
+    en: String(nested ? (nested.en ?? '') : (rawName ?? '')).trim(),
+    ar: String(product?.nameAr ?? (nested ? nested.ar : '') ?? '').trim(),
+  };
+}
+
+/** Presentation only. Arabic prefers name.ar; English prefers name.en. */
+export function getProductName(product, locale) {
+  const names = canonicalProductNames(product);
+  if (locale === 'ar') return names.ar || names.en;
+  return names.en || names.ar;
+}
 export const getProductDescription = (product, locale, short = false) => locale === 'ar' ? (short ? product.shortDescriptionAr : product.descriptionAr) : (short ? product.shortDescription : product.description);
 export const getProductBadge = (product, locale) => locale === 'ar' ? product.badgeAr : product.badge;
 export const getAvailability = (product, locale) => locale === 'ar' ? product.availabilityAr : product.availability;

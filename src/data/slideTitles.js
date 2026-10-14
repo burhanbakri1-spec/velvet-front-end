@@ -1,4 +1,4 @@
-import { resolveProductImages } from './products.js';
+import { canonicalProductNames, resolveProductImages } from './products.js';
 
 function normalizeEntries(entries) {
   if (!Array.isArray(entries)) return [];
@@ -34,8 +34,9 @@ export function buildProductTitleSequence(product) {
     seen.add(title);
     sequence.push(title);
   };
-  push(product?.nameAr);
-  push(product?.name);
+  const names = canonicalProductNames(product);
+  push(names.ar);
+  push(names.en);
   normalizeEntries(product?.slideTitles).sort(byOrder).forEach((entry) => push(entry.title));
   return sequence;
 }

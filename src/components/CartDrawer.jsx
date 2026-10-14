@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
-import { getOptionName, getOptionValue } from '../data/products';
+import { getOptionName, getOptionValue, getProductName } from '../data/products';
 import { getProductBySlug } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
@@ -27,7 +27,7 @@ export default function CartDrawer({ open, onClose }) {
     };
   }, [open]);
 
-  const name = (item, defaultValue) => (locale === 'ar' ? item.nameAr : item.name) || defaultValue;
+  const name = (item, defaultValue) => getProductName(item, locale) || defaultValue;
 
   return (
     <div className={`cart-drawer ${open ? 'is-open' : ''}`} role="dialog" aria-modal={open} aria-hidden={!open} aria-label={copy.cart.title}>

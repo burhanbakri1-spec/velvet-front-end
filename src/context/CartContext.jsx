@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { trackPlatformEvent } from '../analytics/platformAnalytics';
+import { canonicalProductNames } from '../data/products';
 
 const STORAGE_KEY = 'play-store-cart-v1';
 const CartContext = createContext(null);
@@ -36,12 +37,13 @@ export function CartProvider({ children }) {
         const selected = option.values.find((value) => value.label === selections[option.name]);
         return sum + Number(selected?.priceDelta || 0);
       }, 0);
+      const names = canonicalProductNames(product);
       return [...current, {
         key,
         productId: product.id,
         slug: product.slug,
-        name: product.name,
-        nameAr: product.nameAr || product.name,
+        name: names.en,
+        nameAr: names.ar,
         image: selectedImage || product.image,
         price: product.price + optionDelta,
         selections,

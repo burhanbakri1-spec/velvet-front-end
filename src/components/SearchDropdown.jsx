@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { localizePath, useRouter } from '../routing/Router';
+import { getProductName } from '../data/products';
 import { filterProducts, getProductBySlug } from '../data/velvetCatalog';
 import { formatPrice } from '../data/currency';
 
@@ -74,9 +75,7 @@ export default function SearchDropdown({ query, setQuery }) {
   const trimmed = String(query || '').trim();
   if (!trimmed || dismissed) return null;
 
-  const displayName = (product) => (
-    locale === 'ar' ? (product.nameAr || product.name) : product.name
-  ) || '';
+  const displayName = (product) => getProductName(product, locale);
   const displayImage = (product) => product.images?.[0] || product.image || '';
 
   return (

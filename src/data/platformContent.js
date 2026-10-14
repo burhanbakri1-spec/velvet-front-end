@@ -1,3 +1,4 @@
+import { readCanonicalName } from './products.js';
 import { aboutSections, newsCategories, newsItems } from './company.js';
 import { homeCategories, productCategories, products } from './products.js';
 import { buildDynamicCatalog } from './dynamicCatalog.js';
@@ -215,8 +216,8 @@ export function mapPlatformProduct(product, categories, apiUrl) {
     id: product.id,
     slug: product.slug,
     sku: product.sku,
-    name: localized(product.name, 'en'),
-    nameAr: localized(product.name, 'ar'),
+    name: readCanonicalName(product.name, 'en'),
+    nameAr: readCanonicalName(product.name, 'ar'),
     category: category?.nameEn || '',
     categoryId: product.categoryId,
     categorySlug: category?.slug || '',

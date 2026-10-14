@@ -18,7 +18,7 @@
 // directly and passed through untouched (only made absolute against apiUrl).
 // ===========================================================================
 
-import { artwork } from './products.js';
+import { artwork, readCanonicalName } from './products.js';
 import { buildProductClassificationFields } from './classificationFilter.js';
 import { productTaxonomyById } from './velvetTaxonomy.js';
 
@@ -234,8 +234,8 @@ function mapSlideTitleEntries(entries) {
 }
 
 function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
-  const nameEn = localized(raw.name, 'en', '');
-  const nameAr = localized(raw.name, 'ar', nameEn);
+  const nameEn = readCanonicalName(raw.name, 'en');
+  const nameAr = readCanonicalName(raw.name, 'ar');
   const h = hash(`${brandSlug}:${mainCategory?.slug || ''}:${subSlug}:${raw.slug || raw.id}`);
   const palette = PALETTES[h % PALETTES.length];
   const gallery = mapGalleryUrls(raw.gallery, apiUrl);

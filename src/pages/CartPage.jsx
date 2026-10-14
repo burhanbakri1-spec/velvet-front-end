@@ -1,5 +1,5 @@
 import { useCart } from '../context/CartContext';
-import { getOptionName, getOptionValue } from '../data/products';
+import { getOptionName, getOptionValue, getProductName } from '../data/products';
 import { getProductBySlug } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
@@ -35,13 +35,14 @@ export default function CartPage() {
         <section className="cart-items" aria-label={copy.cart.items}>
           {items.map((item) => {
             const product = getProductBySlug(item.slug);
+            const itemName = getProductName(item, locale);
             return (
               <article className="cart-item" key={item.key}>
-                <Link className="cart-item__image" to={`/products/${item.slug}`}><img src={item.image} alt={item.name} /></Link>
+                <Link className="cart-item__image" to={`/products/${item.slug}`}><img src={item.image} alt={itemName} /></Link>
                 <div className="cart-item__info">
                   <div className="cart-item__title-row">
                     <div>
-                      <Link to={`/products/${item.slug}`}><h2>{item.name}</h2></Link>
+                      <Link to={`/products/${item.slug}`}><h2>{itemName}</h2></Link>
                       {Object.keys(item.selections).length > 0 && (
                         <div className="cart-item__variants">
                           {Object.entries(item.selections).map(([name, value]) => {
@@ -55,13 +56,13 @@ export default function CartPage() {
                     <strong>{formatPrice(item.price * item.quantity)}</strong>
                   </div>
                   <div className="cart-item__actions">
-                    <div className="quantity-control quantity-control--cart" aria-label={`${copy.cart.quantityFor} ${item.name}`}>
-                      <button type="button" aria-label={`${copy.cart.decrease} ${item.name}`} onClick={() => updateQuantity(item.key, item.quantity - 1)}>−</button>
+                    <div className="quantity-control quantity-control--cart" aria-label={`${copy.cart.quantityFor} ${itemName}`}>
+                      <button type="button" aria-label={`${copy.cart.decrease} ${itemName}`} onClick={() => updateQuantity(item.key, item.quantity - 1)}>−</button>
                       <span>{item.quantity}</span>
-                      <button type="button" disabled={item.maxStock != null && item.quantity >= item.maxStock} aria-label={`${copy.cart.increase} ${item.name}`} onClick={() => updateQuantity(item.key, item.quantity + 1)}>+</button>
+                      <button type="button" disabled={item.maxStock != null && item.quantity >= item.maxStock} aria-label={`${copy.cart.increase} ${itemName}`} onClick={() => updateQuantity(item.key, item.quantity + 1)}>+</button>
                     </div>
                     <span className="cart-item__unit">{formatPrice(item.price)} {copy.cart.each}</span>
-                    <button className="cart-remove" type="button" aria-label={`${copy.cart.remove} ${item.name}`} onClick={() => removeItem(item.key)}>{copy.cart.remove}</button>
+                    <button className="cart-remove" type="button" aria-label={`${copy.cart.remove} ${itemName}`} onClick={() => removeItem(item.key)}>{copy.cart.remove}</button>
                   </div>
                 </div>
               </article>

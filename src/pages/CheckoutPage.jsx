@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { getProductName } from '../data/products';
 import { velvetProducts } from '../data/velvetCatalog';
 import { formatPrice } from '../data/currency';
 import { buildWhatsAppOrderMessage, buildWhatsAppOrderUrl, openWhatsAppOrder } from '../data/whatsappOrder';
@@ -263,12 +264,13 @@ export default function CheckoutPage() {
               </div>
               <ul className="checkout-gallery">
                 {items.map((item, index) => {
+                  const itemName = getProductName(item, locale);
                   const variants = Object.keys(item.selections || {}).length > 0 ? Object.values(item.selections).join(' · ') : '';
                   return (
                     <li className={`checkout-gallery__item ${index === 0 ? 'checkout-gallery__item--lead' : ''}`} key={item.key}>
-                      <Link className="checkout-gallery__link" to={`/products/${item.slug}`} aria-label={`${copy.products.view} ${item.name}`}><img src={item.image} alt={item.name} /></Link>
+                      <Link className="checkout-gallery__link" to={`/products/${item.slug}`} aria-label={`${copy.products.view} ${itemName}`}><img src={item.image} alt={itemName} /></Link>
                       <div className="checkout-gallery__caption">
-                        <Link to={`/products/${item.slug}`}><h3>{item.name}</h3></Link>
+                        <Link to={`/products/${item.slug}`}><h3>{itemName}</h3></Link>
                         {variants && <p className="checkout-gallery__variants">{variants}</p>}
                         <span className="checkout-gallery__meta">{item.quantity} × {formatPrice(item.price)}</span>
                       </div>
