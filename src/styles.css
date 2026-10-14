@@ -2426,6 +2426,7 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     display: block;
     position: relative;
     height: var(--hero-stage-span, auto);
+    overflow-anchor: none;
   }
   #showcases > .hero-stage-shell > .hero-stage {
     display: block;
@@ -2494,10 +2495,12 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
   #showcases > .brand-banner-stack { display: none; height: 0; transition: none; }
 }
 @media (max-width: 1100px) and (prefers-reduced-motion: no-preference) {
+  html:has(#showcases[data-hero-motion]) { overflow-anchor: none; }
   #showcases[data-hero-motion] > .hero-stage-shell {
     display: block;
     position: relative;
     height: var(--hero-stage-span, auto);
+    overflow-anchor: none;
   }
   #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage {
     display: block;

@@ -381,6 +381,9 @@ test('mobile motion stage uses the pre-stage banner height', () => {
   assert.match(motion, /desktop\.matches\) \{\s*stageHeight = Math\.max\(1, Math\.round\(viewportHeight - headerOffset\)\)/);
   assert.match(motion, /pinHeight = Math\.max\(stageHeight, Math\.round\(viewportHeight - headerOffset\)\)/);
   assert.match(motion, /stageGeometry\(slides, stageHeight\)\.span \+ pinHeight/);
+  assert.match(motion, /stageReleaseBox/);
+  assert.match(motion, /release\.atEnd/);
+  assert.match(styles, /html:has\(#showcases\[data-hero-motion\]\) \{ overflow-anchor: none; \}/);
   assert.match(styles, /@media \(max-width:\s*760px\) and \(prefers-reduced-motion:\s*no-preference\) \{[\s\S]*?\.brand-showcase\.brand-showcase--full-banner \{[^}]*height:\s*calc\(\(100svh - var\(--header-height\)\) \/ 2\)/);
   assert.match(styles, /@media \(min-width:\s*1101px\) and \(prefers-reduced-motion:\s*no-preference\) \{[\s\S]*?#showcases > \.hero-stage-shell > \.hero-stage \{[^}]*height:\s*calc\(100svh - var\(--header-height\)\)/);
 });

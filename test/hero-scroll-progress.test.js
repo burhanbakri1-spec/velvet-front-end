@@ -8,6 +8,7 @@ import {
   heroStageMotion,
   latchStageMode,
   stageGeometry,
+  stageReleaseBox,
   stageSlidePos,
   stepHeroDirection,
 } from '../src/components/heroScrollProgress.js';
@@ -222,4 +223,30 @@ test('direction changes only when a hero boundary is crossed', () => {
   assert.equal(stepHeroDirection('up', 0), 'up');
   assert.equal(stepHeroDirection('down', 0), 'down');
   assert.ok(HERO_SLICE >= 55 && HERO_SLICE <= 70);
+});
+
+test('mobile stage releases on the last slide and desktop keeps its pin', () => {
+  const compact = 386;
+  const pin = 772;
+  const list = [{ kind: 'hero' }, { kind: 'strip', height: 235 }, { kind: 'hero' }];
+  const span = stageGeometry(list, compact).span;
+  const mid = stageReleaseBox(list, compact, pin, span * 0.5);
+  assert.equal(mid.atEnd, false);
+  assert.equal(mid.boxHeight, pin);
+  assert.equal(mid.shellHeight, span + pin);
+  const end = stageReleaseBox(list, compact, pin, span);
+  assert.equal(end.atEnd, true);
+  assert.equal(end.lastLength, compact);
+  assert.equal(end.boxHeight, compact);
+  assert.equal(end.shellHeight, span + compact);
+  const stripLast = [{ kind: 'hero' }, { kind: 'strip', height: 235 }];
+  const stripSpan = stageGeometry(stripLast, compact).span;
+  const stripEnd = stageReleaseBox(stripLast, compact, pin, stripSpan + 40);
+  assert.equal(stripEnd.boxHeight, 235);
+  assert.equal(stripEnd.shellHeight, stripSpan + 235);
+  const desktopSpan = stageGeometry(list, 812).span;
+  const desktop = stageReleaseBox(list, 812, 812, desktopSpan + 80);
+  assert.equal(desktop.atEnd, false);
+  assert.equal(desktop.boxHeight, 812);
+  assert.equal(desktop.shellHeight, desktopSpan + 812);
 });

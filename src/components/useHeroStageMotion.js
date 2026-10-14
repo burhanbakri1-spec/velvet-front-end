@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import { heroStageMotion, latchStageMode, stageGeometry, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
+import { heroStageMotion, latchStageMode, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
 
 /**
  * The approved Home banner stage.
@@ -20,6 +20,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
     const direction = { y: window.scrollY, mode: 'down', pos: 0 };
     let shellTop = 0;
     let stageHeight = 812;
+    let pinHeight = 812;
     let headerOffset = 88;
     let slides = [];
 
@@ -56,7 +57,6 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const stage = root.querySelector('.hero-stage');
       headerOffset = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
       const viewportHeight = window.innerHeight;
-      let pinHeight;
       if (desktop.matches) {
         stageHeight = Math.max(1, Math.round(viewportHeight - headerOffset));
         pinHeight = stageHeight;
@@ -113,8 +113,19 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const y = window.scrollY;
       const delta = y - direction.y;
       const nextMode = stepHeroDirection(direction.mode, delta);
-      const span = stageGeometry(slides, stageHeight).span;
+      const release = stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset));
+      const span = release.span;
       const local = Math.min(span, Math.max(0, y - (shellTop - headerOffset)));
+      const shell = root.querySelector('.hero-stage-shell');
+      const stageEl = root.querySelector('.hero-stage');
+      if (shell && stageEl) {
+        const nextSpan = `${release.shellHeight}px`;
+        if (shell.style.getPropertyValue('--hero-stage-span') !== nextSpan) {
+          shell.style.setProperty('--hero-stage-span', nextSpan);
+        }
+        const nextBox = `${release.boxHeight}px`;
+        if (stageEl.style.height !== nextBox) stageEl.style.height = nextBox;
+      }
       const pos = stageSlidePos(slides, local, stageHeight);
       direction.mode = latchStageMode(direction.mode, delta, direction.pos, pos, slides);
       if (direction.mode !== 'up') direction.mode = 'down';
@@ -127,6 +138,13 @@ export function useHeroStageMotion(rootId, mobile = false) {
         stageHeight,
         mode: direction.mode,
       });
+      if (release.atEnd) {
+        slides.forEach((slide, index) => {
+          if (index === slides.length - 1) return;
+          const away = slide.kind === 'strip' && slide.height > 0 ? Math.round(slide.height) : stageHeight;
+          motion[index] = { y: -away, clipTop: 0, clipBottom: 0, hidden: slide.kind === 'strip', z: 1 };
+        });
+      }
       const pin = y >= shellTop - headerOffset && y <= shellTop - headerOffset + span;
       if (document.body.classList.contains('hero-stage-pin') !== pin) {
         document.body.classList.toggle('hero-stage-pin', pin);

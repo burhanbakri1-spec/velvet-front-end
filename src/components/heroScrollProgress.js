@@ -90,6 +90,21 @@ export function stageGeometry(slides, stageHeight) {
   return { lengths, offsets, span: offsets.length ? offsets[offsets.length - 1] : 0 };
 }
 
+/**
+ * Mobile pins a viewport-tall stage around a compact banner. At the end that
+ * extra pin would scroll the last slide past again and leave a white band.
+ * Release the stage at the last slide's own height. Desktop keeps the pin.
+ */
+export function stageReleaseBox(slides, stageHeight, pinHeight, local) {
+  const span = stageGeometry(slides, stageHeight).span;
+  const last = Array.isArray(slides) && slides.length ? slides[slides.length - 1] : null;
+  const measured = Math.round(Number(last?.height));
+  const lastLength = last?.kind === 'strip' && measured > 0 ? measured : stageHeight;
+  const atEnd = pinHeight > stageHeight + 1 && span > 0 && local >= span - 0.5;
+  const boxHeight = atEnd ? lastLength : pinHeight;
+  return { span, lastLength, atEnd, boxHeight, shellHeight: span + boxHeight };
+}
+
 /** Slide index plus progress through that slide. Hero indexes stay the equal-slot positions the deck uses. */
 export function stageSlidePos(slides, local, stageHeight) {
   if (!Array.isArray(slides) || slides.length === 0 || stageHeight <= 0) return 0;

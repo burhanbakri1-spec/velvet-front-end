@@ -19,7 +19,7 @@ export default function BrandPage({ slug }) {
   const cursorRef = useRef(null);
   const videoRef = useRef(null);
   const { copy, locale } = useI18n();
-  useHeroStageMotion('showcases', false);
+  useHeroStageMotion('showcases', true);
   const { playing, togglePlayback } = useStorefrontVideo(videoRef, { sourceKey: media.video || '' });
 
   const moveCursor = (event) => {
@@ -93,6 +93,8 @@ export default function BrandPage({ slug }) {
                 <section className="home-brand" key={category.slug}>
                   <BrandShowcase
                     variant="full-banner"
+                    mediaLoading="eager"
+                    mediaFetchPriority={index === 0 ? 'high' : undefined}
                     to={`/products?brand=${slug}&category=${category.slug}`}
                     brand={{
                       ...brand,

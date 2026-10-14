@@ -207,6 +207,14 @@ test('header uses managed-logo classes for uploaded artwork; mega menu overlays 
   assert.doesNotMatch(brandPage, /getBrandLogo/);
 });
 
+test('brand main category banners reuse the home stage and load their images', () => {
+  const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
+  assert.match(brandPage, /useHeroStageMotion\('showcases', true\)/);
+  assert.match(brandPage, /mediaLoading="eager"/);
+  assert.match(brandPage, /category\.heroImage \|\| artwork/);
+  assert.match(brandPage, /variant="full-banner"/);
+});
+
 test('brand about content prefers platform copy and falls back to catalog tagline', () => {
   const playEn = getBrandAbout('play', 'en');
   assert.ok(playEn);
