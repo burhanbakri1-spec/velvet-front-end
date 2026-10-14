@@ -225,7 +225,7 @@ test('direction changes only when a hero boundary is crossed', () => {
   assert.ok(HERO_SLICE >= 55 && HERO_SLICE <= 70);
 });
 
-test('mobile stage releases on the last slide and desktop keeps its pin', () => {
+test('terminal stage releases on the last slide without clipping the pose', () => {
   const compact = 386;
   const pin = 772;
   const list = [{ kind: 'hero' }, { kind: 'strip', height: 235 }, { kind: 'hero' }];
@@ -258,7 +258,22 @@ test('mobile stage releases on the last slide and desktop keeps its pin', () => 
   assert.equal(stripEnd.shellHeight, stripSpan + 235);
   const desktopSpan = stageGeometry(list, 812).span;
   const desktop = stageReleaseBox(list, 812, 812, desktopSpan + 80);
-  assert.equal(desktop.atEnd, false);
+  assert.equal(desktop.atEnd, true);
   assert.equal(desktop.boxHeight, 812);
   assert.equal(desktop.shellHeight, desktopSpan + 812);
+  const desktopHeroes = [{ kind: 'hero' }, { kind: 'hero' }, { kind: 'hero' }];
+  const desktopHeroSpan = stageGeometry(desktopHeroes, 812).span;
+  const desktopEarly = stageReleaseBox(desktopHeroes, 812, 812, 100);
+  assert.equal(desktopEarly.atEnd, false);
+  assert.equal(desktopEarly.boxHeight, 812);
+  assert.equal(desktopEarly.shellHeight, desktopHeroSpan + 812);
+  const desktopLocal = desktopHeroSpan - 812 * 0.3;
+  const desktopApproach = stageReleaseBox(desktopHeroes, 812, 812, desktopLocal);
+  assert.equal(desktopApproach.atEnd, false);
+  assert.equal(desktopApproach.boxHeight, 812);
+  assert.equal(desktopApproach.shellHeight, desktopLocal + 812);
+  const desktopUp = stageReleaseBox(desktopHeroes, 812, 812, desktopHeroSpan - 40, 'up');
+  assert.equal(desktopUp.atEnd, false);
+  assert.equal(desktopUp.boxHeight, 812);
+  assert.equal(desktopUp.shellHeight, desktopHeroSpan - 40 + 812);
 });

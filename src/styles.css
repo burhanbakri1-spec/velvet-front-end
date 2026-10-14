@@ -2422,6 +2422,7 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
   #showcases > .home-brand > .home-brand__runway { height: 0; }
 }
 @media (min-width: 1101px) and (prefers-reduced-motion: no-preference) {
+  html:has(#showcases[data-hero-motion]) { overflow-anchor: none; }
   #showcases > .hero-stage-shell {
     display: block;
     position: relative;

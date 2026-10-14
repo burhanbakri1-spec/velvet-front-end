@@ -91,20 +91,22 @@ export function stageGeometry(slides, stageHeight) {
 }
 
 /**
- * Mobile pins a viewport-tall stage around a compact banner so the next slide
- * can sit in the lower half. That extra pin is empty once the last slide is
- * the lowest content. The shell stays `span + box`, so the sticky distance
- * remains the motion span while the box closes onto the last slide and the
- * next section rises with it. Desktop keeps the pin: there the banner fills it.
+ * The terminal box follows the active pose. A tall mobile pin closes once the
+ * last slide is the lowest content, and the shell becomes the scroll already
+ * used plus that box so the next section rises with it. Desktop banners fill
+ * the pin, so the box stays on that pose. The leftover there is the shell tail
+ * under the final transition; closing the shell onto the pose removes it
+ * without clipping the cover or the deck.
  */
 export function stageReleaseBox(slides, stageHeight, pinHeight, local, mode = 'down') {
-  const span = stageGeometry(slides, stageHeight).span;
+  const geometry = stageGeometry(slides, stageHeight);
+  const span = geometry.span;
   const last = Array.isArray(slides) && slides.length ? slides[slides.length - 1] : null;
   const measured = Math.round(Number(last?.height));
   const lastLength = last?.kind === 'strip' && measured > 0 ? measured : stageHeight;
   const safeLocal = Math.max(0, Number(local) || 0);
-  const tallPin = pinHeight > stageHeight + 1 && span > 0 && stageHeight > 0 && Array.isArray(slides) && slides.length > 1;
-  if (!tallPin) {
+  const canRelease = span > 0 && stageHeight > 0 && pinHeight > 0 && Array.isArray(slides) && slides.length > 1;
+  if (!canRelease) {
     return { span, lastLength, atEnd: false, boxHeight: pinHeight, shellHeight: span + pinHeight };
   }
   const atEnd = safeLocal >= span - 0.5;
@@ -132,12 +134,14 @@ export function stageReleaseBox(slides, stageHeight, pinHeight, local, mode = 'd
     if (pose.y < pinHeight && slideBottom > bottom) bottom = slideBottom;
   });
   const boxHeight = Math.max(lastLength, Math.min(pinHeight, Math.round(bottom)));
-  // While the pin is still full, the shell keeps the whole motion span so the
-  // stage stays stuck. Once the last slide is the lowest content, the shell
-  // closes to the scroll already used plus that box. The next section then
-  // sits on the stage bottom and rises as the box closes, instead of waiting
-  // out the leftover pin.
-  const shellHeight = boxHeight < pinHeight - 0.5
+  const tallPin = pinHeight > stageHeight + 1;
+  const releaseStart = geometry.offsets[slides.length - 2];
+  const terminal = safeLocal >= releaseStart - 0.5;
+  // Mobile keeps the full pin until the pose itself rises out of it.
+  // Desktop keeps that same box, and drops only the shell tail once the
+  // final transition has started, so the next section meets the pose.
+  const closeShell = (tallPin && boxHeight < pinHeight - 0.5) || (!tallPin && terminal);
+  const shellHeight = closeShell
     ? Math.min(span, safeLocal) + boxHeight
     : span + boxHeight;
   return { span, lastLength, atEnd: false, boxHeight, shellHeight };
