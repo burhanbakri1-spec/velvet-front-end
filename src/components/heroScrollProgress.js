@@ -91,18 +91,56 @@ export function stageGeometry(slides, stageHeight) {
 }
 
 /**
- * Mobile pins a viewport-tall stage around a compact banner. At the end that
- * extra pin would scroll the last slide past again and leave a white band.
- * Release the stage at the last slide's own height. Desktop keeps the pin.
+ * Mobile pins a viewport-tall stage around a compact banner so the next slide
+ * can sit in the lower half. That extra pin is empty once the last slide is
+ * the lowest content. The shell stays `span + box`, so the sticky distance
+ * remains the motion span while the box closes onto the last slide and the
+ * next section rises with it. Desktop keeps the pin: there the banner fills it.
  */
-export function stageReleaseBox(slides, stageHeight, pinHeight, local) {
+export function stageReleaseBox(slides, stageHeight, pinHeight, local, mode = 'down') {
   const span = stageGeometry(slides, stageHeight).span;
   const last = Array.isArray(slides) && slides.length ? slides[slides.length - 1] : null;
   const measured = Math.round(Number(last?.height));
   const lastLength = last?.kind === 'strip' && measured > 0 ? measured : stageHeight;
-  const atEnd = pinHeight > stageHeight + 1 && span > 0 && local >= span - 0.5;
-  const boxHeight = atEnd ? lastLength : pinHeight;
-  return { span, lastLength, atEnd, boxHeight, shellHeight: span + boxHeight };
+  const safeLocal = Math.max(0, Number(local) || 0);
+  const tallPin = pinHeight > stageHeight + 1 && span > 0 && stageHeight > 0 && Array.isArray(slides) && slides.length > 1;
+  if (!tallPin) {
+    return { span, lastLength, atEnd: false, boxHeight: pinHeight, shellHeight: span + pinHeight };
+  }
+  const atEnd = safeLocal >= span - 0.5;
+  if (atEnd) {
+    return { span, lastLength, atEnd: true, boxHeight: lastLength, shellHeight: span + lastLength };
+  }
+  const motion = heroStageMotion({
+    slides,
+    local: Math.min(safeLocal, span),
+    stageHeight,
+    mode: mode === 'up' ? 'up' : 'down',
+  });
+  let bottom = lastLength;
+  const upward = mode === 'up';
+  slides.forEach((slide, index) => {
+    const pose = motion[index];
+    if (!pose || pose.hidden) return;
+    // Up leaves untouched slides parked at the blank pose. They are not part
+    // of the deck, so they must not keep the pin open.
+    if (upward && pose.z <= 1 && pose.y >= stageHeight && !pose.clipTop && !pose.clipBottom) return;
+    const height = slide.kind === 'strip' && Math.round(Number(slide.height)) > 0
+      ? Math.round(Number(slide.height))
+      : stageHeight;
+    const slideBottom = pose.y + height - (pose.clipBottom || 0);
+    if (pose.y < pinHeight && slideBottom > bottom) bottom = slideBottom;
+  });
+  const boxHeight = Math.max(lastLength, Math.min(pinHeight, Math.round(bottom)));
+  // While the pin is still full, the shell keeps the whole motion span so the
+  // stage stays stuck. Once the last slide is the lowest content, the shell
+  // closes to the scroll already used plus that box. The next section then
+  // sits on the stage bottom and rises as the box closes, instead of waiting
+  // out the leftover pin.
+  const shellHeight = boxHeight < pinHeight - 0.5
+    ? Math.min(span, safeLocal) + boxHeight
+    : span + boxHeight;
+  return { span, lastLength, atEnd: false, boxHeight, shellHeight };
 }
 
 /** Slide index plus progress through that slide. Hero indexes stay the equal-slot positions the deck uses. */

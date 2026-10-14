@@ -113,9 +113,13 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const y = window.scrollY;
       const delta = y - direction.y;
       const nextMode = stepHeroDirection(direction.mode, delta);
-      const release = stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset));
-      const span = release.span;
+      const span = stageGeometry(slides, stageHeight).span;
       const local = Math.min(span, Math.max(0, y - (shellTop - headerOffset)));
+      const pos = stageSlidePos(slides, local, stageHeight);
+      direction.mode = latchStageMode(direction.mode, delta, direction.pos, pos, slides);
+      if (direction.mode !== 'up') direction.mode = 'down';
+      if (nextMode === direction.mode) direction.mode = nextMode;
+      const release = stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset), direction.mode);
       const shell = root.querySelector('.hero-stage-shell');
       const stageEl = root.querySelector('.hero-stage');
       if (shell && stageEl) {
@@ -126,10 +130,6 @@ export function useHeroStageMotion(rootId, mobile = false) {
         const nextBox = `${release.boxHeight}px`;
         if (stageEl.style.height !== nextBox) stageEl.style.height = nextBox;
       }
-      const pos = stageSlidePos(slides, local, stageHeight);
-      direction.mode = latchStageMode(direction.mode, delta, direction.pos, pos, slides);
-      if (direction.mode !== 'up') direction.mode = 'down';
-      if (nextMode === direction.mode) direction.mode = nextMode;
       direction.pos = pos;
       direction.y = y;
       const motion = heroStageMotion({
