@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from '../routing/Router';
-import { collectProductImages, getProductBadge, getProductName } from '../data/products';
+import { collectProductImages, getProductBadge, getProductName, isFeaturedBadgeLabel } from '../data/products';
 import { formatPrice } from '../data/currency';
 import { selectBrandStripProducts } from '../data/brandProductStrip';
 import { getHomePriority } from '../data/displayPriority';
@@ -47,7 +47,7 @@ export default function BrandProductStrip({ brandSlug, deckIndex, concealed = fa
         tabIndex={focusable ? undefined : -1}
       >
         <span className="brand-strip-card__media">
-          {badge && <span className="brand-strip-card__badge">{badge}</span>}
+          {badge && <span className={`brand-strip-card__badge${isFeaturedBadgeLabel(badge) ? ' is-featured' : ''}`}>{badge}</span>}
           <img className="brand-strip-card__image" src={image} alt={name} loading="lazy" decoding="async" />
         </span>
         <span className="brand-strip-card__name">{name}</span>

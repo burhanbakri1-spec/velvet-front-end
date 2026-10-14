@@ -136,6 +136,11 @@ export function getProductName(product, locale) {
 }
 export const getProductDescription = (product, locale, short = false) => locale === 'ar' ? (short ? product.shortDescriptionAr : product.descriptionAr) : (short ? product.shortDescription : product.description);
 export const getProductBadge = (product, locale) => locale === 'ar' ? product.badgeAr : product.badge;
+
+export function isFeaturedBadgeLabel(label) {
+  const value = String(label || '').trim().toLowerCase();
+  return value === 'featured' || value === 'مميز' || value === 'مميزة';
+}
 export const getAvailability = (product, locale) => locale === 'ar' ? product.availabilityAr : product.availability;
 export const getOptionName = (option, locale) => locale === 'ar' ? option.nameAr : option.name;
 export const getOptionValue = (value, locale) => locale === 'ar' ? value.labelAr : value.label;

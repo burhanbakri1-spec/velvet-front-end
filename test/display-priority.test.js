@@ -95,6 +95,31 @@ test('general shop and brand shop priorities stay independent', () => {
   assert.equal(getHomePriority('baby'), null);
 });
 
+test('a home list for other brands does not hide plush or books products', () => {
+  applyDisplayPriority({
+    displayPriority: {
+      home: { orderedIds: ['baby-1', 'play-1'] },
+    },
+  });
+  const products = [
+    product('baby-1', 'baby'),
+    product('plush-1', 'plush'),
+    product('book-1', 'books'),
+  ];
+  assert.deepEqual(
+    selectBrandStripProducts(products, 'baby', { priority: getHomePriority('baby') }).map((item) => item.id),
+    ['baby-1'],
+  );
+  assert.deepEqual(
+    selectBrandStripProducts(products, 'plush', { priority: getHomePriority('plush') }).map((item) => item.id),
+    ['plush-1'],
+  );
+  assert.deepEqual(
+    selectBrandStripProducts(products, 'books', { priority: getHomePriority('books') }).map((item) => item.id),
+    ['book-1'],
+  );
+});
+
 test('explicit customer sort is separate from the default featured option', () => {
   assert.equal(isExplicitCustomerSort(''), false);
   assert.equal(isExplicitCustomerSort('featured'), false);

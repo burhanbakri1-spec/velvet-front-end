@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { artwork } from '../data/products';
 import { filterProducts, getBrand, getCategory, getSubcategory } from '../data/velvetCatalog';
 import { getShopPriority, orderProductsByIds } from '../data/displayPriority';
+import BrandShowcase from '../components/BrandShowcase';
 import CategoryProductShowcase from '../components/CategoryProductShowcase';
+import { useHeroStageMotion } from '../components/useHeroStageMotion';
 import PageNavigation from '../components/PageNavigation';
 import { useI18n } from '../i18n/I18nContext';
 import { Link, localizePath } from '../routing/Router';
@@ -22,6 +24,7 @@ export default function BrandCategoryPage({ slug, categorySlug, subcategorySlug 
   const isSubMode = Boolean(subcategorySlug);
   const cursorRef = useRef(null);
   const { copy, locale } = useI18n();
+  useHeroStageMotion('showcases', true);
   const { addItem } = useCart();
   const [justAdded, setJustAdded] = useState(false);
   const addTimer = useRef(null);
@@ -115,6 +118,38 @@ export default function BrandCategoryPage({ slug, categorySlug, subcategorySlug 
         {heroDescription ? <p className="category-hero__description">{heroDescription}</p> : null}
         <span className="showcase-view-cursor" ref={cursorRef} aria-hidden="true">{copy.home.view}</span>
       </section>
+
+      {!isSubMode && category.subs.length > 0 && (
+        <section className="category-showcases" aria-label={copy.shop.subcategory}>
+          <div id="showcases">
+            <div className="hero-stage-shell">
+              <div className="hero-stage">
+                {category.subs.map((sub, index) => (
+                  <section className="home-brand" key={sub.slug}>
+                    <BrandShowcase
+                      variant="full-banner"
+                      to={`/brands/${slug}/category/${categorySlug}/subcategory/${sub.slug}`}
+                      brand={{
+                        ...brand,
+                        slug: sub.slug,
+                        name: sub.name,
+                        image: sub.image || artwork(sub.name.en, brand.home.palette, (index % 6) + 1),
+                        palette: brand.home.palette,
+                        scene: brand.home.scene,
+                        home: {
+                          logo: brand.home.logo,
+                          kickerEn: category.name.en,
+                          kickerAr: category.name.ar,
+                        },
+                      }}
+                    />
+                  </section>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {!isSubMode && category.subs.length > 0 && (
         <nav className="category-subnav" aria-label={copy.shop.subcategory}>

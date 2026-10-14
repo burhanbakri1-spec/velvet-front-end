@@ -67,8 +67,14 @@ export function selectBrandStripProducts(products, brandSlug, options = {}) {
   const brandPool = (Array.isArray(products) ? products : []).filter(
     (product) => isStripVisibleProduct(product) && brandPathOf(product) === brandSlug
   );
-  // A present home scope owns the strip, including an empty orderedIds list.
-  if (priority != null) return orderProductsByIds(brandPool, priority.orderedIds);
+  // An explicit empty orderedIds list owns the strip and stays empty.
+  // A list that names other brands does not hide this brand's own products.
+  if (priority != null) {
+    const orderedIds = Array.isArray(priority.orderedIds) ? priority.orderedIds : [];
+    if (orderedIds.length === 0) return [];
+    const ordered = orderProductsByIds(brandPool, orderedIds);
+    if (ordered.length > 0) return ordered;
+  }
   if (!brandPool.length) return [];
 
   const requestedTier =

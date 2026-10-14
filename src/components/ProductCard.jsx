@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from '../routing/Router';
-import { collectProductImages, getCategoryLabel, getProductBadge, getProductDescription, getProductName } from '../data/products';
+import { collectProductImages, getCategoryLabel, getProductBadge, getProductDescription, getProductName, isFeaturedBadgeLabel } from '../data/products';
 import { getVelvetPathLabel } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { productStock } from '../data/inventory';
@@ -45,7 +45,7 @@ export default function ProductCard({ product, onAddToCart, onSelect, active = f
           aria-label={`${copy.products.view} ${name}`}
           onClick={handleProductActivate}
         >
-          {badge && <span className="product-card__badge">{badge}</span>}
+          {badge && <span className={`product-card__badge${isFeaturedBadgeLabel(badge) ? ' is-featured' : ''}`}>{badge}</span>}
           <img className="product-card__image" src={activeImage} alt={name} loading="lazy" />
         </Link>
         <FavoriteButton productId={product.id} className="product-card__favorite" />

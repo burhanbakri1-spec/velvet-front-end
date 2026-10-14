@@ -6,6 +6,7 @@ import {
   getOptionValue,
   getProductBadge,
   getProductName,
+  isFeaturedBadgeLabel,
 } from '../data/products';
 import { PRODUCT_SWITCH_DURATION_MS, getProductSlidePercent } from '../hooks/productSiblings';
 import { optionValueUnavailable, coerceSelectionsToValidVariant } from '../data/inventory';
@@ -68,7 +69,7 @@ export default function ProductDetailSlide({
       {showCopy && <div className="category-product-showcase__copy">
         <span className="category-product-showcase__category">
           {eyebrow}
-          {product.badge && <span className="product-detail-badge">{getProductBadge(product, locale)}</span>}
+          {product.badge && <span className={`product-detail-badge${isFeaturedBadgeLabel(getProductBadge(product, locale)) ? ' is-featured' : ''}`}>{getProductBadge(product, locale)}</span>}
         </span>
         <h1 className={`product-detail-title${titleMotion ? ' is-transitioning' : ''}`}>
           {titleMotion ? (

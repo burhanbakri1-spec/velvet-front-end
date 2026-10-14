@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { artwork } from '../data/products';
 import { getBrand, getBrandAbout, getBrandPageHeaderMedia } from '../data/velvetCatalog';
 import BrandShowcase from '../components/BrandShowcase';
+import { useHeroStageMotion } from '../components/useHeroStageMotion';
 import { PlayButton } from '../components/Hero';
 import { useStorefrontVideo } from '../components/useStorefrontVideo';
 import PageNavigation from '../components/PageNavigation';
@@ -18,6 +19,7 @@ export default function BrandPage({ slug }) {
   const cursorRef = useRef(null);
   const videoRef = useRef(null);
   const { copy, locale } = useI18n();
+  useHeroStageMotion('showcases', false);
   const { playing, togglePlayback } = useStorefrontVideo(videoRef, { sourceKey: media.video || '' });
 
   const moveCursor = (event) => {
@@ -84,26 +86,33 @@ export default function BrandPage({ slug }) {
       ) : null}
 
       <section className="category-showcases" id="category-products" aria-label={`${brand.name[locale]} ${copy.shop.category}`}>
-        {brand.categories.map((category, index) => (
-          <BrandShowcase
-            key={category.slug}
-            variant="full-banner"
-            to={`/products?brand=${slug}&category=${category.slug}`}
-            brand={{
-              ...brand,
-              slug: category.slug,
-              name: category.name,
-              image: category.heroImage || artwork(category.name.en, brand.home.palette, (index % 6) + 1),
-              palette: brand.home.palette,
-              scene: brand.home.scene,
-              home: {
-                logo: brand.home.logo,
-                kickerEn: brand.home.kickerEn,
-                kickerAr: brand.home.kickerAr,
-              },
-            }}
-          />
-        ))}
+        <div id="showcases">
+          <div className="hero-stage-shell">
+            <div className="hero-stage">
+              {brand.categories.map((category, index) => (
+                <section className="home-brand" key={category.slug}>
+                  <BrandShowcase
+                    variant="full-banner"
+                    to={`/products?brand=${slug}&category=${category.slug}`}
+                    brand={{
+                      ...brand,
+                      slug: category.slug,
+                      name: category.name,
+                      image: category.heroImage || artwork(category.name.en, brand.home.palette, (index % 6) + 1),
+                      palette: brand.home.palette,
+                      scene: brand.home.scene,
+                      home: {
+                        logo: brand.home.logo,
+                        kickerEn: brand.home.kickerEn,
+                        kickerAr: brand.home.kickerAr,
+                      },
+                    }}
+                  />
+                </section>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );

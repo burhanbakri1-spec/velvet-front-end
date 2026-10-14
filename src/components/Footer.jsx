@@ -21,8 +21,11 @@ export default function Footer() {
   return (
     <footer className="footer" id="footer">
       <div className="footer__callout">
-        <h2>{copy.footer.callout}</h2>
-        <a href="#top">{copy.footer.opportunities} <span>{locale === 'ar' ? '←' : '→'}</span></a>
+        <div className="footer__callout-copy">
+          <span className="eyebrow">{copy.home.careersCta}</span>
+          <h2>{copy.footer.opportunities}</h2>
+        </div>
+        <Link className="footer__callout-cta" to="/contact">{copy.footer.opportunities} <span>{locale === 'ar' ? '←' : '→'}</span></Link>
       </div>
       <div className="footer__body">
         <div className={`footer__brand${managedSiteLogo ? ' footer__brand--managed' : ''}`}>
