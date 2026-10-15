@@ -7,6 +7,7 @@ import {
   getShopPriority,
   isExplicitCustomerSort,
   orderProductsByIds,
+  orderShopCatalog,
 } from '../src/data/displayPriority.js';
 
 const product = (id, brandId) => ({
@@ -118,6 +119,13 @@ test('a home list for other brands does not hide plush or books products', () =>
     selectBrandStripProducts(products, 'books', { priority: getHomePriority('books') }).map((item) => item.id),
     ['book-1'],
   );
+});
+
+test('the shop catalog keeps products outside the saved display priority', () => {
+  const products = [product('c', 'play'), product('a', 'baby'), product('b', 'build')];
+  assert.deepEqual(orderShopCatalog(products, ['b']).map((item) => item.id), ['b', 'c', 'a']);
+  assert.deepEqual(orderShopCatalog(products, []).map((item) => item.id), ['c', 'a', 'b']);
+  assert.deepEqual(orderShopCatalog(products, null).map((item) => item.id), ['c', 'a', 'b']);
 });
 
 test('explicit customer sort is separate from the default featured option', () => {

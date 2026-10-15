@@ -97,3 +97,18 @@ export function orderProductsByIds(products, orderedIds) {
   }
   return ordered;
 }
+
+/**
+ * Shop display priority only reorders. Products outside the saved list stay
+ * in the catalog; an empty saved list does not hide the shop.
+ */
+export function orderShopCatalog(products, orderedIds) {
+  const list = Array.isArray(products) ? products : [];
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) return list;
+  const prioritized = orderProductsByIds(list, orderedIds);
+  const seen = new Set(prioritized.map((product) => String(product?.id ?? product?.slug)));
+  return [
+    ...prioritized,
+    ...list.filter((product) => !seen.has(String(product?.id ?? product?.slug))),
+  ];
+}
