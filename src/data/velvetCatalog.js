@@ -41,6 +41,7 @@ import {
   velvetTaxonomyBrands,
   velvetTaxonomyStats,
 } from './velvetTaxonomy.js';
+import { normalizeArabicSearch } from '../utils/arabicNormalize.js';
 
 export { outsideTaxonomyProductIds, productTaxonomyById, velvetTaxonomyBrands, velvetTaxonomyStats };
 
@@ -693,7 +694,8 @@ export function sortProducts(products, sort = '', locale = 'en') {
 }
 
 export function filterProducts(state) {
-  const normalized = String(state.search || '').trim().toLowerCase();
+  const rawQuery = String(state.search || '').trim();
+  const normalizedQuery = normalizeArabicSearch(rawQuery);
   return velvetProducts.filter((product) => {
     if (state.brand && product.velvetPath?.brandId !== state.brand) return false;
     if (state.category && product.velvetPath?.categoryId !== state.category) return false;
@@ -704,9 +706,10 @@ export function filterProducts(state) {
       if (selected.length && !productMatchesAttributeFilter(product, key, selected)) return false;
     }
     if (state.shopping?.length && !state.shopping.some((tag) => (product.shopping || []).includes(tag))) return false;
-    if (normalized) {
-      const haystack = `${product.name} ${product.nameAr || ''} ${product.description} ${product.descriptionAr || ''} ${product.category || ''}`.toLowerCase();
-      if (!haystack.includes(normalized)) return false;
+    if (normalizedQuery) {
+      const haystack = `${product.name} ${product.nameAr || ''} ${product.description} ${product.descriptionAr || ''} ${product.category || ''}`;
+      const normalizedHaystack = normalizeArabicSearch(haystack);
+      if (!normalizedHaystack.includes(normalizedQuery)) return false;
     }
     return true;
   });

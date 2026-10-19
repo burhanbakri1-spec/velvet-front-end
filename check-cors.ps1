@@ -1,0 +1,2 @@
+$response = Invoke-WebRequest -Uri 'https://api-staging.igroup.website/api/storefront/content?locale=ar' -Headers @{'X-Company-Id'='kids-velvet'; 'X-Site-Id'='kids-velvet-storefront'; 'Origin'='https://mintcream-mink-816924.hostingersite.com'} -Method Options -UseBasicParsing
+$response.Headers
