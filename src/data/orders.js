@@ -37,6 +37,9 @@ const ORDER_SNAPSHOT_KEY = 'velvet-order-snapshots-v1';
  * Delivery: send deliveryZoneId so the backend validates the zone and applies
  * the configured fee. Optional delivery_city_key is included when known.
  * Never trust a client-supplied fee as authoritative.
+ *
+ * Phone/WhatsApp: include structured fields for international support while
+ * keeping the legacy `phone` field for backward compatibility.
  */
 export function buildOrderPayload({ customer = {}, items = [], deliveryZone = null } = {}) {
   const payload = {
@@ -47,6 +50,17 @@ export function buildOrderPayload({ customer = {}, items = [], deliveryZone = nu
       city: String(customer.city || '').trim(),
       address: String(customer.address || '').trim(),
       notes: String(customer.notes || '').trim() || undefined,
+      // New structured phone fields (optional, backward compatible)
+      phoneCountryCode: customer.phoneCountryCode ? String(customer.phoneCountryCode).trim() : undefined,
+      phoneNational: customer.phoneNational ? String(customer.phoneNational).trim() : undefined,
+      phoneLocal: customer.phoneLocal ? String(customer.phoneLocal).trim() : undefined,
+      phoneCanonical: customer.phoneCanonical ? String(customer.phoneCanonical).trim() : undefined,
+      // WhatsApp fields
+      whatsappSameAsPhone: customer.whatsappSameAsPhone !== undefined ? Boolean(customer.whatsappSameAsPhone) : undefined,
+      whatsappCountryCode: customer.whatsappCountryCode ? String(customer.whatsappCountryCode).trim() : undefined,
+      whatsappNational: customer.whatsappNational ? String(customer.whatsappNational).trim() : undefined,
+      whatsappLocal: customer.whatsappLocal ? String(customer.whatsappLocal).trim() : undefined,
+      whatsappCanonical: customer.whatsappCanonical ? String(customer.whatsappCanonical).trim() : undefined,
     },
     items: (Array.isArray(items) ? items : [])
       .map((item) => ({

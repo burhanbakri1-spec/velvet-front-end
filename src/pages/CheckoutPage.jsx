@@ -17,12 +17,33 @@ import { resolveOrderTotals } from '../data/orderTotals';
 import { trackPlatformEvent } from '../analytics/platformAnalytics';
 import { Link } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
+import {
+  SUPPORTED_COUNTRY_CODES,
+  DEFAULT_COUNTRY_CODE,
+  normalizePhone,
+  normalizeWhatsApp,
+  deriveWhatsAppFromContact,
+  getPreferredWhatsAppCanonical,
+} from '../utils/phoneNormalize';
 
 export default function CheckoutPage() {
   const { items, subtotal, addItem, clearCart } = useCart();
   const { copy, locale } = useI18n();
   const { token, customer } = useAuth();
-  const [form, setForm] = useState({ name: '', phone: '', email: '', city: '', address: '', notes: '' });
+
+  // Form state with new phone/WhatsApp fields
+  const [form, setForm] = useState({
+    name: '',
+    phoneCountryCode: DEFAULT_COUNTRY_CODE,
+    phone: '',
+    email: '',
+    whatsappSameAsPhone: true,
+    whatsappCountryCode: DEFAULT_COUNTRY_CODE,
+    whatsapp: '',
+    city: '',
+    address: '',
+    notes: '',
+  });
   const [prepared, setPrepared] = useState(null);
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState(null);
@@ -129,6 +150,22 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Validate phone
+    const phoneNorm = normalizePhone(form.phone, form.phoneCountryCode);
+    if (!phoneNorm.phoneNational || phoneNorm.phoneNational.length < 8) {
+      setError('Please enter a valid phone number');
+      return;
+    }
+
+    // Validate WhatsApp if not same as phone
+    if (!form.whatsappSameAsPhone) {
+      const whatsappNorm = normalizeWhatsApp(form.whatsapp, form.whatsappCountryCode);
+      if (!whatsappNorm.whatsappNational || whatsappNorm.whatsappNational.length < 8) {
+        setError('Please enter a valid WhatsApp number');
+        return;
+      }
+    }
+
     setPlacing(true);
     try {
       let order = null;
@@ -137,8 +174,26 @@ export default function CheckoutPage() {
       // is allowed (no token); logged-in customers attach their Bearer token so
       // the server associates the order with their account.
       if (isStorefrontApiConfigured()) {
+        // Build normalized phone data for payload
+        const phoneData = normalizePhone(form.phone, form.phoneCountryCode);
+        const whatsappData = form.whatsappSameAsPhone
+          ? deriveWhatsAppFromContact(phoneData)
+          : normalizeWhatsApp(form.whatsapp, form.whatsappCountryCode);
+
         const payload = buildOrderPayload({
-          customer: form,
+          customer: {
+            ...form,
+            phone: phoneData.phoneLocal, // Legacy field: local format with leading 0
+            phoneCountryCode: phoneData.phoneCountryCode,
+            phoneNational: phoneData.phoneNational,
+            phoneCanonical: phoneData.phoneCanonical,
+            phoneLocal: phoneData.phoneLocal,
+            whatsappSameAsPhone: form.whatsappSameAsPhone,
+            whatsappCountryCode: whatsappData.whatsappCountryCode,
+            whatsappNational: whatsappData.whatsappNational,
+            whatsappCanonical: whatsappData.whatsappCanonical,
+            whatsappLocal: whatsappData.whatsappLocal,
+          },
           items,
           deliveryZone: selectedZone,
         });
@@ -176,8 +231,17 @@ export default function CheckoutPage() {
         fallbackDeliveryFee: selectedZone.deliveryPrice,
       });
 
+      // Build phone data for WhatsApp (prefer whatsappCanonical for WhatsApp action)
+      const phoneData = normalizePhone(submittedForm.phone, submittedForm.phoneCountryCode);
+      const whatsappData = submittedForm.whatsappSameAsPhone
+        ? deriveWhatsAppFromContact(phoneData)
+        : normalizeWhatsApp(submittedForm.whatsapp, submittedForm.whatsappCountryCode);
+
       const message = buildWhatsAppOrderMessage({
-        customer: submittedForm,
+        customer: {
+          ...submittedForm,
+          phone: phoneData.phoneLocal, // Display local format in message
+        },
         items: submittedItems,
         subtotal: totals.subtotal,
         deliveryArea: serverArea || selectedZone.cityName,
@@ -220,6 +284,79 @@ export default function CheckoutPage() {
   const totalSummaryValue = previewTotals
     ? formatPrice(previewTotals.finalTotal)
     : '—';
+
+  // Phone + WhatsApp UI components
+  const PhoneField = () => (
+    <div className="checkout-field checkout-field--phone">
+      <label htmlFor="checkout-phone">{copy.checkout.phone}</label>
+      <div className="checkout-phone-input">
+        <select
+          id="checkout-phone-country"
+          value={form.phoneCountryCode}
+          onChange={setField('phoneCountryCode')}
+          className="checkout-country-select"
+          aria-label={copy.checkout.phoneCountryCode}
+        >
+          {SUPPORTED_COUNTRY_CODES.map((code) => (
+            <option key={code} value={code}>{code}</option>
+          ))}
+        </select>
+        <input
+          id="checkout-phone"
+          required
+          value={form.phone}
+          onChange={setField('phone')}
+          placeholder={copy.checkout.phonePlaceholder}
+          name="phone"
+          type="tel"
+          autoComplete="tel"
+          className="checkout-phone-national"
+        />
+      </div>
+    </div>
+  );
+
+  const WhatsAppField = () => (
+    <div className="checkout-field checkout-field--whatsapp">
+      <div className="checkout-whatsapp-toggle">
+        <input
+          type="checkbox"
+          id="checkout-whatsapp-same"
+          checked={form.whatsappSameAsPhone}
+          onChange={(e) => setField('whatsappSameAsPhone')(e)}
+        />
+        <label htmlFor="checkout-whatsapp-same">{copy.checkout.whatsappSameAsPhone}</label>
+      </div>
+      {!form.whatsappSameAsPhone && (
+        <div className="checkout-whatsapp-input">
+          <label htmlFor="checkout-whatsapp">{copy.checkout.whatsapp}</label>
+          <div className="checkout-phone-input">
+            <select
+              id="checkout-whatsapp-country"
+              value={form.whatsappCountryCode}
+              onChange={setField('whatsappCountryCode')}
+              className="checkout-country-select"
+              aria-label={copy.checkout.whatsappCountryCode}
+            >
+              {SUPPORTED_COUNTRY_CODES.map((code) => (
+                <option key={code} value={code}>{code}</option>
+              ))}
+            </select>
+            <input
+              id="checkout-whatsapp"
+              value={form.whatsapp}
+              onChange={setField('whatsapp')}
+              placeholder={copy.checkout.whatsappPlaceholder}
+              name="whatsapp"
+              type="tel"
+              autoComplete="tel"
+              className="checkout-phone-national"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="checkout-page">
@@ -304,16 +441,14 @@ export default function CheckoutPage() {
                   <label htmlFor="checkout-name">{copy.checkout.fullName}</label>
                   <input id="checkout-name" required value={form.name} onChange={setField('name')} placeholder={copy.checkout.fullNamePlaceholder} name="name" autoComplete="name" />
                 </div>
-                <div className="checkout-field-row">
-                  <div className="checkout-field">
-                    <label htmlFor="checkout-phone">{copy.checkout.phone}</label>
-                    <input id="checkout-phone" required value={form.phone} onChange={setField('phone')} placeholder={copy.checkout.phonePlaceholder} name="phone" type="tel" autoComplete="tel" />
-                  </div>
+                <div className="checkout-field-row checkout-field-row--phone">
+                  <PhoneField />
                   <div className="checkout-field">
                     <label htmlFor="checkout-email">{copy.checkout.email}</label>
                     <input id="checkout-email" required value={form.email} onChange={setField('email')} placeholder={copy.checkout.emailPlaceholder} name="email" type="email" autoComplete="email" />
                   </div>
                 </div>
+                <WhatsAppField />
                 <div className="checkout-field">
                   <label htmlFor="checkout-city">{copy.checkout.city}</label>
                   <input id="checkout-city" required value={form.city} onChange={setField('city')} placeholder={copy.checkout.cityPlaceholder} name="city" autoComplete="address-level2" />
@@ -358,7 +493,8 @@ export default function CheckoutPage() {
                         <option key={zone.id} value={zone.id}>
                           {zone.cityName}
                           {zone.region ? ` — ${zone.region}` : ''}
-                          {` (${formatPrice(zone.deliveryPrice)})`}
+                          {' '}
+                          {formatPrice(zone.deliveryPrice)}
                         </option>
                       ))}
                     </select>

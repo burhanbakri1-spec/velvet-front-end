@@ -49,6 +49,16 @@ test('buildOrderPayload shapes the exact POST /api/orders body', () => {
     city: 'Ramallah',
     address: 'Main St 3',
     notes: undefined,
+    // New optional phone/WhatsApp fields (undefined when not provided)
+    phoneCountryCode: undefined,
+    phoneNational: undefined,
+    phoneLocal: undefined,
+    phoneCanonical: undefined,
+    whatsappSameAsPhone: undefined,
+    whatsappCountryCode: undefined,
+    whatsappNational: undefined,
+    whatsappLocal: undefined,
+    whatsappCanonical: undefined,
   });
   assert.deepEqual(payload.items, [
     { productId: 'p1', variantId: 'v1', quantity: 2 },
@@ -58,7 +68,24 @@ test('buildOrderPayload shapes the exact POST /api/orders body', () => {
 
 test('buildOrderPayload tolerates empty input and always carries attribution', () => {
   const payload = buildOrderPayload();
-  assert.deepEqual(payload.customer, { name: '', phone: '', email: undefined, city: '', address: '', notes: undefined });
+  assert.deepEqual(payload.customer, {
+    name: '',
+    phone: '',
+    email: undefined,
+    city: '',
+    address: '',
+    notes: undefined,
+    // New optional phone/WhatsApp fields (undefined when not provided)
+    phoneCountryCode: undefined,
+    phoneNational: undefined,
+    phoneLocal: undefined,
+    phoneCanonical: undefined,
+    whatsappSameAsPhone: undefined,
+    whatsappCountryCode: undefined,
+    whatsappNational: undefined,
+    whatsappLocal: undefined,
+    whatsappCanonical: undefined,
+  });
   assert.deepEqual(payload.items, []);
   assert.equal(typeof payload.analyticsSessionKey, 'string');
   assert.ok(payload.analyticsSessionKey.length > 0);

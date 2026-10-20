@@ -4225,6 +4225,163 @@ html[dir="rtl"] .checkout-field select { background-position: 12px calc(50% - 3p
 .checkout-delivery-retry { margin-top: 10px; width: auto; }
 .checkout-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 
+/* Phone field with country selector */
+.checkout-field--phone .checkout-phone-input {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.checkout-field--phone .checkout-country-select {
+  flex: 0 0 auto;
+  width: 92px;
+  min-width: 92px;
+  padding: 13px 12px;
+  border: 1px solid #dcdcd8;
+  border-radius: 12px;
+  background: #fbfbf9;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  outline: 0;
+  transition: border-color .2s ease, background-color .2s ease;
+  cursor: pointer;
+}
+
+.checkout-field--phone .checkout-country-select:focus {
+  border-color: var(--red);
+  background: #fff;
+}
+
+.checkout-field--phone .checkout-phone-national {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 13px 15px;
+  border: 1px solid #dcdcd8;
+  border-radius: 12px;
+  background: #fbfbf9;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  outline: 0;
+  transition: border-color .2s ease, background-color .2s ease;
+}
+
+.checkout-field--phone .checkout-phone-national:focus {
+  border-color: var(--red);
+  background: #fff;
+}
+
+/* WhatsApp field */
+.checkout-field--whatsapp .checkout-whatsapp-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: #f6f5f1;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #555559;
+}
+
+.checkout-field--whatsapp .checkout-whatsapp-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--red);
+  flex-shrink: 0;
+}
+
+.checkout-field--whatsapp .checkout-whatsapp-input {
+  animation: checkout-whatsapp-slide 0.2s ease;
+}
+
+@keyframes checkout-whatsapp-slide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.checkout-field--whatsapp .checkout-phone-input {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.checkout-field--whatsapp .checkout-country-select {
+  flex: 0 0 auto;
+  width: 92px;
+  min-width: 92px;
+  padding: 13px 12px;
+  border: 1px solid #dcdcd8;
+  border-radius: 12px;
+  background: #fbfbf9;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  outline: 0;
+  transition: border-color .2s ease, background-color .2s ease;
+  cursor: pointer;
+}
+
+.checkout-field--whatsapp .checkout-country-select:focus {
+  border-color: var(--red);
+  background: #fff;
+}
+
+.checkout-field--whatsapp .checkout-phone-national {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 13px 15px;
+  border: 1px solid #dcdcd8;
+  border-radius: 12px;
+  background: #fbfbf9;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  outline: 0;
+  transition: border-color .2s ease, background-color .2s ease;
+}
+
+.checkout-field--whatsapp .checkout-phone-national:focus {
+  border-color: var(--red);
+  background: #fff;
+}
+
+/* Responsive adjustments for phone fields */
+@media (max-width: 760px) {
+  .checkout-field-row { grid-template-columns: 1fr; }
+  
+  .checkout-field--phone .checkout-phone-input,
+  .checkout-field--whatsapp .checkout-phone-input {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .checkout-field--phone .checkout-country-select,
+  .checkout-field--whatsapp .checkout-country-select {
+    width: 100%;
+    min-width: 0;
+  }
+  
+  .checkout-field--phone .checkout-phone-national,
+  .checkout-field--whatsapp .checkout-phone-national {
+    width: 100%;
+  }
+}
+
+/* RTL adjustments for phone fields */
+html[dir="rtl"] .checkout-field--phone .checkout-phone-input,
+html[dir="rtl"] .checkout-field--whatsapp .checkout-phone-input {
+  flex-direction: row-reverse;
+}
+
+@media (max-width: 760px) {
+  html[dir="rtl"] .checkout-field--phone .checkout-phone-input,
+  html[dir="rtl"] .checkout-field--whatsapp .checkout-phone-input {
+    flex-direction: column;
+  }
+}
+
 .checkout-empty { min-height: 65vh; display: grid; place-content: center; justify-items: center; text-align: center; }
 .checkout-empty h1 { max-width: 760px; margin: 14px 0 0; font-family: Impact,'Arial Narrow',sans-serif; font-size: clamp(48px,6vw,88px); font-weight: 900; line-height: .92; letter-spacing: -.03em; text-transform: uppercase; }
 .checkout-empty p { max-width: 500px; margin: 22px 0 0; color: #69696c; font-size: 17px; line-height: 1.55; }

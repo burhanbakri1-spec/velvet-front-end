@@ -166,6 +166,37 @@ export function buildWhatsAppOrderUrl(message, whatsappUrl = socialLinks.whatsap
   return `https://api.whatsapp.com/send/?phone=${phone}&text=${text}&type=phone_number&app_absent=0`;
 }
 
+/**
+ * Build a WhatsApp deep link for a specific customer phone number.
+ * Uses whatsappCanonical if provided, otherwise phoneCanonical, otherwise falls back to official store number.
+ * The canonical values should be in international format without leading + (e.g., "970591111111").
+ */
+export function buildCustomerWhatsAppUrl(message, customer = {}) {
+  let phone = '';
+  
+  // Priority 1: whatsappCanonical (no leading +)
+  if (customer.whatsappCanonical && String(customer.whatsappCanonical).trim()) {
+    phone = String(customer.whatsappCanonical).replace(/^\+/, '').trim();
+  }
+  // Priority 2: phoneCanonical (no leading +)
+  else if (customer.phoneCanonical && String(customer.phoneCanonical).trim()) {
+    phone = String(customer.phoneCanonical).replace(/^\+/, '').trim();
+  }
+  // Priority 3: official store number
+  else {
+    phone = getOfficialWhatsAppPhone();
+  }
+  
+  // Validate: must be digits only, no leading 0 in international format
+  if (!/^\d+$/.test(phone) || phone.startsWith('0')) {
+    // Fallback to official if invalid
+    phone = getOfficialWhatsAppPhone();
+  }
+  
+  const text = encodeURIComponent(String(message ?? ''));
+  return `https://api.whatsapp.com/send/?phone=${phone}&text=${text}&type=phone_number&app_absent=0`;
+}
+
 /** Open WhatsApp with the prepared message. Returns whether a new browsing context was opened. */
 export function openWhatsAppOrder(url, openFn = typeof window !== 'undefined' ? window.open.bind(window) : null) {
   if (typeof openFn !== 'function' || !url) return false;
