@@ -4382,6 +4382,266 @@ html[dir="rtl"] .checkout-field--whatsapp .checkout-phone-input {
   }
 }
 
+/* Searchable Country Select (replaces native select for phone/WhatsApp) */
+.checkout-country-select-wrapper {
+  position: relative;
+  flex: 0 0 auto;
+  width: 140px;
+  min-width: 140px;
+}
+
+.checkout-country-select-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 12px;
+  border: 1px solid #dcdcd8;
+  border-radius: 12px;
+  background: #fbfbf9;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  outline: 0;
+  transition: border-color .2s ease, background-color .2s ease;
+  cursor: pointer;
+  text-align: left;
+  justify-content: space-between;
+}
+
+html[dir="rtl"] .checkout-country-select-button {
+  text-align: right;
+}
+
+.checkout-country-select-button:focus,
+.checkout-country-select-button:hover {
+  border-color: var(--red);
+  background: #fff;
+}
+
+.checkout-country-select-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.checkout-country-select-code {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.checkout-country-select-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+
+.checkout-country-select-arrow {
+  flex: 0 0 auto;
+  font-size: 10px;
+  opacity: 0.6;
+  transition: transform .2s ease;
+}
+
+.checkout-country-select-wrapper.is-open .checkout-country-select-arrow {
+  transform: rotate(180deg);
+}
+
+.checkout-country-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(0,0,0,.12);
+  animation: checkout-country-dropdown-in 0.15s ease;
+}
+
+@keyframes checkout-country-dropdown-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+html[dir="rtl"] .checkout-country-select-dropdown {
+  left: auto;
+  right: 0;
+}
+
+.checkout-country-select-search-wrapper {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.checkout-country-select-search {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dcdcd8;
+  border-radius: 8px;
+  background: #fbfbf9;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  outline: 0;
+  transition: border-color .2s ease, background-color .2s ease;
+}
+
+.checkout-country-select-search:focus {
+  border-color: var(--red);
+  background: #fff;
+}
+
+.checkout-country-select-options {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.checkout-country-select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background-color .15s ease;
+}
+
+.checkout-country-select-option:hover,
+.checkout-country-select-option.is-highlighted {
+  background: var(--brand-tint);
+}
+
+.checkout-country-select-option.is-selected {
+  background: var(--brand-tint);
+}
+
+.checkout-country-select-option-code {
+  flex: 0 0 auto;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--red);
+  min-width: 56px;
+}
+
+.checkout-country-select-option-name {
+  flex: 1 1 auto;
+  font-size: 13px;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checkout-country-select-no-results {
+  padding: 12px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+  cursor: default;
+}
+
+.checkout-country-select-pinned-badge {
+  flex: 0 0 auto;
+  font-size: 10px;
+  color: var(--red);
+  opacity: 0.8;
+  margin-inline-start: 8px;
+}
+
+.checkout-country-select-option.is-pinned {
+  background: var(--brand-tint);
+  border-top: 1px solid #e4e4e7;
+}
+
+.checkout-country-select-option.is-pinned:first-child {
+  border-top: none;
+}
+
+.checkout-country-select-option.is-pinned:hover,
+.checkout-country-select-option.is-pinned.is-highlighted {
+  background: var(--brand-tint);
+}
+
+/* WhatsApp field styles */
+.checkout-whatsapp-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.checkout-whatsapp-legend {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #555559;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.checkout-whatsapp-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: #f6f5f1;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #555559;
+}
+
+.checkout-whatsapp-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--red);
+  flex-shrink: 0;
+}
+
+.checkout-whatsapp-input {
+  animation: checkout-whatsapp-slide 0.2s ease;
+}
+
+@keyframes checkout-whatsapp-slide {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.checkout-whatsapp-hint {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: #8a8a8d;
+  line-height: 1.4;
+}
+
+/* Responsive adjustments for country select */
+@media (max-width: 760px) {
+  .checkout-country-select-wrapper {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .checkout-country-select-dropdown {
+    left: 0;
+    right: 0;
+  }
+
+  html[dir="rtl"] .checkout-country-select-dropdown {
+    left: 0;
+    right: 0;
+  }
+}
+
 .checkout-empty { min-height: 65vh; display: grid; place-content: center; justify-items: center; text-align: center; }
 .checkout-empty h1 { max-width: 760px; margin: 14px 0 0; font-family: Impact,'Arial Narrow',sans-serif; font-size: clamp(48px,6vw,88px); font-weight: 900; line-height: .92; letter-spacing: -.03em; text-transform: uppercase; }
 .checkout-empty p { max-width: 500px; margin: 22px 0 0; color: #69696c; font-size: 17px; line-height: 1.55; }

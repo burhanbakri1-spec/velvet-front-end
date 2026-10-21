@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -18,27 +18,271 @@ import { trackPlatformEvent } from '../analytics/platformAnalytics';
 import { Link } from '../routing/Router';
 import { useI18n } from '../i18n/I18nContext';
 import {
-  SUPPORTED_COUNTRY_CODES,
+  getPinnedCountries,
+  getSearchableCountries,
+  COUNTRIES,
+  DEFAULT_COUNTRY,
   DEFAULT_COUNTRY_CODE,
+  getCallingCode,
   normalizePhone,
   normalizeWhatsApp,
   deriveWhatsAppFromContact,
   getPreferredWhatsAppCanonical,
+  createEmptyWhatsAppPayload,
+  isValidPhone,
 } from '../utils/phoneNormalize';
+import { parsePhoneNumberFromString } from 'libphonenumber-js/min';
+
+/** Searchable country calling code selector component with pinned quick-access countries. */
+function CountrySelect({
+  id,
+  value, // ISO country code (e.g., "PS", "US", "CA")
+  onChange, // receives ISO country code
+  ariaLabel,
+  locale,
+  className = 'checkout-country-select',
+  disabled = false,
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const buttonRef = useRef(null);
+  const listRef = useRef(null);
+  const optionsRef = useRef([]);
+
+  // Pinned countries always shown at top (Palestine PS, Israel IL)
+  const pinnedCountries = useMemo(() => getPinnedCountries(), []);
+  // Searchable international list (excludes pinned to avoid duplicates)
+  const searchableCountries = useMemo(() => getSearchableCountries(), []);
+
+  // When searching, filter BOTH pinned and searchable countries
+  const filteredPinned = useMemo(() => {
+    if (!searchQuery.trim()) return pinnedCountries;
+    const query = searchQuery.toLowerCase().trim();
+    return pinnedCountries.filter(
+      (country) =>
+        country.code.toLowerCase().includes(query) ||
+        country.name.toLowerCase().includes(query) ||
+        (country.nameAr && country.nameAr.includes(query)) ||
+        country.country.toLowerCase().includes(query)
+    );
+  }, [searchQuery, pinnedCountries]);
+
+  // Filter searchable countries based on search query
+  const filteredSearchable = useMemo(() => {
+    if (!searchQuery.trim()) return searchableCountries;
+    const query = searchQuery.toLowerCase().trim();
+    return searchableCountries.filter(
+      (country) =>
+        country.code.toLowerCase().includes(query) ||
+        country.name.toLowerCase().includes(query) ||
+        (country.nameAr && country.nameAr.includes(query)) ||
+        country.country.toLowerCase().includes(query)
+    );
+  }, [searchQuery, searchableCountries]);
+
+  // Combined list: filtered pinned first, then filtered searchable
+  const displayCountries = useMemo(
+    () => [...filteredPinned, ...filteredSearchable],
+    [filteredPinned, filteredSearchable]
+  );
+
+  // Get display name based on locale
+  const getCountryName = useCallback(
+    (country) => (locale === 'ar' && country.nameAr ? country.nameAr : country.name),
+    [locale]
+  );
+
+  // selectedCountry must come from full COUNTRIES by ISO, NOT from filtered display list
+  const selectedCountry = useMemo(
+    () => COUNTRIES.find((c) => c.country === value) || COUNTRIES[0],
+    [value]
+  );
+
+  // Handle keyboard navigation - works for both button and search input
+  const handleKeyDown = useCallback(
+    (e) => {
+      const target = e.target;
+      const isSearchInput = target.classList.contains('checkout-country-select-search');
+
+      if (!isOpen) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+          e.preventDefault();
+          setIsOpen(true);
+          setHighlightedIndex(0);
+        }
+        return;
+      }
+
+      const maxIndex = displayCountries.length - 1;
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setHighlightedIndex((prev) => Math.min(prev + 1, maxIndex));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setHighlightedIndex((prev) => Math.max(prev - 1, 0));
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (highlightedIndex >= 0 && displayCountries[highlightedIndex]) {
+            onChange({ target: { value: displayCountries[highlightedIndex].country } });
+            setIsOpen(false);
+            setSearchQuery('');
+            setHighlightedIndex(-1);
+            buttonRef.current?.focus();
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          setIsOpen(false);
+          setSearchQuery('');
+          setHighlightedIndex(-1);
+          buttonRef.current?.focus();
+          break;
+        case 'Tab':
+          setIsOpen(false);
+          setSearchQuery('');
+          setHighlightedIndex(-1);
+          break;
+        default:
+          // Allow typing in search input
+          if (!isSearchInput) {
+            e.stopPropagation();
+          }
+          break;
+      }
+    },
+    [isOpen, displayCountries, highlightedIndex, onChange, locale]
+  );
+
+  // Handle click outside to close
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        isOpen &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target) &&
+        listRef.current &&
+        !listRef.current.contains(event.target)
+      ) {
+        setIsOpen(false);
+        setSearchQuery('');
+        setHighlightedIndex(-1);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  // Reset highlighted index when display countries change
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [displayCountries.length, searchQuery]);
+
+  return (
+    <div className={`checkout-country-select-wrapper ${isOpen ? 'is-open' : ''}`}>
+      <button
+        ref={buttonRef}
+        type="button"
+        id={id}
+        className={`${className} checkout-country-select-button`}
+        aria-label={ariaLabel}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-controls={`${id}-listbox`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onKeyDown={handleKeyDown}
+        disabled={disabled}
+        tabIndex={disabled ? -1 : 0}
+      >
+        <span className="checkout-country-select-code">{selectedCountry.code}</span>
+        <span className="checkout-country-select-name">{getCountryName(selectedCountry)}</span>
+        <span className="checkout-country-select-arrow" aria-hidden="true">▼</span>
+      </button>
+
+      {isOpen && (
+        <div
+          ref={listRef}
+          id={`${id}-listbox`}
+          className="checkout-country-select-dropdown"
+          role="listbox"
+          aria-label={ariaLabel}
+        >
+          <div className="checkout-country-select-search-wrapper">
+            <input
+              type="search"
+              className="checkout-country-select-search"
+              placeholder={locale === 'ar' ? 'ابحث عن دولة…' : 'Search country…'}
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setHighlightedIndex(0);
+              }}
+              onKeyDown={handleKeyDown}
+              autoComplete="off"
+              aria-label={locale === 'ar' ? 'ابحث عن رمز الدولة' : 'Search country code'}
+              autoFocus
+            />
+          </div>
+          <ul className="checkout-country-select-options" role="presentation">
+            {displayCountries.map((country, index) => {
+              const isSelected = country.country === value;
+              const isHighlighted = index === highlightedIndex;
+              const isPinned = country.pinned === true;
+              return (
+                <li
+                  key={country.country}
+                  ref={(el) => {
+                    optionsRef.current[index] = el;
+                  }}
+                  className={`checkout-country-select-option ${isSelected ? 'is-selected' : ''} ${isHighlighted ? 'is-highlighted' : ''} ${isPinned ? 'is-pinned' : ''}`}
+                  role="option"
+                  aria-selected={isSelected}
+                  aria-highlighted={isHighlighted}
+                  onClick={() => {
+                    onChange({ target: { value: country.country } });
+                    setIsOpen(false);
+                    setSearchQuery('');
+                    setHighlightedIndex(-1);
+                    buttonRef.current?.focus();
+                  }}
+                  onMouseEnter={() => setHighlightedIndex(index)}
+                >
+                  <span className="checkout-country-select-option-code">{country.code}</span>
+                  <span className="checkout-country-select-option-name">{getCountryName(country)}</span>
+                  {isPinned && <span className="checkout-country-select-pinned-badge" aria-label={locale === 'ar' ? 'مثبت' : 'Pinned'}>★</span>}
+                </li>
+              );
+            })}
+            {displayCountries.length === 0 && searchQuery.trim() && (
+              <li className="checkout-country-select-no-results" role="option" aria-disabled="true">
+                {locale === 'ar' ? 'لا توجد نتائج' : 'No results found'}
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CheckoutPage() {
   const { items, subtotal, addItem, clearCart } = useCart();
   const { copy, locale } = useI18n();
   const { token, customer } = useAuth();
 
-  // Form state with new phone/WhatsApp fields
+  // Form state - WhatsApp is OPTIONAL, defaults to unchecked (not same as phone)
+  // State uses ISO country codes (PS, IL, US, CA, etc.)
   const [form, setForm] = useState({
     name: '',
-    phoneCountryCode: DEFAULT_COUNTRY_CODE,
+    phoneCountry: DEFAULT_COUNTRY,      // ISO country code
     phone: '',
     email: '',
-    whatsappSameAsPhone: true,
-    whatsappCountryCode: DEFAULT_COUNTRY_CODE,
+    whatsappSameAsPhone: false,         // Default unchecked - WhatsApp is optional
+    whatsappCountry: DEFAULT_COUNTRY,   // ISO country code
     whatsapp: '',
     city: '',
     address: '',
@@ -54,6 +298,9 @@ export default function CheckoutPage() {
   const [zonesReloadKey, setZonesReloadKey] = useState(0);
 
   const setField = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.value }));
+
+  // Handle checkbox changes (boolean values)
+  const setBooleanField = (field) => (event) => setForm((current) => ({ ...current, [field]: event.target.checked }));
 
   // First-party funnel: a checkout starts when the page is entered (or filled)
   // with a non-empty cart. purchase is never sent from here — the platform
@@ -132,6 +379,36 @@ export default function CheckoutPage() {
     && !placing
     && items.length > 0;
 
+  // International paste sync for primary phone
+  const handlePhoneChange = useCallback((event) => {
+    const rawValue = event.target.value;
+    setForm((current) => ({ ...current, phone: rawValue }));
+
+    // If user pasted an international number, auto-sync the country selector
+    // Use isPossible() to match isValidPhone() acceptance semantics
+    if (rawValue.startsWith('+')) {
+      const parsed = parsePhoneNumberFromString(rawValue);
+      if (parsed && parsed.isPossible() && parsed.country) {
+        setForm((current) => ({ ...current, phoneCountry: parsed.country }));
+      }
+    }
+  }, []);
+
+  // International paste sync for WhatsApp
+  const handleWhatsAppChange = useCallback((event) => {
+    const rawValue = event.target.value;
+    setForm((current) => ({ ...current, whatsapp: rawValue }));
+
+    // If user pasted an international number, auto-sync the country selector
+    // Use isPossible() to match isValidPhone() acceptance semantics
+    if (rawValue.startsWith('+')) {
+      const parsed = parsePhoneNumberFromString(rawValue);
+      if (parsed && parsed.isPossible() && parsed.country) {
+        setForm((current) => ({ ...current, whatsappCountry: parsed.country }));
+      }
+    }
+  }, []);
+
   const handlePlaceOrder = async (event) => {
     event.preventDefault();
     setError(null);
@@ -150,17 +427,28 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Validate phone
-    const phoneNorm = normalizePhone(form.phone, form.phoneCountryCode);
-    if (!phoneNorm.phoneNational || phoneNorm.phoneNational.length < 8) {
+    // Validate PRIMARY phone (REQUIRED) - uses ISO country from selector
+    // normalizePhone will auto-detect if user pasted +intl number
+    const phoneNorm = normalizePhone(form.phone, form.phoneCountry);
+    if (!phoneNorm.phoneNational || phoneNorm.phoneNational.length < 4) {
+      setError('Please enter a valid phone number');
+      return;
+    }
+    // Additional validation using libphonenumber-js
+    if (!isValidPhone(form.phone, form.phoneCountry)) {
       setError('Please enter a valid phone number');
       return;
     }
 
-    // Validate WhatsApp if not same as phone
-    if (!form.whatsappSameAsPhone) {
-      const whatsappNorm = normalizeWhatsApp(form.whatsapp, form.whatsappCountryCode);
-      if (!whatsappNorm.whatsappNational || whatsappNorm.whatsappNational.length < 8) {
+    // Validate WhatsApp ONLY if user has entered something AND unchecked "same as phone"
+    // WhatsApp is completely optional - no error if empty
+    if (!form.whatsappSameAsPhone && form.whatsapp.trim()) {
+      const whatsappNorm = normalizeWhatsApp(form.whatsapp, form.whatsappCountry);
+      if (!whatsappNorm.whatsappNational || whatsappNorm.whatsappNational.length < 4) {
+        setError('Please enter a valid WhatsApp number');
+        return;
+      }
+      if (!isValidPhone(form.whatsapp, form.whatsappCountry)) {
         setError('Please enter a valid WhatsApp number');
         return;
       }
@@ -175,21 +463,34 @@ export default function CheckoutPage() {
       // the server associates the order with their account.
       if (isStorefrontApiConfigured()) {
         // Build normalized phone data for payload
-        const phoneData = normalizePhone(form.phone, form.phoneCountryCode);
-        const whatsappData = form.whatsappSameAsPhone
-          ? deriveWhatsAppFromContact(phoneData)
-          : normalizeWhatsApp(form.whatsapp, form.whatsappCountryCode);
+        // Primary phone: normalizePhone auto-detects +intl pasted numbers
+        const phoneData = normalizePhone(form.phone, form.phoneCountry);
+
+        // Build WhatsApp data based on user choice
+        let whatsappData;
+        if (form.whatsappSameAsPhone) {
+          // Checked: use primary phone (already normalized with correct country)
+          whatsappData = deriveWhatsAppFromContact(phoneData);
+        } else if (form.whatsapp.trim()) {
+          // Unchecked with separate number: normalize with auto-sync for pasted intl
+          whatsappData = normalizeWhatsApp(form.whatsapp, form.whatsappCountry);
+        } else {
+          // Unchecked and empty: send empty WhatsApp payload
+          whatsappData = createEmptyWhatsAppPayload();
+        }
 
         const payload = buildOrderPayload({
           customer: {
             ...form,
-            phone: phoneData.phoneLocal, // Legacy field: local format with leading 0
+            phone: phoneData.phoneLocal,
             phoneCountryCode: phoneData.phoneCountryCode,
+            phoneISO: phoneData.phoneISO,
             phoneNational: phoneData.phoneNational,
             phoneCanonical: phoneData.phoneCanonical,
             phoneLocal: phoneData.phoneLocal,
             whatsappSameAsPhone: form.whatsappSameAsPhone,
             whatsappCountryCode: whatsappData.whatsappCountryCode,
+            whatsappISO: whatsappData.whatsappISO,
             whatsappNational: whatsappData.whatsappNational,
             whatsappCanonical: whatsappData.whatsappCanonical,
             whatsappLocal: whatsappData.whatsappLocal,
@@ -232,10 +533,15 @@ export default function CheckoutPage() {
       });
 
       // Build phone data for WhatsApp (prefer whatsappCanonical for WhatsApp action)
-      const phoneData = normalizePhone(submittedForm.phone, submittedForm.phoneCountryCode);
-      const whatsappData = submittedForm.whatsappSameAsPhone
-        ? deriveWhatsAppFromContact(phoneData)
-        : normalizeWhatsApp(submittedForm.whatsapp, submittedForm.whatsappCountryCode);
+      const phoneData = normalizePhone(submittedForm.phone, submittedForm.phoneCountry);
+      let whatsappData;
+      if (submittedForm.whatsappSameAsPhone) {
+        whatsappData = deriveWhatsAppFromContact(phoneData);
+      } else if (submittedForm.whatsapp.trim()) {
+        whatsappData = normalizeWhatsApp(submittedForm.whatsapp, submittedForm.whatsappCountry);
+      } else {
+        whatsappData = createEmptyWhatsAppPayload();
+      }
 
       const message = buildWhatsAppOrderMessage({
         customer: {
@@ -290,27 +596,24 @@ export default function CheckoutPage() {
     <div className="checkout-field checkout-field--phone">
       <label htmlFor="checkout-phone">{copy.checkout.phone}</label>
       <div className="checkout-phone-input">
-        <select
+        <CountrySelect
           id="checkout-phone-country"
-          value={form.phoneCountryCode}
-          onChange={setField('phoneCountryCode')}
-          className="checkout-country-select"
-          aria-label={copy.checkout.phoneCountryCode}
-        >
-          {SUPPORTED_COUNTRY_CODES.map((code) => (
-            <option key={code} value={code}>{code}</option>
-          ))}
-        </select>
+          value={form.phoneCountry}
+          onChange={setField('phoneCountry')}
+          ariaLabel={copy.checkout.phoneCountryCode}
+          locale={locale}
+        />
         <input
           id="checkout-phone"
           required
           value={form.phone}
-          onChange={setField('phone')}
+          onChange={handlePhoneChange}
           placeholder={copy.checkout.phonePlaceholder}
           name="phone"
           type="tel"
           autoComplete="tel"
           className="checkout-phone-national"
+          dir="ltr"
         />
       </div>
     </div>
@@ -318,43 +621,47 @@ export default function CheckoutPage() {
 
   const WhatsAppField = () => (
     <div className="checkout-field checkout-field--whatsapp">
-      <div className="checkout-whatsapp-toggle">
-        <input
-          type="checkbox"
-          id="checkout-whatsapp-same"
-          checked={form.whatsappSameAsPhone}
-          onChange={(e) => setField('whatsappSameAsPhone')(e)}
-        />
-        <label htmlFor="checkout-whatsapp-same">{copy.checkout.whatsappSameAsPhone}</label>
-      </div>
-      {!form.whatsappSameAsPhone && (
-        <div className="checkout-whatsapp-input">
-          <label htmlFor="checkout-whatsapp">{copy.checkout.whatsapp}</label>
-          <div className="checkout-phone-input">
-            <select
-              id="checkout-whatsapp-country"
-              value={form.whatsappCountryCode}
-              onChange={setField('whatsappCountryCode')}
-              className="checkout-country-select"
-              aria-label={copy.checkout.whatsappCountryCode}
-            >
-              {SUPPORTED_COUNTRY_CODES.map((code) => (
-                <option key={code} value={code}>{code}</option>
-              ))}
-            </select>
-            <input
-              id="checkout-whatsapp"
-              value={form.whatsapp}
-              onChange={setField('whatsapp')}
-              placeholder={copy.checkout.whatsappPlaceholder}
-              name="whatsapp"
-              type="tel"
-              autoComplete="tel"
-              className="checkout-phone-national"
-            />
-          </div>
+      <fieldset className="checkout-whatsapp-fieldset">
+        <legend className="checkout-whatsapp-legend">{copy.checkout.whatsapp}</legend>
+        <div className="checkout-whatsapp-toggle">
+          <input
+            type="checkbox"
+            id="checkout-whatsapp-same"
+            checked={form.whatsappSameAsPhone}
+            onChange={setBooleanField('whatsappSameAsPhone')}
+          />
+          <label htmlFor="checkout-whatsapp-same">{copy.checkout.whatsappSameAsPhone}</label>
         </div>
-      )}
+        {!form.whatsappSameAsPhone && (
+          <div className="checkout-whatsapp-input">
+            <div className="checkout-phone-input">
+              <CountrySelect
+                id="checkout-whatsapp-country"
+                value={form.whatsappCountry}
+                onChange={setField('whatsappCountry')}
+                ariaLabel={copy.checkout.whatsappCountryCode}
+                locale={locale}
+              />
+              <input
+                id="checkout-whatsapp"
+                value={form.whatsapp}
+                onChange={handleWhatsAppChange}
+                placeholder={copy.checkout.whatsappPlaceholder}
+                name="whatsapp"
+                type="tel"
+                autoComplete="tel"
+                className="checkout-phone-national"
+                dir="ltr"
+              />
+            </div>
+            <p className="checkout-whatsapp-hint">
+              {locale === 'ar'
+                ? 'اختياري. اتركه فارغاً إذا لم يكن لديك واتساب منفصل.'
+                : 'Optional. Leave empty if you don\'t have a separate WhatsApp number.'}
+            </p>
+          </div>
+        )}
+      </fieldset>
     </div>
   );
 
