@@ -11,6 +11,7 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import AboutPage from './pages/AboutPage';
 import NewsPage from './pages/NewsPage';
+import NewsArticlePage from './pages/NewsArticlePage';
 import ContactPage from './pages/ContactPage';
 import VlogsPage from './pages/VlogsPage';
 import CategoryPage from './pages/CategoryPage';
@@ -83,6 +84,10 @@ function RouteView() {
   else if (routePath === '/login') page = <LoginPage />;
   else if (routePath === '/register') page = <RegisterPage />;
   else if (routePath === '/account') page = <AccountPage />;
+  else if (routePath.startsWith('/news/')) {
+    const slug = decodeURIComponent(routePath.split('/').pop());
+    page = <NewsArticlePage key={slug} slug={slug} />;
+  }
   else page = <section className="store-not-found"><h1>404</h1><p>{copy.detail.missing}</p></section>;
 
   const companyPage = routePath.startsWith('/categories/')

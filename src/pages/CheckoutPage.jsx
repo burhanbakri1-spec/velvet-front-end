@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { getProductName } from '../data/products';
+import { getCustomerFacingSelectionLabels, getProductName } from '../data/products';
 import { velvetProducts } from '../data/velvetCatalog';
 import { formatPrice } from '../data/currency';
 import { buildWhatsAppOrderMessage, buildWhatsAppOrderUrl, openWhatsAppOrder } from '../data/whatsappOrder';
@@ -709,7 +709,8 @@ export default function CheckoutPage() {
               <ul className="checkout-gallery">
                 {items.map((item, index) => {
                   const itemName = getProductName(item, locale);
-                  const variants = Object.keys(item.selections || {}).length > 0 ? Object.values(item.selections).join(' · ') : '';
+                  const product = velvetProducts.find((p) => p.slug === item.slug);
+                  const variants = getCustomerFacingSelectionLabels(product, item.selections || {}, locale).join(' · ');
                   return (
                     <li className={`checkout-gallery__item ${index === 0 ? 'checkout-gallery__item--lead' : ''}`} key={item.key}>
                       <Link className="checkout-gallery__link" to={`/products/${item.slug}`} aria-label={`${copy.products.view} ${itemName}`}><img src={item.image} alt={itemName} /></Link>

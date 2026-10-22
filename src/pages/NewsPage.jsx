@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from '../routing/Router';
 import PageTitleHero from '../components/PageTitleHero';
 import PageVideoHero from '../components/PageVideoHero';
 import { newsCategories, newsItems } from '../data/company';
@@ -22,6 +23,8 @@ export default function NewsPage() {
       return b.date.localeCompare(a.date);
     });
   }, [category, locale, sort]);
+
+  const articleUrl = (item) => `/news/${item.id}`;
 
   return (
     <div className="news-page">
@@ -55,12 +58,12 @@ export default function NewsPage() {
         {visibleItems.map((item, index) => (
           <article className={`news-card ${index % 2 === 1 ? 'news-card--reverse' : ''}`} key={item.id}>
             <div className="news-card__media">
-              <img src={item.image} alt="" />
+              <Link to={articleUrl(item)}><img src={item.image} alt="" /></Link>
             </div>
             <div className="news-card__content">
               <div className="news-card__meta"><span>{formatDate(item.date)}</span><span>{locale === 'ar' ? item.categoryAr : item.category}</span></div>
-              <h2>{locale === 'ar' ? item.titleAr : item.title}</h2>
-              <span className="news-card__link">{copy.news.read} <i>{locale === 'ar' ? '←' : '→'}</i></span>
+              <Link to={articleUrl(item)}><h2>{locale === 'ar' ? item.titleAr : item.title}</h2></Link>
+              <Link className="news-card__link" to={articleUrl(item)}>{copy.news.read} <i>{locale === 'ar' ? '←' : '→'}</i></Link>
             </div>
           </article>
         ))}

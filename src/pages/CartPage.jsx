@@ -1,5 +1,5 @@
 import { useCart } from '../context/CartContext';
-import { getOptionName, getOptionValue, getProductName } from '../data/products';
+import { getCustomerFacingSelectionLabels, getProductName } from '../data/products';
 import { getProductBySlug } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
@@ -45,11 +45,9 @@ export default function CartPage() {
                       <Link to={`/products/${item.slug}`}><h2>{itemName}</h2></Link>
                       {Object.keys(item.selections).length > 0 && (
                         <div className="cart-item__variants">
-                          {Object.entries(item.selections).map(([name, value]) => {
-                            const option = product?.options.find((entry) => entry.name === name);
-                            const optionValue = option?.values.find((entry) => entry.label === value);
-                            return <span key={name}>{option ? getOptionName(option, locale) : name}: {optionValue ? getOptionValue(optionValue, locale) : value}</span>;
-                          })}
+                          {getCustomerFacingSelectionLabels(product, item.selections, locale).map((label, idx) => (
+                            <span key={idx}>{label}</span>
+                          ))}
                         </div>
                       )}
                     </div>

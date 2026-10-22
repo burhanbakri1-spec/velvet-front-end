@@ -10,7 +10,18 @@ const groups = [
     title: 'follow',
     links: socialLinkOrder.map((key) => ({ key, href: socialLinks[key] })),
   },
-  { title: 'policies', links: [{ key: 'terms' }, { key: 'privacy' }, { key: 'cookies' }, { key: 'accessibility' }] },
+  {
+    title: 'policies',
+    // TODO: Approved legal routes/content required before launch.
+    // Links currently unresolved (#top) — replace with real routes when legal provides:
+    // Privacy Policy, Terms of Use, Cookie Policy, Accessibility Statement.
+    links: [
+      { key: 'terms' },
+      { key: 'privacy' },
+      { key: 'cookies' },
+      { key: 'accessibility' },
+    ],
+  },
 ];
 
 export default function Footer() {

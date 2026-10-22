@@ -98,6 +98,20 @@ export default function ProductDetailsPage({ slug }) {
   const titles = useMemo(() => buildProductTitleSequence(routeProduct), [routeProduct]);
   const images = useMemo(() => slides.map((slide) => slide.src), [slides]);
   const hasGallery = images.length > 1;
+
+  // Set dynamic document title based on localized product name
+  const pageProductName = routeProduct ? getProductName(routeProduct, locale) : '';
+  useEffect(() => {
+    if (routeProduct) {
+      document.title = `${pageProductName} | VELVET`;
+    } else {
+      document.title = `${copy.detail.missing} | VELVET`;
+    }
+    return () => {
+      // Reset to generic products title on unmount to avoid stale title
+      document.title = `${copy.meta.products} | VELVET`;
+    };
+  }, [routeProduct, pageProductName, locale, copy]);
   const isTransitioning = Boolean(transition);
   const rtl = locale === 'ar';
   const activeImage = images[imageIndex] || routeProduct?.image || '';
