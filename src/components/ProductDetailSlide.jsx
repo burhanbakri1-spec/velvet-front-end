@@ -35,6 +35,7 @@ export default function ProductDetailSlide({
   productTitle,
   titleMotion = null,
 }) {
+  const badge = getProductBadge(product, locale);
   const productName = productTitle || getProductName(product, locale);
   const titleStyle = (role) => {
     if (!titleMotion) return undefined;
@@ -69,7 +70,7 @@ export default function ProductDetailSlide({
       {showCopy && <div className="category-product-showcase__copy">
         <span className="category-product-showcase__category">
           {eyebrow}
-          {product.badge && <span className={`product-detail-badge${isFeaturedBadgeLabel(getProductBadge(product, locale)) ? ' is-featured' : ''}`}>{getProductBadge(product, locale)}</span>}
+          {badge && <span className={`product-detail-badge${isFeaturedBadgeLabel(badge) ? ' is-featured' : ''}`}>{badge}</span>}
         </span>
         <h1 className={`product-detail-title${titleMotion ? ' is-transitioning' : ''}`}>
           {titleMotion ? (

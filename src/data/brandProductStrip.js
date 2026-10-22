@@ -2,6 +2,7 @@
 // A saved home priority replaces the automatic tier order.
 // Missing priority keeps featured → bestseller → sales → catalog order.
 
+import { getProductBadgeFields } from './productBadge.js';
 import { orderProductsByIds } from './displayPriority.js';
 
 export const BRAND_STRIP_DEFAULT_LIMIT = 8;
@@ -17,14 +18,11 @@ export function isStripVisibleProduct(product) {
 }
 
 export function isFeaturedProduct(product) {
-  return product?.featured === true;
+  return getProductBadgeFields(product).featured;
 }
 
 export function isBestsellerProduct(product) {
-  const tags = product?.shopping || [];
-  if (tags.includes('bestsellers') || tags.includes('bestseller')) return true;
-  const badge = `${product?.badge || ''} ${product?.badgeAr || ''}`;
-  return /best\s*seller|الأكثر مبيع/i.test(badge);
+  return getProductBadgeFields(product).bestseller;
 }
 
 export function productSalesCount(product) {

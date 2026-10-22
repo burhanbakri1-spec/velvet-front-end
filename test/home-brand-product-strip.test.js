@@ -75,11 +75,11 @@ test('featured products win the first positions', () => {
 test('bestseller, salesCount and fallback tiers apply in priority order', () => {
   const products = [
     makeProduct('plain-1', 'play'),
-    makeProduct('seller-high', 'play', { shopping: ['bestsellers'], salesCount: 5 }),
+    makeProduct('seller-high', 'play', { bestseller: true, salesCount: 5 }),
     makeProduct('sales-1', 'play', { salesCount: 40 }),
     makeProduct('sales-2', 'play', { salesCount: 90 }),
     makeProduct('plain-2', 'play'),
-    makeProduct('badge-seller', 'play', { badge: 'Best Seller' }),
+    makeProduct('badge-seller', 'play', { bestseller: true, badge: 'Custom label' }),
     makeProduct('hidden', 'play', { visible: false }),
     makeProduct('archived', 'play', { status: 'archived' }),
   ];
@@ -398,4 +398,10 @@ test('product selection stays isolated from velvetCatalog.js', () => {
   assert.doesNotMatch(catalog, /brandProductStrip|brand-strip/);
   assert.match(helper, /export function selectBrandStripProducts/);
   assert.match(helper, /BRAND_STRIP_DEFAULT_LIMIT/);
+});
+
+
+test('bestseller classification never derives business state from display text or tags', () => {
+  assert.equal(isBestsellerProduct({ badge: 'Best Seller', shopping: ['bestsellers'] }), false);
+  assert.equal(isBestsellerProduct({ bestseller: true, badgeMode: 'none' }), true);
 });

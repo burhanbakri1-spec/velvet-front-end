@@ -1,3 +1,4 @@
+import { getProductBadgeFields } from './productBadge.js';
 // ===========================================================================
 // Dynamic VELVET catalog — built from the platform `/api/storefront/content`
 // entity data when it is available, mirroring the exact shape that
@@ -90,15 +91,15 @@ function buildVariants(rawVariants, apiUrl) {
   }));
 }
 
-// `shopping` tags are not an entity field; derive them deterministically from
-// the badge and price so the existing filter groups keep working.
-function deriveShopping(badge, price, hasOffer) {
+// New/Best Seller filters use official flags, independently of badge presentation.
+// Existing offer/price and other custom merchandising tags remain compatible.
+function deriveShopping(product, badge, price, hasOffer) {
   const tags = [];
   const key = String(badge || '').trim().toLowerCase();
   if (key.includes('offer')) tags.push('offers');
-  else if (key.includes('new')) tags.push('new');
-  else if (key.includes('best')) tags.push('bestsellers');
-  else if (key.includes('exclusive')) tags.push('exclusive');
+  if (getProductBadgeFields(product).newArrival) tags.push('new');
+  if (getProductBadgeFields(product).bestseller) tags.push('bestsellers');
+  if (key.includes('exclusive')) tags.push('exclusive');
   else if (key.includes('limited')) tags.push('limited');
   if (hasOffer && !tags.includes('offers')) tags.push('offers');
   if (price > 0 && price < 50) tags.push('u50');
@@ -286,10 +287,10 @@ function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
     availability,
     availabilityAr,
     ...classification,
-    shopping: deriveShopping(badge, price, hasOffer),
+    shopping: deriveShopping(raw, badge, price, hasOffer),
     usageVideo: absoluteUrl(raw.usageVideo, apiUrl),
     usageVideoPoster: absoluteUrl(raw.usageVideoPoster, apiUrl),
-    featured: raw.featured === true,
+    ...getProductBadgeFields(raw),
     velvetPath: { brandId: brandSlug, categoryId: mainCategory?.slug || '', subcategoryId: subSlug },
   };
 }

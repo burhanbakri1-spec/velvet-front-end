@@ -132,3 +132,23 @@ test('static VELVET catalog remains the fallback when no brand entities are supp
   applyPlatformContent({ ...canonicalPayload({ withBrands: false }), media: [{ sectionKey: 'brand.baby.video', mediaType: 'video', video: '/uploads/baby-legacy.mp4' }] }, API);
   assert.equal(getBrandMedia('baby').video, 'https://api.test/uploads/baby-legacy.mp4');
 });
+
+
+test('official shopping flags survive normalization independently of presentation strings', () => {
+  const payload = canonicalPayload();
+  Object.assign(payload.products[0], { badgeMode: 'none', newArrival: true, bestseller: true, quickShop: true, customBadge: { en: 'Exclusive', ar: 'حصري' } });
+  applyPlatformContent(payload, API);
+  const product = getProductBySlug('baby-sensory-set');
+  assert.equal(product.badgeMode, 'none');
+  assert.equal(product.newArrival, true);
+  assert.equal(product.bestseller, true);
+  assert.equal(product.quickShop, true);
+  assert.deepEqual(product.customBadge, { en: 'Exclusive', ar: 'حصري' });
+  assert.ok(product.shopping.includes('new'));
+  assert.ok(product.shopping.includes('bestsellers'));
+  Object.assign(payload.products[0], { newArrival: false, bestseller: false, badge: { en: 'New Best Seller', ar: 'جديد' } });
+  applyPlatformContent(payload, API);
+  const customOnly = getProductBySlug('baby-sensory-set');
+  assert.ok(!customOnly.shopping.includes('new'));
+  assert.ok(!customOnly.shopping.includes('bestsellers'));
+});

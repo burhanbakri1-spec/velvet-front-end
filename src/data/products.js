@@ -1,3 +1,5 @@
+import { getCustomerFacingProductBadge } from './productBadge.js';
+
 // Generated fallback banners use the production banner canvas (1920×900 / 32:15).
 // Decorative shapes are re-laid out for the wide frame (uniform proportions — not a stretched 960×820).
 // `background: 'transparent'` drops the baked-in gradient plate so product artwork shares the card surface.
@@ -135,7 +137,8 @@ export function getProductName(product, locale) {
   return names.en || names.ar;
 }
 export const getProductDescription = (product, locale, short = false) => locale === 'ar' ? (short ? product.shortDescriptionAr : product.descriptionAr) : (short ? product.shortDescription : product.description);
-export const getProductBadge = (product, locale) => locale === 'ar' ? product.badgeAr : product.badge;
+// Compatibility export: every badge surface delegates to the same resolver.
+export const getProductBadge = getCustomerFacingProductBadge;
 
 export function isFeaturedBadgeLabel(label) {
   const value = String(label || '').trim().toLowerCase();

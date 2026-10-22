@@ -1,3 +1,4 @@
+import { getProductBadgeFields } from './productBadge.js';
 import { readCanonicalName } from './products.js';
 import { aboutSections, newsCategories, newsItems } from './company.js';
 import { homeCategories, productCategories, products } from './products.js';
@@ -250,7 +251,7 @@ export function mapPlatformProduct(product, categories, apiUrl) {
         image: absoluteUrl(value.image, apiUrl),
       })),
     })),
-    featured: product.featured === true,
+    ...getProductBadgeFields(product),
     sortOrder: Number(product.sortOrder || 0),
   };
 }
