@@ -98,8 +98,8 @@ export function stageGeometry(slides, stageHeight) {
  * under the final transition; closing the shell onto the pose removes it
  * without clipping the cover or the deck.
  */
-export function stageReleaseBox(slides, stageHeight, pinHeight, local, mode = 'down') {
-  const geometry = stageGeometry(slides, stageHeight);
+export function stageReleaseBox(slides, stageHeight, pinHeight, local, mode = 'down', cachedGeometry, cachedMotion) {
+  const geometry = cachedGeometry || stageGeometry(slides, stageHeight);
   const span = geometry.span;
   const last = Array.isArray(slides) && slides.length ? slides[slides.length - 1] : null;
   const measured = Math.round(Number(last?.height));
@@ -113,11 +113,12 @@ export function stageReleaseBox(slides, stageHeight, pinHeight, local, mode = 'd
   if (atEnd) {
     return { span, lastLength, atEnd: true, boxHeight: lastLength, shellHeight: span + lastLength };
   }
-  const motion = heroStageMotion({
+  const motion = cachedMotion || heroStageMotion({
     slides,
     local: Math.min(safeLocal, span),
     stageHeight,
     mode: mode === 'up' ? 'up' : 'down',
+    geometry,
   });
   let bottom = lastLength;
   const upward = mode === 'up';
@@ -148,9 +149,9 @@ export function stageReleaseBox(slides, stageHeight, pinHeight, local, mode = 'd
 }
 
 /** Slide index plus progress through that slide. Hero indexes stay the equal-slot positions the deck uses. */
-export function stageSlidePos(slides, local, stageHeight) {
+export function stageSlidePos(slides, local, stageHeight, cachedGeometry) {
   if (!Array.isArray(slides) || slides.length === 0 || stageHeight <= 0) return 0;
-  const { lengths, offsets, span } = stageGeometry(slides, stageHeight);
+  const { lengths, offsets, span } = cachedGeometry || stageGeometry(slides, stageHeight);
   const travel = Math.min(Math.max(0, local), span);
   const maxIndex = slides.length - 1;
   let index = maxIndex;
@@ -170,23 +171,24 @@ export function heroStageMotion({
   local = 0,
   stageHeight = 0,
   mode = 'down',
+  geometry,
 }) {
   if (!Array.isArray(slides) || slides.length === 0 || stageHeight <= 0) return [];
   if (mode === 'up') {
-    const pos = stageSlidePos(slides, local, stageHeight);
+    const pos = stageSlidePos(slides, local, stageHeight, geometry);
     const travel = Math.min(Math.max(0, (slides.length - 1) * stageHeight), pos * stageHeight);
     return upDeck(slides, travel, stageHeight);
   }
-  return downSequence(slides, local, stageHeight);
+  return downSequence(slides, local, stageHeight, geometry);
 }
 
 function progressOf(unit) {
   return unit <= HERO_HOLD ? 0 : (unit - HERO_HOLD) / (1 - HERO_HOLD);
 }
 
-function downSequence(slides, local, stageHeight) {
+function downSequence(slides, local, stageHeight, cachedGeometry) {
   const pose = slides.map(() => blank(stageHeight));
-  const { lengths, offsets, span } = stageGeometry(slides, stageHeight);
+  const { lengths, offsets, span } = cachedGeometry || stageGeometry(slides, stageHeight);
   const travel = Math.min(Math.max(0, local), span);
   const maxIndex = slides.length - 1;
   let index = maxIndex;

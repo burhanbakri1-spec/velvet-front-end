@@ -20,6 +20,12 @@ export function useHeroStageMotion(rootId, mobile = false) {
     let frame = 0;
     let needsMeasure = true;
     let geometryCache = null;
+    let measureVersion = 0;
+    let appliedVersion = -1;
+    let appliedY = null;
+    let cleared = false;
+    let observer = null;
+    const observedStrips = new Set();
 
     const direction = { y: window.scrollY, mode: 'down', pos: 0 };
     let shellTop = 0;
@@ -29,12 +35,14 @@ export function useHeroStageMotion(rootId, mobile = false) {
     let slides = [];
 
     // Cached DOM references to avoid repeated queries
-    let shellEl = null;
-    let stageEl = null;
+    const shellEl = root.querySelector('.hero-stage-shell');
+    const stageEl = root.querySelector('.hero-stage');
 
     const motionEnabled = () => (mobile || desktop.matches) && !reduced.matches && slides.length > 0;
 
     const clearMotion = () => {
+      if (cleared) return;
+      cleared = true;
       root.removeAttribute('data-hero-motion');
       root.style.setProperty('--brand-rail-height', '0px');
       document.body.classList.remove('hero-stage-pin');
@@ -59,13 +67,22 @@ export function useHeroStageMotion(rootId, mobile = false) {
     };
 
     const cacheDOMElements = () => {
-      shellEl = root.querySelector('.hero-stage-shell');
-      stageEl = root.querySelector('.hero-stage');
       // Pre-set will-change on animated elements for GPU compositing
       slides.forEach((slide) => {
         if (slide.el) {
-          slide.el.style.willChange = 'transform, clip-path';
+          if (slide.el.style.willChange !== 'transform, clip-path') slide.el.style.willChange = 'transform, clip-path';
         }
+      });
+    };
+
+    const observeGeometry = () => {
+      if (!observer) return;
+      const currentStrips = new Set(slides.filter((slide) => slide.kind === 'strip').map((slide) => slide.el));
+      observedStrips.forEach((el) => {
+        if (!currentStrips.has(el)) { observer.unobserve(el); observedStrips.delete(el); }
+      });
+      currentStrips.forEach((el) => {
+        if (!observedStrips.has(el)) { observer.observe(el); observedStrips.add(el); }
       });
     };
 
@@ -101,14 +118,16 @@ export function useHeroStageMotion(rootId, mobile = false) {
         }
       });
 
-      // Cache DOM elements for apply()
-      cacheDOMElements();
-
       // Compute shellTop (layout read)
       if (shellEl) shellTop = shellEl.getBoundingClientRect().top + window.scrollY;
 
       // Recompute geometry on every measure call since stageHeight changes on resize/orientation
       geometryCache = stageGeometry(slides, stageHeight);
+      measureVersion += 1;
+      cleared = false;
+
+      // All geometry reads above finish before compositing/layout writes.
+      cacheDOMElements();
 
       const enabled = motionEnabled();
       if (shellEl && stageEl && enabled) {
@@ -117,8 +136,8 @@ export function useHeroStageMotion(rootId, mobile = false) {
         if (shellEl.style.getPropertyValue('--hero-stage-span') !== nextSpan) {
           shellEl.style.setProperty('--hero-stage-span', nextSpan);
         }
-        stageEl.style.top = `${headerOffset}px`;
-        stageEl.style.height = `${pinHeight}px`;
+        if (stageEl.style.top !== `${headerOffset}px`) stageEl.style.top = `${headerOffset}px`;
+        if (stageEl.style.height !== `${pinHeight}px`) stageEl.style.height = `${pinHeight}px`;
       } else if (shellEl || stageEl) {
         shellEl?.style.removeProperty('--hero-stage-span');
         if (stageEl) {
@@ -126,9 +145,14 @@ export function useHeroStageMotion(rootId, mobile = false) {
           stageEl.style.height = '';
         }
       }
+      observeGeometry();
     };
 
     const apply = () => {
+      const y = window.scrollY;
+      if (appliedY === y && appliedVersion === measureVersion) return;
+      appliedY = y;
+      appliedVersion = measureVersion;
       const enabled = motionEnabled();
       if (!enabled) {
         direction.mode = 'down';
@@ -137,22 +161,28 @@ export function useHeroStageMotion(rootId, mobile = false) {
         return;
       }
 
-      root.setAttribute('data-hero-motion', '');
-
-      const y = window.scrollY;
+      cleared = false;
+      if (!root.hasAttribute('data-hero-motion')) root.setAttribute('data-hero-motion', '');
       const delta = y - direction.y;
       const nextMode = stepHeroDirection(direction.mode, delta);
 
       // Use cached geometry
       const span = geometryCache?.span ?? 0;
       const local = Math.min(span, Math.max(0, y - (shellTop - headerOffset)));
-      const pos = stageSlidePos(slides, local, stageHeight);
+      const pos = stageSlidePos(slides, local, stageHeight, geometryCache);
 
       direction.mode = latchStageMode(direction.mode, delta, direction.pos, pos, slides);
       if (direction.mode !== 'up') direction.mode = 'down';
       if (nextMode === direction.mode) direction.mode = nextMode;
 
-      const release = stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset), direction.mode);
+      const motion = heroStageMotion({
+        slides,
+        local,
+        stageHeight,
+        mode: direction.mode,
+        geometry: geometryCache,
+      });
+      const release = stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset), direction.mode, geometryCache, motion);
 
       if (shellEl && stageEl) {
         const nextSpan = `${release.shellHeight}px`;
@@ -165,13 +195,6 @@ export function useHeroStageMotion(rootId, mobile = false) {
 
       direction.pos = pos;
       direction.y = y;
-
-      const motion = heroStageMotion({
-        slides,
-        local,
-        stageHeight,
-        mode: direction.mode,
-      });
 
       if (release.atEnd) {
         slides.forEach((slide, index) => {
@@ -196,14 +219,20 @@ export function useHeroStageMotion(rootId, mobile = false) {
         const clip = (pose.clipTop || pose.clipBottom) ? `inset(${pose.clipTop}px 0 ${pose.clipBottom}px 0)` : '';
         const el = slide.el;
         if (el) {
-          el.style.transform = `translate3d(0, ${pose.y}px, 0)`;
-          el.style.clipPath = clip;
-          el.style.zIndex = String(pose.z || 1);
+          const transform = `translate3d(0, ${pose.y}px, 0)`;
+          const zIndex = String(pose.z || 1);
+          // CSSOM serializes zero units and inset shorthand differently from
+          // our input strings. Cache the last writes instead of comparing those
+          // serialized strings, so parked/held slides really skip DOM work.
+          const previous = slide.appliedStyle || (slide.appliedStyle = {});
+          if (previous.transform !== transform) { el.style.transform = transform; previous.transform = transform; }
+          if (previous.clip !== clip) { el.style.clipPath = clip; previous.clip = clip; }
+          if (previous.zIndex !== zIndex) { el.style.zIndex = zIndex; previous.zIndex = zIndex; }
         }
         if (slide.kind === 'strip') {
           el?.classList.toggle('is-concealed', Boolean(pose.hidden));
         }
-        if (slide.kind === 'hero' && slide.heroIndex === activeHero) {
+        if (slide.kind === 'hero' && slide.heroIndex === activeHero && !slide.section?.hasAttribute('data-active')) {
           slide.section?.setAttribute('data-active', '');
         }
       });
@@ -229,10 +258,23 @@ export function useHeroStageMotion(rootId, mobile = false) {
 
     // Initial measure and apply
     measure();
+    needsMeasure = false;
     apply();
 
-    const observer = new ResizeObserver(onLayout);
+    observer = new ResizeObserver((entries) => {
+      // The release animation changes the parent's height itself. That is not
+      // new input geometry: only a moved shell or a resized strip needs a measure.
+      const stripChanged = entries.some((entry) => {
+        const slide = slides.find((item) => item.kind === 'strip' && item.el === entry.target);
+        if (!slide) return false;
+        const height = entry.borderBoxSize?.[0]?.blockSize ?? entry.target.offsetHeight;
+        return Math.round(height) !== Math.round(slide.height || 0);
+      });
+      const nextTop = shellEl ? shellEl.getBoundingClientRect().top + window.scrollY : shellTop;
+      if (stripChanged || nextTop !== shellTop) onLayout();
+    });
     if (root.parentElement) observer.observe(root.parentElement);
+    observeGeometry();
 
     const stage = root.querySelector('.hero-stage');
     const stageObserver = new MutationObserver(onLayout);
