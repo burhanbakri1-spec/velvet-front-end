@@ -222,10 +222,15 @@ test('grid density localStorage key and default are defined', () => {
   assert.match(hookSource, /localStorage/);
 });
 
-test('mobile density keeps 2 and 3 column prefs (no clamp to 2)', () => {
-  assert.match(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-2 \{[\s\S]*?repeat\(2,/);
-  assert.match(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-3 \{[\s\S]*?repeat\(3,/);
-  assert.doesNotMatch(styles, /\.shop-grid-density \{ display: none; \}/);
+test('mobile density forces 2 columns regardless of desktop preference', () => {
+  // Mobile (<=760px) forces 2 columns via !important rule in @media (max-width: 760px)
+  assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.shop-products \{[\s\S]*?grid-template-columns:\s*repeat\(2,/);
+  assert.match(styles, /!important/);
+  // The 560px breakpoint no longer defines pref-2/pref-3 grid columns
+  assert.doesNotMatch(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-2 \{[\s\S]*?repeat\(2,/);
+  assert.doesNotMatch(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-3 \{[\s\S]*?repeat\(3,/);
+  // Grid density control is hidden on mobile
+  assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.shop-grid-density \{[\s\S]*?display:\s*none/);
 });
 
 test('shop filter layout keeps FILTER alone in bordered bar', () => {

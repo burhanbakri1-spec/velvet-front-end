@@ -47,12 +47,13 @@ test('desktop keeps the grid-density controls visible and functional', () => {
   assert.match(productsPage, /shop-products--pref-\$\{gridCols\}/);
 });
 
-test('mobile product grid and Shop search/filter/sort/category controls are unchanged', () => {
-  // Mobile keeps the same 2/3 column preferences as desktop (no layout change).
-  assert.match(styles, /\.shop-products--pref-2 \{ grid-template-columns: repeat\(2,/);
-  assert.match(styles, /\.shop-products--pref-3 \{ grid-template-columns: repeat\(3,/);
-  assert.match(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-2 \{[\s\S]*?repeat\(2,/);
-  assert.match(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-3 \{[\s\S]*?repeat\(3,/);
+test('mobile product grid forces 2 columns; search/filter/sort/category controls unchanged', () => {
+  // Mobile (<=760px) forces 2 columns regardless of desktop preference
+  assert.match(styles, /@media \(max-width: 760px\)[\s\S]*\.shop-products \{[\s\S]*?grid-template-columns:\s*repeat\(2,/);
+  assert.match(styles, /!important/);
+  // The 560px breakpoint no longer defines pref-2/pref-3 grid columns
+  assert.doesNotMatch(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-2 \{[\s\S]*?repeat\(2,/);
+  assert.doesNotMatch(styles, /@media \(max-width: 560px\)[\s\S]*\.shop-products--pref-3 \{[\s\S]*?repeat\(3,/);
 
   // Search, Filter, and Sort stay. Category chips no longer render in the filter bar.
   assert.match(styles, /@media \(max-width: 760px\) \{\s*\.shop-filter-bar__row\.shop-filter-bar__row--filter \{/);

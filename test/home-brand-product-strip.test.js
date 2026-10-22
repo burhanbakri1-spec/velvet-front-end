@@ -358,8 +358,9 @@ test('previous-brand banner stack stays compact and hidden until scroll-up', () 
   assert.match(motion, /heroStageMotion/);
   assert.match(motion, /stepHeroDirection/);
   assert.match(motion, /mode !== 'up'/);
-  assert.match(motion, /hero\.style\.transform = ''/);
-  assert.match(motion, /hero\.style\.clipPath = ''/);
+  // Optimized: uses cached slide.el references instead of querying hero elements
+  assert.match(motion, /el\.style\.transform = ''/);
+  assert.match(motion, /el\.style\.clipPath = ''/);
   assert.match(motion, /classList\.remove\('is-concealed'\)/);
   assert.match(motion, /translate3d/);
   assert.equal((motion.match(/addEventListener\('scroll'/g) || []).length, 1);
@@ -380,7 +381,8 @@ test('mobile motion stage uses the pre-stage banner height', () => {
   assert.match(motion, /Math\.max\(160, Math\.round\(\(viewportHeight - headerOffset\) \/ divisor\)\)/);
   assert.match(motion, /desktop\.matches\) \{\s*stageHeight = Math\.max\(1, Math\.round\(viewportHeight - headerOffset\)\)/);
   assert.match(motion, /pinHeight = Math\.max\(stageHeight, Math\.round\(viewportHeight - headerOffset\)\)/);
-  assert.match(motion, /stageGeometry\(slides, stageHeight\)\.span \+ pinHeight/);
+  // Optimized: uses cached geometryCache.span instead of calling stageGeometry() every frame
+  assert.match(motion, /geometryCache\.span/);
   assert.match(motion, /stageReleaseBox/);
   assert.match(motion, /release\.atEnd/);
   assert.match(styles, /html:has\(#showcases\[data-hero-motion\]\) \{ overflow-anchor: none; \}/);
