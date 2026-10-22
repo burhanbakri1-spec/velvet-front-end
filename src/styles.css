@@ -4070,6 +4070,10 @@ html[dir="rtl"] .shop-filter-column__head h3 { letter-spacing: 0; text-transform
   .shop-filter-tools {
     justify-content: flex-end;
   }
+  /* Mobile shop grid: force 2 columns regardless of desktop preference. */
+  .shop-products {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
 }
 .shop-products .product-card { border-radius: 14px; box-shadow: none; border: 1px solid #e7e6e2; transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease; }
 .shop-products .product-card:hover { transform: translateY(-3px); box-shadow: none; }
@@ -4142,9 +4146,6 @@ html[dir="rtl"] .mega-cascade__col a:hover, html[dir="rtl"] .mega-cascade__col b
   .shop-hero { padding: 1.1rem 1.2rem; }
   .shop-toolbar__right { width: 100%; justify-content: space-between; }
   .shop-search { width: auto; flex: 1; }
-  /* Density prefs stay truthful on phone: 2â†’2 cols, 3â†’3 cols (no mobile clamp). */
-  .shop-products--pref-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .shop-products--pref-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .shop-filter-panel__groups--hierarchy,
   .shop-filter-panel__groups--attrs { grid-template-columns: 1fr; }
   .shop-filter-panel__groups--attrs { margin-top: 18px; padding-top: 16px; }

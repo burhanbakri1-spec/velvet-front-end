@@ -13,10 +13,14 @@ export function useHeroStageMotion(rootId, mobile = false) {
   useLayoutEffect(() => {
     const root = document.getElementById(rootId);
     if (!root) return undefined;
+
     const desktop = window.matchMedia('(min-width: 1101px)');
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
     let frame = 0;
     let needsMeasure = true;
+    let geometryCache = null;
+
     const direction = { y: window.scrollY, mode: 'down', pos: 0 };
     let shellTop = 0;
     let stageHeight = 812;
@@ -24,39 +28,52 @@ export function useHeroStageMotion(rootId, mobile = false) {
     let headerOffset = 88;
     let slides = [];
 
+    // Cached DOM references to avoid repeated queries
+    let shellEl = null;
+    let stageEl = null;
+
     const motionEnabled = () => (mobile || desktop.matches) && !reduced.matches && slides.length > 0;
 
     const clearMotion = () => {
       root.removeAttribute('data-hero-motion');
       root.style.setProperty('--brand-rail-height', '0px');
       document.body.classList.remove('hero-stage-pin');
-      root.querySelector('.hero-stage-shell')?.style.removeProperty('--hero-stage-span');
-      const stage = root.querySelector('.hero-stage');
-      if (stage) {
-        stage.style.top = '';
-        stage.style.height = '';
+      shellEl?.style.removeProperty('--hero-stage-span');
+      if (stageEl) {
+        stageEl.style.top = '';
+        stageEl.style.height = '';
       }
-      root.querySelectorAll('.home-brand').forEach((section) => {
-        const hero = section.querySelector(':scope > .brand-showcase');
-        const strip = section.querySelector(':scope > .brand-strip');
-        if (hero) {
-          hero.style.transform = '';
-          hero.style.clipPath = '';
-          hero.style.zIndex = '';
+      slides.forEach((slide) => {
+        const el = slide.el;
+        if (el) {
+          el.style.transform = '';
+          el.style.clipPath = '';
+          el.style.zIndex = '';
+          el.style.willChange = '';
         }
-        if (strip) {
-          strip.style.transform = '';
-          strip.classList.remove('is-concealed');
+        if (slide.kind === 'strip') {
+          el?.classList.remove('is-concealed');
         }
-        section.removeAttribute('data-active');
+        slide.section?.removeAttribute('data-active');
+      });
+    };
+
+    const cacheDOMElements = () => {
+      shellEl = root.querySelector('.hero-stage-shell');
+      stageEl = root.querySelector('.hero-stage');
+      // Pre-set will-change on animated elements for GPU compositing
+      slides.forEach((slide) => {
+        if (slide.el) {
+          slide.el.style.willChange = 'transform, clip-path';
+        }
       });
     };
 
     const measure = () => {
-      const shell = root.querySelector('.hero-stage-shell');
-      const stage = root.querySelector('.hero-stage');
+      // Read header offset only when needed (resize/media change)
       headerOffset = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
       const viewportHeight = window.innerHeight;
+
       if (desktop.matches) {
         stageHeight = Math.max(1, Math.round(viewportHeight - headerOffset));
         pinHeight = stageHeight;
@@ -65,8 +82,10 @@ export function useHeroStageMotion(rootId, mobile = false) {
         stageHeight = Math.max(160, Math.round((viewportHeight - headerOffset) / divisor));
         pinHeight = Math.max(stageHeight, Math.round(viewportHeight - headerOffset));
       }
+
+      // Rebuild slides array and cache DOM references
       slides = [];
-      stage?.querySelectorAll(':scope > .home-brand').forEach((section, heroIndex) => {
+      stageEl?.querySelectorAll(':scope > .home-brand').forEach((section, heroIndex) => {
         const hero = section.querySelector(':scope > .brand-showcase');
         const strip = section.querySelector(':scope > .brand-strip');
         if (hero) slides.push({ kind: 'hero', heroIndex, el: hero, section });
@@ -81,19 +100,27 @@ export function useHeroStageMotion(rootId, mobile = false) {
           });
         }
       });
-      if (shell) shellTop = shell.getBoundingClientRect().top + window.scrollY;
-      const stageEl = root.querySelector('.hero-stage');
+
+      // Cache DOM elements for apply()
+      cacheDOMElements();
+
+      // Compute shellTop (layout read)
+      if (shellEl) shellTop = shellEl.getBoundingClientRect().top + window.scrollY;
+
+      // Recompute geometry on every measure call since stageHeight changes on resize/orientation
+      geometryCache = stageGeometry(slides, stageHeight);
+
       const enabled = motionEnabled();
-      if (shell && stageEl && enabled) {
-        const span = stageGeometry(slides, stageHeight).span + pinHeight;
+      if (shellEl && stageEl && enabled) {
+        const span = geometryCache.span + pinHeight;
         const nextSpan = `${span}px`;
-        if (shell.style.getPropertyValue('--hero-stage-span') !== nextSpan) {
-          shell.style.setProperty('--hero-stage-span', nextSpan);
+        if (shellEl.style.getPropertyValue('--hero-stage-span') !== nextSpan) {
+          shellEl.style.setProperty('--hero-stage-span', nextSpan);
         }
         stageEl.style.top = `${headerOffset}px`;
         stageEl.style.height = `${pinHeight}px`;
-      } else if (shell || stageEl) {
-        shell?.style.removeProperty('--hero-stage-span');
+      } else if (shellEl || stageEl) {
+        shellEl?.style.removeProperty('--hero-stage-span');
         if (stageEl) {
           stageEl.style.top = '';
           stageEl.style.height = '';
@@ -109,35 +136,43 @@ export function useHeroStageMotion(rootId, mobile = false) {
         clearMotion();
         return;
       }
+
       root.setAttribute('data-hero-motion', '');
+
       const y = window.scrollY;
       const delta = y - direction.y;
       const nextMode = stepHeroDirection(direction.mode, delta);
-      const span = stageGeometry(slides, stageHeight).span;
+
+      // Use cached geometry
+      const span = geometryCache?.span ?? 0;
       const local = Math.min(span, Math.max(0, y - (shellTop - headerOffset)));
       const pos = stageSlidePos(slides, local, stageHeight);
+
       direction.mode = latchStageMode(direction.mode, delta, direction.pos, pos, slides);
       if (direction.mode !== 'up') direction.mode = 'down';
       if (nextMode === direction.mode) direction.mode = nextMode;
+
       const release = stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset), direction.mode);
-      const shell = root.querySelector('.hero-stage-shell');
-      const stageEl = root.querySelector('.hero-stage');
-      if (shell && stageEl) {
+
+      if (shellEl && stageEl) {
         const nextSpan = `${release.shellHeight}px`;
-        if (shell.style.getPropertyValue('--hero-stage-span') !== nextSpan) {
-          shell.style.setProperty('--hero-stage-span', nextSpan);
+        if (shellEl.style.getPropertyValue('--hero-stage-span') !== nextSpan) {
+          shellEl.style.setProperty('--hero-stage-span', nextSpan);
         }
         const nextBox = `${release.boxHeight}px`;
         if (stageEl.style.height !== nextBox) stageEl.style.height = nextBox;
       }
+
       direction.pos = pos;
       direction.y = y;
+
       const motion = heroStageMotion({
         slides,
         local,
         stageHeight,
         mode: direction.mode,
       });
+
       if (release.atEnd) {
         slides.forEach((slide, index) => {
           if (index === slides.length - 1) return;
@@ -145,21 +180,32 @@ export function useHeroStageMotion(rootId, mobile = false) {
           motion[index] = { y: -away, clipTop: 0, clipBottom: 0, hidden: slide.kind === 'strip', z: 1 };
         });
       }
+
       const pin = y >= shellTop - headerOffset && y <= shellTop - headerOffset + span;
       if (document.body.classList.contains('hero-stage-pin') !== pin) {
         document.body.classList.toggle('hero-stage-pin', pin);
       }
+
       const activeHero = slides.reduce((best, slide, index) => (
         slide.kind === 'hero' && index <= Math.round(pos) ? slide.heroIndex : best
       ), 0);
+
+      // Apply styles using cached element references from slides array
       slides.forEach((slide, index) => {
         const pose = motion[index] || { y: stageHeight, clipTop: 0, clipBottom: 0, hidden: false, z: 1 };
         const clip = (pose.clipTop || pose.clipBottom) ? `inset(${pose.clipTop}px 0 ${pose.clipBottom}px 0)` : '';
-        slide.el.style.transform = `translate3d(0, ${pose.y}px, 0)`;
-        slide.el.style.clipPath = clip;
-        slide.el.style.zIndex = String(pose.z || 1);
-        if (slide.kind === 'strip') slide.el.classList.toggle('is-concealed', Boolean(pose.hidden));
-        if (slide.kind === 'hero' && slide.heroIndex === activeHero) slide.section.setAttribute('data-active', '');
+        const el = slide.el;
+        if (el) {
+          el.style.transform = `translate3d(0, ${pose.y}px, 0)`;
+          el.style.clipPath = clip;
+          el.style.zIndex = String(pose.z || 1);
+        }
+        if (slide.kind === 'strip') {
+          el?.classList.toggle('is-concealed', Boolean(pose.hidden));
+        }
+        if (slide.kind === 'hero' && slide.heroIndex === activeHero) {
+          slide.section?.setAttribute('data-active', '');
+        }
       });
     };
 
@@ -178,19 +224,26 @@ export function useHeroStageMotion(rootId, mobile = false) {
 
     const onScroll = () => schedule(false);
     const onLayout = () => schedule(true);
+
     syncHeroes.current = apply;
+
+    // Initial measure and apply
     measure();
     apply();
+
     const observer = new ResizeObserver(onLayout);
     if (root.parentElement) observer.observe(root.parentElement);
+
     const stage = root.querySelector('.hero-stage');
     const stageObserver = new MutationObserver(onLayout);
     if (stage) stageObserver.observe(stage, { childList: true, subtree: true });
+
     window.addEventListener('scroll', onScroll, { passive: true });
     stage?.addEventListener('load', onLayout, true);
     window.addEventListener('resize', onLayout);
     desktop.addEventListener('change', onLayout);
     reduced.addEventListener('change', onLayout);
+
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener('scroll', onScroll);
@@ -202,6 +255,10 @@ export function useHeroStageMotion(rootId, mobile = false) {
       document.body.classList.remove('hero-stage-pin');
       desktop.removeEventListener('change', onLayout);
       reduced.removeEventListener('change', onLayout);
+      // Clean up will-change
+      slides.forEach((slide) => {
+        if (slide.el) slide.el.style.willChange = '';
+      });
     };
   }, [rootId, mobile]);
 
