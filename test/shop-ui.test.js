@@ -13,6 +13,7 @@ import {
   velvetBrands,
 } from '../src/data/velvetCatalog.js';
 import { translations } from '../src/i18n/translations.js';
+import { getStorefrontCategories } from '../src/data/storefrontVisibility.js';
 import {
   EMPTY_SHOP_STATE,
   buildShopQuery,
@@ -121,7 +122,7 @@ test('selecting Brand updates URL and scopes Main Category options', () => {
   assert.ok(options.brands.some((brand) => brand.id === 'collect'));
   assert.ok(options.categories.some((category) => category.id === 'blind-boxes'));
   assert.ok(options.categories.some((category) => category.id === 'collectible-figures'));
-  assert.equal(options.categories.length, getBrand('collect').categories.length);
+  assert.equal(options.categories.length, getStorefrontCategories(getBrand('collect')).length);
   assert.equal(options.subcategories.length, 0);
 });
 

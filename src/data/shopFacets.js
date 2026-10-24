@@ -7,6 +7,7 @@ import {
   getFilterGroup,
   velvetBrands,
 } from './velvetCatalog.js';
+import { getStorefrontCategories } from './storefrontVisibility.js';
 
 const HIERARCHY_KEYS = ['brand', 'category', 'subcategory'];
 const MULTI_ATTRIBUTE_KEYS = [...LIVE_CLASSIFICATION_KEYS, 'shopping'];
@@ -104,10 +105,11 @@ export function getFacetHierarchyOptions(state = {}) {
     .map((brand) => ({ id: brand.slug, name: brand.name }));
 
   // Main Categories / Subcategories come from the brand tree (CPanel when
-  // platform content is applied). They must remain visible even with zero products.
+  // platform content is applied). They must remain visible even with zero products,
+  // except for the shared temporary storefront visibility overrides.
   const rawCategories = state.brand
-    ? (getBrand(state.brand)?.categories || [])
-    : velvetBrands.flatMap((brand) => brand.categories || []);
+    ? getStorefrontCategories(getBrand(state.brand))
+    : velvetBrands.flatMap((brand) => getStorefrontCategories(brand));
   const seen = new Set();
   const categories = rawCategories
     .filter((category) => {

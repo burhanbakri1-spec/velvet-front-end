@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getBrand, getCategory, getManufacturersForPath, getSubcategory, velvetBrands } from '../data/velvetCatalog';
+import { getStorefrontCategories } from '../data/storefrontVisibility';
 import { useI18n } from '../i18n/I18nContext';
 
 function CascadeSelect({ hint, placeholder, value, disabled, options, allLabel, onSelect, locale }) {
@@ -80,7 +81,7 @@ export default function CategoryCascade({ state, onSelect, hideBrand = false }) 
   const sub = category && state.subcategory ? getSubcategory(brand.slug, category.slug, state.subcategory) : null;
 
   const categoryOptions = useMemo(() => (
-    brand ? brand.categories.map((item) => ({ id: item.slug, label: item.name[locale], count: item.subs.length })) : []
+    brand ? getStorefrontCategories(brand).map((item) => ({ id: item.slug, label: item.name[locale], count: item.subs.length })) : []
   ), [brand, locale]);
 
   const subOptions = useMemo(() => (

@@ -17,6 +17,7 @@ import {
   getFacetOptions,
 } from '../src/data/shopFacets.js';
 import { translations } from '../src/i18n/translations.js';
+import { getStorefrontCategories } from '../src/data/storefrontVisibility.js';
 import { SHOP_GRID_DENSITY_KEY, SHOP_GRID_DEFAULT_COLS } from '../src/hooks/useShopGridDensity.js';
 import { EMPTY_SHOP_STATE } from '../src/hooks/shopQuery.js';
 
@@ -47,7 +48,9 @@ test('zero-product brands are hidden from facet hierarchy', () => {
 test('brand Main Categories stay visible in shop hierarchy even without products', () => {
   const state = { ...baseState, brand: 'collect' };
   const options = getFacetHierarchyOptions(state);
-  const configured = getBrand('collect').categories;
+  // Discovery uses the shared storefront visibility overrides, so compare
+  // against the storefront-visible list rather than the raw brand tree.
+  const configured = getStorefrontCategories(getBrand('collect'));
   assert.equal(options.categories.length, configured.length);
   assert.ok(options.categories.length > 0);
   assert.ok(configured.every((category) =>
@@ -58,7 +61,7 @@ test('brand Main Categories stay visible in shop hierarchy even without products
 test('empty main categories remain listed for navigation', () => {
   const state = { ...baseState, brand: 'collect' };
   const options = getFacetHierarchyOptions(state);
-  const emptyConfigured = getBrand('collect').categories.filter((category) =>
+  const emptyConfigured = getStorefrontCategories(getBrand('collect')).filter((category) =>
     filterProducts({ ...state, category: category.slug }).length === 0,
   );
   assert.ok(emptyConfigured.length > 0, 'collect should include empty mains in the static catalog');

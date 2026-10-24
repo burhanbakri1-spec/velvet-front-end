@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { artwork } from '../data/products';
 import { getBrand, getBrandAbout, getBrandPageHeaderMedia } from '../data/velvetCatalog';
+import { getStorefrontCategories } from '../data/storefrontVisibility';
 import BrandShowcase from '../components/BrandShowcase';
 import { useHeroStageMotion } from '../components/useHeroStageMotion';
 import { PlayButton } from '../components/Hero';
@@ -43,6 +44,9 @@ export default function BrandPage({ slug }) {
   }
 
   const brandAbout = getBrandAbout(slug, locale);
+  // Shared temporary visibility override — hidden banners are dropped before the
+  // sequence renders, so slide order/index stay contiguous with no blank slots.
+  const categoryBanners = getStorefrontCategories(brand);
 
   return (
     <div className="category-page">
@@ -89,7 +93,7 @@ export default function BrandPage({ slug }) {
         <div id="showcases">
           <div className="hero-stage-shell">
             <div className="hero-stage">
-              {brand.categories.map((category, index) => (
+              {categoryBanners.map((category, index) => (
                 <section className="home-brand" key={category.slug}>
                   <BrandShowcase
                     variant="full-banner"
