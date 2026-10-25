@@ -1,7 +1,7 @@
 /**
  * Desktop hero motion inside a pinned stage.
  * Scroll distance is the only input. Both directions are pure functions of
- * that distance: hold-then-slide downward, and one continuous deck upward.
+ * that distance: continuous cover downward, and one continuous deck upward.
  * No layout reads, no easing, no pose swap at a hero index.
  */
 export function stepHeroDirection(mode, delta) {
@@ -10,8 +10,8 @@ export function stepHeroDirection(mode, delta) {
   return mode === 'up' ? 'up' : 'down';
 }
 
-/** Fraction of each slide's scroll that holds the slide still. */
-export const HERO_HOLD = 0.4;
+/** The old hold consumed 40% of every slide with no visible progress. */
+export const HERO_HOLD = 0;
 
 /**
  * How far the outgoing hero drifts up while the next slide covers it.
@@ -183,7 +183,7 @@ export function heroStageMotion({
 }
 
 function progressOf(unit) {
-  return unit <= HERO_HOLD ? 0 : (unit - HERO_HOLD) / (1 - HERO_HOLD);
+  return clamp01(unit);
 }
 
 function downSequence(slides, local, stageHeight, cachedGeometry) {
@@ -247,7 +247,7 @@ function downSlider(slides, travel, stageHeight) {
   } else {
     unit = travel / stageHeight - index;
   }
-  const t = unit <= HERO_HOLD ? 0 : (unit - HERO_HOLD) / (1 - HERO_HOLD);
+  const t = clamp01(unit);
   const outgoing = roundPx(-t * stageHeight);
   const incoming = outgoing + stageHeight;
   slides.forEach((slide, slideIndex) => {
