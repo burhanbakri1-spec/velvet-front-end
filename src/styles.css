@@ -2816,13 +2816,13 @@ html[dir="rtl"] .brand-logo.mega-menu__preview-logo {
 .careers-section p { margin: 36px 0 70px; font-size: 18px; }
 .careers-section a { right: 64px; bottom: 64px; }
 
-.footer { min-height: 722px; padding: 0 64px; color: var(--ink); background: #fff; display: block; }
+.footer { padding: 0 64px; color: var(--ink); background: #fff; display: block; }
 .footer__callout { min-height: 0; margin-top: 28px; padding: 36px 0; border-bottom: 1px solid #d7d7d7; border-top: 1px solid #d7d7d7; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 40px; background: #f7fbfb; }
 .footer__callout-copy .eyebrow { display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: .14em; font-size: 12px; font-weight: 700; color: #0A8492; }
 .footer__callout h2 { margin: 0; font-family: Arial, Helvetica, sans-serif; font-size: clamp(28px, 2.4vw, 40px); font-weight: 800; line-height: 1.15; letter-spacing: -.03em; text-transform: none; }
 .footer__callout a { min-width: 230px; padding: 18px 0; border-bottom: 1px solid; display: flex; align-items: center; justify-content: space-between; font-weight: 700; }
 .footer__callout a.footer__callout-cta { min-width: 220px; padding: 16px 22px; border: 0; border-radius: 999px; background: #0A8492; color: #fff; text-decoration: none; }
-.footer__body { min-height: 400px; padding: 66px 0 50px; display: grid; grid-template-columns: .8fr 2fr; gap: 8vw; }
+.footer__body { padding: 66px 0 50px; display: grid; grid-template-columns: .8fr 2fr; gap: 8vw; }
 .footer__brand span { color: #fff; }
 .footer__brand p { opacity: .62; }
 .footer__groups h3 { opacity: .48; }
