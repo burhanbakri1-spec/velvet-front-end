@@ -80,7 +80,7 @@ export default function ProductReviewsSection({ productId }) {
         <form className="auth-form product-review-form" onSubmit={handleSubmit}>
           <label>
             <span>{copy.reviews.rating}</span>
-            <select value={rating} onChange={(event) => setRating(Number(event.target.value))}>
+            <select id="product-review-rating" name="rating" value={rating} onChange={(event) => setRating(Number(event.target.value))}>
               {[5, 4, 3, 2, 1].map((value) => (
                 <option key={value} value={value}>{'★'.repeat(value)}</option>
               ))}
@@ -89,6 +89,8 @@ export default function ProductReviewsSection({ productId }) {
           <label>
             <span>{copy.reviews.comment}</span>
             <textarea
+              id="product-review-comment"
+              name="comment"
               required
               rows={3}
               value={comment}

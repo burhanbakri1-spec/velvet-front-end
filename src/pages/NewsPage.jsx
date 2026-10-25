@@ -46,7 +46,7 @@ export default function NewsPage() {
           </div>
           <label className="news-sort">
             <span>{copy.news.sort}</span>
-            <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label={copy.news.sort}>
+            <select id="news-sort" name="news-sort" value={sort} onChange={(event) => setSort(event.target.value)} aria-label={copy.news.sort}>
               <option value="latest">{copy.news.latest}</option>
               <option value="oldest">{copy.news.oldest}</option>
               <option value="az">{copy.news.az}</option>

@@ -19,10 +19,10 @@ export default function ContactPage() {
           <p>{copy.contact.intro}</p>
         </div>
         <form className="contact-form" onSubmit={handleSubmit}>
-          <label><span>{copy.contact.name}</span><input name="name" required placeholder={copy.contact.namePlaceholder} /></label>
-          <label><span>{copy.contact.email}</span><input name="email" required type="email" dir="ltr" placeholder={copy.contact.emailPlaceholder} /></label>
-          <label className="contact-form__wide"><span>{copy.contact.subject}</span><select name="subject" required defaultValue=""><option value="" disabled>{copy.contact.choose}</option><option value="product">{copy.contact.product}</option><option value="order">{copy.contact.order}</option><option value="press">{copy.contact.press}</option><option value="general">{copy.contact.general}</option></select></label>
-          <label className="contact-form__wide"><span>{copy.contact.message}</span><textarea name="message" required rows="6" placeholder={copy.contact.messagePlaceholder} /></label>
+          <label><span>{copy.contact.name}</span><input id="contact-name" name="contact-name" autoComplete="name" required placeholder={copy.contact.namePlaceholder} /></label>
+          <label><span>{copy.contact.email}</span><input id="contact-email" name="contact-email" autoComplete="email" required type="email" dir="ltr" placeholder={copy.contact.emailPlaceholder} /></label>
+          <label className="contact-form__wide"><span>{copy.contact.subject}</span><select id="contact-subject" name="subject" required defaultValue=""><option value="" disabled>{copy.contact.choose}</option><option value="product">{copy.contact.product}</option><option value="order">{copy.contact.order}</option><option value="press">{copy.contact.press}</option><option value="general">{copy.contact.general}</option></select></label>
+          <label className="contact-form__wide"><span>{copy.contact.message}</span><textarea id="contact-message" name="message" required rows="6" placeholder={copy.contact.messagePlaceholder} /></label>
           <div className="contact-form__actions"><button className="store-primary-button" type="submit">{copy.contact.submit} <i>{locale === 'ar' ? '←' : '→'}</i></button>{submitted && <p role="status">{copy.contact.success}</p>}</div>
         </form>
       </section>

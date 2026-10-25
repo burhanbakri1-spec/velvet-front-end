@@ -214,6 +214,8 @@ function CountrySelect({
           <div className="checkout-country-select-search-wrapper">
             <input
               type="search"
+              id={`${id}-search`}
+              name={`${id}-search`}
               className="checkout-country-select-search"
               placeholder={locale === 'ar' ? 'ابحث عن دولة…' : 'Search country…'}
               value={searchQuery}

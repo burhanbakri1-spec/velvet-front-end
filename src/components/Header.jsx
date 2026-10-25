@@ -44,6 +44,7 @@ export default function Header({ introActive, solid = false }) {
   const [compact, setCompact] = useState(false);
   const scrollAnchor = useRef(0);
   const closeTimer = useRef(null);
+  const footerCalloutUnderHeader = useRef(false);
   const { itemCount } = useCart();
   const { isAuthenticated } = useAuth();
   const { copy, locale } = useI18n();
@@ -155,6 +156,21 @@ export default function Header({ introActive, solid = false }) {
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
 
   useEffect(() => {
+    const callout = document.querySelector('.footer__callout');
+    const header = document.querySelector('.site-header');
+    if (!callout || !header || typeof IntersectionObserver === 'undefined') return undefined;
+
+    const headerHeight = Math.ceil(header.getBoundingClientRect().height);
+    const observer = new IntersectionObserver(([entry]) => {
+      footerCalloutUnderHeader.current = entry.isIntersecting;
+    }, {
+      rootMargin: `0px 0px -${Math.max(0, window.innerHeight - headerHeight)}px 0px`,
+    });
+    observer.observe(callout);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     document.body.classList.toggle('mobile-nav-open', mobileOpen);
     return () => document.body.classList.remove('mobile-nav-open');
   }, [mobileOpen]);
@@ -173,6 +189,9 @@ export default function Header({ introActive, solid = false }) {
       const delta = y - scrollAnchor.current;
       if (Math.abs(delta) < SCROLL_DELTA) return;
       if (delta > 0) {
+        setHidden(true);
+        setCompact(false);
+      } else if (footerCalloutUnderHeader.current) {
         setHidden(true);
         setCompact(false);
       } else {
@@ -261,7 +280,7 @@ export default function Header({ introActive, solid = false }) {
           <div className="header-search">
             <form className="search-pill" onSubmit={submitSearch}>
               <span>{copy.header.search}</span>
-              <input value={search} onChange={(event) => setSearch(event.target.value)} aria-label={copy.header.searchLabel} />
+              <input id="header-search" name="site-search" value={search} onChange={(event) => setSearch(event.target.value)} aria-label={copy.header.searchLabel} />
               <button className="search-pill__submit" type="submit" aria-label={copy.header.searchLabel}><i /></button>
             </form>
             <SearchDropdown query={search} setQuery={setSearch} />
@@ -326,6 +345,7 @@ export default function Header({ introActive, solid = false }) {
                 <label className="sr-only" htmlFor="mobile-header-search">{copy.header.searchLabel}</label>
                 <input
                   id="mobile-header-search"
+                  name="mobile-site-search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={copy.header.search}

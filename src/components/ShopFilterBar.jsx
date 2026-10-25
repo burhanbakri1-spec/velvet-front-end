@@ -69,6 +69,8 @@ function FilterColumn({ column, selected, options, emptyHint, onReset, onToggle,
                 key={option.id}
               >
                 <input
+                  id={`shop-filter-${column.key}-${option.id}`}
+                  name={`filters[${column.key}]`}
                   type="checkbox"
                   checked={active}
                   onChange={() => onToggle(option.id)}
@@ -221,6 +223,8 @@ export default function ShopFilterBar({
           </button>
           <label className="shop-filter-bar__search">
             <input
+              id="shop-product-search"
+              name="product-search"
               type="search"
               className="shop-filter-bar__search-input"
               value={state.search || ''}
@@ -247,6 +251,8 @@ export default function ShopFilterBar({
         <label className="shop-filter-bar__sort">
           <span className="shop-filter-bar__sort-label">{s.sort}:</span>
           <select
+            id="shop-sort"
+            name="catalog-sort"
             value={currentSort}
             aria-label={`${s.sort}: ${sortOptions[currentSort] || s.sortFeatured}`}
             onChange={(event) => onSortChange(event.target.value)}
