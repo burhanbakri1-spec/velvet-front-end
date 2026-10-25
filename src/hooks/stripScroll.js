@@ -1,5 +1,12 @@
 export const STRIP_GROUPS = 8;
 
+// A full product group already exceeds the viewport once it has six cards.
+// Three copies preserve both the marquee seam and a positive manual-scroll
+// wrap range without compositing five extra copies of every product image.
+export function selectStripGroupCount(productCount) {
+  return productCount >= 6 ? 3 : STRIP_GROUPS;
+}
+
 export function clampStripScrollPosition(position, trackWidth, viewportWidth, step) {
   if (step <= 0 || viewportWidth <= 0) return position;
   const band = trackWidth - viewportWidth - step;

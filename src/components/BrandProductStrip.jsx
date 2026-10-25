@@ -5,7 +5,7 @@ import { formatPrice } from '../data/currency';
 import { selectBrandStripProducts } from '../data/brandProductStrip';
 import { getHomePriority } from '../data/displayPriority';
 import { getBrand, velvetProducts } from '../data/velvetCatalog';
-import { normalizeStripScroll, STRIP_GROUPS } from '../hooks/stripScroll';
+import { normalizeStripScroll, selectStripGroupCount } from '../hooks/stripScroll';
 import { useI18n } from '../i18n/I18nContext';
 
 const RESUME_DELAY_MS = 3200;
@@ -31,6 +31,7 @@ export default function BrandProductStrip({ brandSlug, deckIndex, concealed = fa
 
   if (!brandSlug || products.length === 0) return null;
 
+  const stripGroups = selectStripGroupCount(products.length);
   const brandName = getBrand(brandSlug)?.name?.[locale] || '';
   const viewAllTo = `/products?brand=${encodeURIComponent(brandSlug)}`;
 
@@ -91,9 +92,9 @@ export default function BrandProductStrip({ brandSlug, deckIndex, concealed = fa
       >
         <div
           className={`brand-strip__track${paused ? ' is-paused' : ''}`}
-          style={{ '--strip-groups': STRIP_GROUPS }}
+          style={{ '--strip-groups': stripGroups }}
         >
-          {Array.from({ length: STRIP_GROUPS }, (_, index) => renderGroup(index))}
+          {Array.from({ length: stripGroups }, (_, index) => renderGroup(index))}
         </div>
       </div>
     </section>

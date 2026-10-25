@@ -8,7 +8,7 @@ import {
   isFeaturedProduct,
   selectBrandStripProducts,
 } from '../src/data/brandProductStrip.js';
-import { clampStripScrollPosition, STRIP_GROUPS } from '../src/hooks/stripScroll.js';
+import { clampStripScrollPosition, selectStripGroupCount, STRIP_GROUPS } from '../src/hooks/stripScroll.js';
 import { BRAND_BANNER_STACK, brandBannerStackHeight } from '../src/components/brandBannerMetrics.js';
 
 const read = (relative) => fs.readFileSync(new URL(`../src/${relative}`, import.meta.url), 'utf8');
@@ -182,12 +182,12 @@ test('auto-scroll marquee exists with duplicated groups, interaction pause and R
   const strip = fs.readFileSync(stripPath, 'utf8');
   const styles = fs.readFileSync(stylesPath, 'utf8');
 
-  assert.match(strip, /Array\.from\(\{ length: STRIP_GROUPS \}/, 'track must be duplicated for a seamless loop');
+  assert.match(strip, /Array\.from\(\{ length: stripGroups \}/, 'track must be duplicated for a seamless loop');
   assert.match(strip, /aria-hidden=\{index === 0 \? undefined : 'true'\}/);
   assert.match(strip, /is-paused/);
   assert.match(strip, /onPointerDown=\{pauseForInteraction\}/);
   assert.match(strip, /onScroll=\{normalizeStripScroll\}/);
-  assert.match(strip, /'--strip-groups': STRIP_GROUPS/);
+  assert.match(strip, /'--strip-groups': stripGroups/);
 
   assert.match(styles, /@keyframes brand-strip-marquee \{/);
   assert.match(styles, /\.brand-strip__track \{[^}]*animation: brand-strip-marquee/);
@@ -216,8 +216,29 @@ test('marquee travels exactly one group per cycle with no -50% jump or direction
     styles,
     /@keyframes brand-strip-marquee-rtl \{\s*from \{ transform: translate3d\(0%, 0, 0\); \}\s*to \{ transform: translate3d\(calc\(100% \/ var\(--strip-groups, 8\)\), 0, 0\); \}\s*\}/,
   );
-  assert.match(strip, /import \{ normalizeStripScroll, STRIP_GROUPS \} from '\.\.\/hooks\/stripScroll'/);
+  assert.match(strip, /import \{ normalizeStripScroll, selectStripGroupCount \} from '\.\.\/hooks\/stripScroll'/);
   assert.equal(STRIP_GROUPS, 8);
+});
+
+test('long strip groups use three identical copies while short strips keep enough coverage', () => {
+  for (const count of [1, 4, 5]) assert.equal(selectStripGroupCount(count), 8);
+  for (const count of [6, 11, 23]) assert.equal(selectStripGroupCount(count), 3);
+  for (const vw of [320, 390, 760, 1100, 1440, 1920, 3840]) {
+    const cols = vw <= 760 ? 2.5 : vw <= 1100 ? 3.5 : 4;
+    const gapCount = vw <= 1100 ? 4 : 3;
+    const pad = Math.min(56, Math.max(18, 0.04 * vw));
+    const cardStep = (vw - pad * 2 - 14 * gapCount) / cols + 14;
+    const groupWidth = cardStep * 6;
+    const band = groupWidth * selectStripGroupCount(6) - vw - groupWidth;
+    assert.ok(groupWidth > vw, `vw=${vw}: one group must cover the viewport`);
+    assert.ok(band >= groupWidth, `vw=${vw}: manual scroll can wrap by one group without exposing a gap`);
+    for (const position of [0, band, band + groupWidth * 3, -band - groupWidth * 3]) {
+      const wrapped = clampStripScrollPosition(position, groupWidth * 3, vw, groupWidth);
+      assert.ok(Math.abs(wrapped) <= band, `vw=${vw}: manual scroll must remain inside the covered band`);
+      assert.ok(Math.abs((position - wrapped) / groupWidth - Math.round((position - wrapped) / groupWidth)) < 1e-9,
+        `vw=${vw}: wrapping must shift by whole product groups`);
+    }
+  }
 });
 
 test('strip scroll stays inside the covered band so the viewport never empties', () => {
