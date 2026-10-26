@@ -94,3 +94,20 @@ test('the selected eight-banner deck covers the released stage without blank gap
     assert.ok(end >= box.boxHeight - 1, `uncovered stage tail at scroll ${local}`);
   }
 });
+
+test('phone UP decks never push the incoming banner beyond its endpoint and pull it back', () => {
+ for(const stageHeight of [364,370,386,422]) {
+  const geometry=stageGeometry(slides,stageHeight);
+  for(let upper=2;upper<24;upper+=2) {
+   let previous=Infinity;
+   for(let local=geometry.offsets[upper-2];local<=geometry.offsets[upper];local++) {
+    const poses=heroStageMotion({slides,stageHeight,local,mode:'up',geometry,upDeckDepth:8});
+    assert.ok(poses[upper].y<=stageHeight,`incoming banner overshot ${stageHeight}px at ${local}`);
+    // Reading this route upward (reverse local order) must never push the
+    // incoming banner down and then pull it back above its final position.
+    assert.ok(poses[upper].y<=previous,`incoming banner reversed at ${local}`);
+    previous=poses[upper].y;
+   }
+  }
+ }
+});

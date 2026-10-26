@@ -2565,7 +2565,9 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
   }
   #showcases > .hero-stage-shell > .hero-stage .home-brand__runway { display: none; }
 }
-body.hero-stage-pin .site-header.is-hidden { transform: none; }
+@media (min-width: 1101px) {
+  body.hero-stage-pin .site-header.is-hidden { transform: none; }
+}
 body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
 @media (max-width: 1100px) {
   #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {

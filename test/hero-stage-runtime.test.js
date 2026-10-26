@@ -5,7 +5,7 @@ import test from 'node:test';
 import * as math from '../src/components/heroScrollProgress.js';
 
 function mount(width = 375, reduced = false, heroCount = 1) {
-  let y = 0, top = 1000, stripHeight = 240, reads = 0, writes = 0, rafId = 0;
+  let y = 0, top = 1000, stripHeight = 240, reads = 0, writes = 0, rafId = 0, viewportHeight = 812;
   const frames = new Map(), listeners = new Map(), cleanups = [], observers = [], motionInputs = [];
   const classes = () => { const values = new Set(); return { contains: key => values.has(key), add: key => values.add(key), remove: key => values.delete(key), toggle(key,on) { if (on) values.add(key); else values.delete(key); } }; };
   const element = () => {
@@ -14,6 +14,9 @@ function mount(width = 375, reduced = false, heroCount = 1) {
       setAttribute(key,value) { writes++; attributes.set(key,value); }, hasAttribute: key => attributes.has(key), removeAttribute(key) { attributes.delete(key); } };
   };
   const root=element(), shell=element(), stage=element(), hero=element(), strip=element(), section=element(), parent=element();
+  const probe=element();let smallViewportHeight=812,probeRemoved=false;
+  probe.getBoundingClientRect=()=>{reads++;return {height:smallViewportHeight};};
+  probe.remove=()=>{probeRemoved=true;};root.appendChild=()=>{};
   Object.defineProperty(strip,'offsetHeight',{get(){reads++; return stripHeight;}});
   shell.getBoundingClientRect = () => { reads++; return {top:top-y}; };
   root.parentElement=parent;
@@ -33,11 +36,11 @@ function mount(width = 375, reduced = false, heroCount = 1) {
     heroStageMotion(input) { motionInputs.push(input); return math.heroStageMotion(input); },
     useRef: current => ({current}),
     useLayoutEffect(effect) { const cleanup=effect(); if(cleanup) cleanups.push(cleanup); },
-    document: { getElementById: () => root, documentElement: {}, body:{classList:classes()} },
+    document: { getElementById: () => root, createElement:()=>probe, documentElement: {}, body:{classList:classes()} },
     getComputedStyle: () => ({getPropertyValue:()=> '72px'}),
     ResizeObserver: class { constructor(callback){this.callback=callback;this.disconnected=false;observers.push(this);} observe(){} unobserve(){} disconnect(){this.disconnected=true;} },
     MutationObserver: class { observe(){} disconnect(){} },
-    window: { innerWidth:width,innerHeight:812,get scrollY(){return y;},
+    window: { innerWidth:width,get innerHeight(){return viewportHeight;},get scrollY(){return y;},
       matchMedia: query => ({matches:query.includes('reduce') ? reduced : width>=1101,addEventListener(){},removeEventListener(){}}),
       requestAnimationFrame(callback){frames.set(++rafId,callback);return rafId;},cancelAnimationFrame(id){frames.delete(id);},
       addEventListener(name,callback){listeners.set(name,callback);},removeEventListener(name){listeners.delete(name);},
@@ -47,6 +50,8 @@ function mount(width = 375, reduced = false, heroCount = 1) {
   vm.runInNewContext(source+"\nuseHeroStageMotion('showcases',true);",context);
   const flush=()=>{const current=[...frames.values()];frames.clear();current.forEach(callback=>callback());};
   return { root,shell,stage,strip,hero,frames,listeners,motionInputs,
+    get probeRemoved(){return probeRemoved;},
+    resize(height,smallHeight=smallViewportHeight){viewportHeight=height;smallViewportHeight=smallHeight;listeners.get('resize')?.();},
     get reads(){return reads;},get writes(){return writes;},
     scroll(next){y=next;listeners.get('scroll')?.();},flush,
     parentResize(){observers[0].callback([{target:parent}]);},
@@ -134,4 +139,33 @@ test('mobile UP changes the local shell length while DOWN and desktop keep the o
   stage.dispose();
   assert.equal(stage.shell.style.getPropertyValue('--mobile-up-stage-span'),'');
  }
+});
+
+test('Android toolbar resizing cannot remap a stationary mobile DOWN or UP pose', () => {
+ for(const up of [false,true]) {
+  const stage=mount(390,false,12),slides=Array.from({length:24},(_,i)=>i%2?{kind:'strip',height:240}:{kind:'hero'});
+  const geometry=math.stageGeometry(slides,370),boundary=928+geometry.offsets[22];
+  stage.scroll(boundary);stage.flush();
+  stage.scroll(boundary+(up?-90:90));stage.flush();
+  const before=stage.motionInputs.at(-1),beforePose=math.heroStageMotion(before),box=stage.stage.style.height;
+  for(const height of [868,840,812,868,812]) {
+   stage.resize(height);stage.flush();
+   const after=stage.motionInputs.at(-1);
+   assert.equal(after.stageHeight,370);
+   assert.deepEqual(math.heroStageMotion(after),beforePose,'toolbar changes must not move a banner without scroll input');
+   assert.equal(stage.stage.style.height,box);
+  }
+  assert.equal(stage.hero.style.height,'370px');
+  stage.dispose();assert.equal(stage.probeRemoved,true);assert.equal(stage.hero.style.height,'');
+ }
+});
+
+test('real small-viewport resizing still remeasures mobile geometry, while desktop uses innerHeight', () => {
+ const mobile=mount(390);mobile.resize(915,915);mobile.flush();
+ assert.equal(mobile.motionInputs.at(-1).stageHeight,422);
+ assert.equal(mobile.hero.style.height,'422px','rendered height must match the rounded pose height');
+ mobile.dispose();
+ const desktop=mount(1440);desktop.resize(868,812);desktop.flush();
+ assert.equal(desktop.motionInputs.at(-1).stageHeight,796);
+ assert.equal(desktop.hero.style.height,'');desktop.dispose();
 });

@@ -351,7 +351,11 @@ function upDeck(slides, travel, stageHeight, depth = Infinity) {
     z: 40,
   };
   pose[upper] = {
-    y: roundPx(nearestTop + nearestVisible - tuck),
+    // A bounded mobile stack can briefly be taller than the banner. Keep its
+    // incoming banner at its endpoint instead of pushing it past and back.
+    y: roundPx(Number.isFinite(depth)
+      ? Math.min(stageHeight, nearestTop + nearestVisible - tuck)
+      : nearestTop + nearestVisible - tuck),
     clipTop: 0,
     clipBottom: 0,
     hidden: false,

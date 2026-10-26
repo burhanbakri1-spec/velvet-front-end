@@ -40,6 +40,16 @@ export function useHeroStageMotion(rootId, mobile = false) {
     const shellEl = root.querySelector('.hero-stage-shell');
     const stageEl = root.querySelector('.hero-stage');
 
+    // Match the banners' small viewport, which stays fixed while Android's
+    // browser toolbar retracts. innerHeight instead remaps every scroll slot.
+    const viewportProbe = mobile ? document.createElement('div') : null;
+    if (viewportProbe) {
+      viewportProbe.setAttribute('data-hero-viewport', '');
+      viewportProbe.setAttribute('aria-hidden', 'true');
+      viewportProbe.style.cssText = 'position:absolute;top:0;left:0;width:0;height:100vh;height:100svh;visibility:hidden;pointer-events:none;contain:strict;';
+      root.appendChild(viewportProbe);
+    }
+
     const motionEnabled = () => (mobile || desktop.matches) && !reduced.matches && slides.length > 0;
 
     const clearMotion = () => {
@@ -62,6 +72,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
           el.style.clipPath = '';
           el.style.zIndex = '';
           el.style.willChange = '';
+          if (slide.kind === 'hero') el.style.height = '';
         }
         if (slide.kind === 'strip') {
           el?.classList.remove('is-concealed');
@@ -93,7 +104,9 @@ export function useHeroStageMotion(rootId, mobile = false) {
     const measure = () => {
       // Read header offset only when needed (resize/media change)
       headerOffset = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
-      const viewportHeight = window.innerHeight;
+      const viewportHeight = !desktop.matches && viewportProbe
+        ? viewportProbe.getBoundingClientRect().height || window.innerHeight
+        : window.innerHeight;
 
       if (desktop.matches) {
         stageHeight = Math.max(1, Math.round(viewportHeight - headerOffset));
@@ -134,6 +147,13 @@ export function useHeroStageMotion(rootId, mobile = false) {
       cacheDOMElements();
 
       const enabled = motionEnabled();
+      slides.forEach((slide) => {
+        if (slide.kind !== 'hero') return;
+        // The pose rounds to CSS pixels; use that same height for the image
+        // box so fractional viewport divisions cannot leave a hairline seam.
+        const height = enabled && !desktop.matches ? `${stageHeight}px` : '';
+        if (slide.el.style.height !== height) slide.el.style.height = height;
+      });
       if (shellEl && stageEl && enabled) {
         const span = geometryCache.span + pinHeight;
         const nextSpan = `${span}px`;
@@ -303,6 +323,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
       window.removeEventListener('resize', onLayout);
       observer.disconnect();
       stageObserver.disconnect();
+      viewportProbe?.remove();
       root.removeAttribute('data-hero-motion');
       root.removeAttribute('data-mobile-hero-up');
       shellEl?.style.removeProperty('--mobile-up-stage-span');
@@ -312,6 +333,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
       // Clean up will-change
       slides.forEach((slide) => {
         if (slide.el) slide.el.style.willChange = '';
+        if (slide.kind === 'hero') slide.el.style.height = '';
       });
     };
   }, [rootId, mobile]);
