@@ -2413,6 +2413,12 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
    the stack. Tablet, mobile, and reduced motion use normal flow.
    Scoped to #showcases (HomePage only).
    ============================================================ */
+/* Only the mobile UP shell consumes this animated length. Keeping it local
+   avoids invalidating every banner and product-card descendant each frame. */
+@property --mobile-up-stage-span {
+  syntax: '*';
+  inherits: false;
+}
 #showcases { --brand-hero-edge: 140px; --brand-rail-height: 0px; overflow-anchor: none; }
 #showcases > .home-brand { margin: 0; padding: 0; }
 #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
@@ -2577,6 +2583,9 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
   #showcases > .brand-banner-stack { display: none; height: 0; transition: none; }
 }
 @media (max-width: 1100px) and (prefers-reduced-motion: no-preference) {
+  #showcases[data-hero-motion][data-mobile-hero-up] > .hero-stage-shell {
+    height: var(--mobile-up-stage-span, var(--hero-stage-span, auto));
+  }
   html:has(#showcases[data-hero-motion]) { overflow-anchor: none; }
   #showcases[data-hero-motion] > .hero-stage-shell {
     display: block;

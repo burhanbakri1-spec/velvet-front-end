@@ -4,9 +4,9 @@ import vm from 'node:vm';
 import test from 'node:test';
 import * as math from '../src/components/heroScrollProgress.js';
 
-function mount(width = 375, reduced = false) {
+function mount(width = 375, reduced = false, heroCount = 1) {
   let y = 0, top = 1000, stripHeight = 240, reads = 0, writes = 0, rafId = 0;
-  const frames = new Map(), listeners = new Map(), cleanups = [], observers = [];
+  const frames = new Map(), listeners = new Map(), cleanups = [], observers = [], motionInputs = [];
   const classes = () => { const values = new Set(); return { contains: key => values.has(key), add: key => values.add(key), remove: key => values.delete(key), toggle(key,on) { if (on) values.add(key); else values.delete(key); } }; };
   const element = () => {
     const values = {}, attributes = new Map();
@@ -19,10 +19,18 @@ function mount(width = 375, reduced = false) {
   root.parentElement=parent;
   root.querySelector = selector => selector === '.hero-stage-shell' ? shell : selector === '.hero-stage' ? stage : null;
   section.querySelector = selector => selector === ':scope > .brand-showcase' ? hero : strip;
-  stage.querySelectorAll = () => [section];
+  const sections=[section];
+  for(let index=1;index<heroCount;index++) {
+    const nextSection=element(),nextHero=element(),nextStrip=element();
+    Object.defineProperty(nextStrip,'offsetHeight',{get(){reads++;return stripHeight;}});
+    nextSection.querySelector=selector=>selector===':scope > .brand-showcase'?nextHero:nextStrip;
+    sections.push(nextSection);
+  }
+  stage.querySelectorAll = () => sections;
   stage.addEventListener=()=>{}; stage.removeEventListener=()=>{};
   const context = {
     ...math,
+    heroStageMotion(input) { motionInputs.push(input); return math.heroStageMotion(input); },
     useRef: current => ({current}),
     useLayoutEffect(effect) { const cleanup=effect(); if(cleanup) cleanups.push(cleanup); },
     document: { getElementById: () => root, documentElement: {}, body:{classList:classes()} },
@@ -38,7 +46,7 @@ function mount(width = 375, reduced = false) {
   const source=fs.readFileSync(new URL('../src/components/useHeroStageMotion.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replace('export function useHeroStageMotion','function useHeroStageMotion');
   vm.runInNewContext(source+"\nuseHeroStageMotion('showcases',true);",context);
   const flush=()=>{const current=[...frames.values()];frames.clear();current.forEach(callback=>callback());};
-  return { root,shell,stage,strip,hero,frames,listeners,
+  return { root,shell,stage,strip,hero,frames,listeners,motionInputs,
     get reads(){return reads;},get writes(){return writes;},
     scroll(next){y=next;listeners.get('scroll')?.();},flush,
     parentResize(){observers[0].callback([{target:parent}]);},
@@ -90,4 +98,40 @@ test('parked slides do not rewrite CSS during different scroll positions before 
  stage.scroll(600);stage.flush();
  assert.equal(stage.writes,writes);
  stage.dispose();
+});
+
+test('only the existing mobile breakpoint opts into the bounded UP deck', () => {
+ const mobile=mount(1100);
+ assert.equal(mobile.motionInputs[0].upDeckDepth,8);
+ mobile.dispose();
+ const desktop=mount(1101);
+ assert.equal(desktop.motionInputs[0].upDeckDepth,undefined);
+ desktop.dispose();
+});
+
+test('mobile UP changes the local shell length while DOWN and desktop keep the original property', () => {
+ for(const width of [390,1440]) {
+  const stage=mount(width,false,12);
+  const h=width<1101?370:740;
+  const slides=Array.from({length:24},(_,i)=>i%2?{kind:'strip',height:240}:{kind:'hero'});
+  const geometry=math.stageGeometry(slides,h),boundary=928+geometry.offsets[22];
+  stage.scroll(boundary);stage.flush();
+  const downSpan=stage.shell.style.getPropertyValue('--hero-stage-span');
+  stage.scroll(boundary-50);stage.flush();
+  if(width<1101) {
+   assert.equal(stage.root.hasAttribute('data-mobile-hero-up'),true);
+   assert.ok(stage.shell.style.getPropertyValue('--mobile-up-stage-span'));
+   assert.equal(stage.shell.style.getPropertyValue('--hero-stage-span'),downSpan);
+  } else {
+   assert.equal(stage.root.hasAttribute('data-mobile-hero-up'),false);
+   assert.equal(stage.shell.style.getPropertyValue('--mobile-up-stage-span'),'');
+  }
+  stage.scroll(boundary+10);stage.flush();
+  assert.equal(stage.root.hasAttribute('data-mobile-hero-up'),false);
+  const local=boundary+10-928;
+  const expected=math.stageReleaseBox(slides,h,width<1101?740:h,local,'down',geometry);
+  assert.equal(stage.shell.style.getPropertyValue('--hero-stage-span'),`${expected.shellHeight}px`);
+  stage.dispose();
+  assert.equal(stage.shell.style.getPropertyValue('--mobile-up-stage-span'),'');
+ }
 });

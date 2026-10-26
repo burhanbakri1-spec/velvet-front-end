@@ -172,12 +172,13 @@ export function heroStageMotion({
   stageHeight = 0,
   mode = 'down',
   geometry,
+  upDeckDepth,
 }) {
   if (!Array.isArray(slides) || slides.length === 0 || stageHeight <= 0) return [];
   if (mode === 'up') {
     const pos = stageSlidePos(slides, local, stageHeight, geometry);
     const travel = Math.min(Math.max(0, (slides.length - 1) * stageHeight), pos * stageHeight);
-    return upDeck(slides, travel, stageHeight);
+    return upDeck(slides, travel, stageHeight, upDeckDepth);
   }
   return downSequence(slides, local, stageHeight, geometry);
 }
@@ -288,7 +289,7 @@ function heroIndexesOf(slides) {
  * g=1 is the lower hero full-bleed. The same numbers are the neighboring
  * segment's opposite end, so the stack never rebuilds.
  */
-function upDeck(slides, travel, stageHeight) {
+function upDeck(slides, travel, stageHeight, depth = Infinity) {
   const heroes = heroIndexesOf(slides);
   if (heroes.length < 2) return downSlider(slides, travel, stageHeight);
   const pos = travel / stageHeight;
@@ -307,7 +308,11 @@ function upDeck(slides, travel, stageHeight) {
   const lower = heroes[upperK - 1];
   const span = upper - lower;
   const distPx = (upper - pos) * stageHeight;
-  const older = heroes.slice(0, upperK - 1);
+  // The nearest and incoming heroes retain the original segment. Historical
+  // slices roll out at a full-bleed hero boundary, where they are offscreen.
+  const olderCount = Number.isFinite(depth) ? Math.max(0, Math.floor(depth) - 2) : heroes.length;
+  const firstOlder = Math.max(0, upperK - 1 - olderCount);
+  const older = heroes.slice(firstOlder, upperK - 1);
   const nearestVisible = Math.min(stageHeight, distPx / span);
   const olderVisible = Math.min(HERO_SLICE, nearestVisible);
   const grow = clamp01((nearestVisible - HERO_SLICE) / (stageHeight - HERO_SLICE));
@@ -315,6 +320,9 @@ function upDeck(slides, travel, stageHeight) {
   const lift = HERO_SLICE_OVERLAP * grow;
 
   const pose = slides.map(() => blank(stageHeight));
+  heroes.slice(0, firstOlder).forEach((index) => {
+    pose[index] = { ...blank(stageHeight), y: -stageHeight };
+  });
   let cursor = 0;
   older.forEach((index, listIndex) => {
     const edge = olderVisible >= 1

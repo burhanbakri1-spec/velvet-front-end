@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef } from 'react';
 import { heroStageMotion, latchStageMode, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
 
+const MOBILE_UP_DECK_DEPTH = 8;
+
 /**
  * The approved Home banner stage.
  * Desktop Home passes mobile=false, so the enable check stays
@@ -44,9 +46,11 @@ export function useHeroStageMotion(rootId, mobile = false) {
       if (cleared) return;
       cleared = true;
       root.removeAttribute('data-hero-motion');
+      root.removeAttribute('data-mobile-hero-up');
       root.style.setProperty('--brand-rail-height', '0px');
       document.body.classList.remove('hero-stage-pin');
       shellEl?.style.removeProperty('--hero-stage-span');
+      shellEl?.style.removeProperty('--mobile-up-stage-span');
       if (stageEl) {
         stageEl.style.top = '';
         stageEl.style.height = '';
@@ -175,19 +179,25 @@ export function useHeroStageMotion(rootId, mobile = false) {
       if (direction.mode !== 'up') direction.mode = 'down';
       if (nextMode === direction.mode) direction.mode = nextMode;
 
+      const mobileUp = !desktop.matches && direction.mode === 'up';
+      if (mobileUp && !root.hasAttribute('data-mobile-hero-up')) root.setAttribute('data-mobile-hero-up', '');
+      else if (!mobileUp && root.hasAttribute('data-mobile-hero-up')) root.removeAttribute('data-mobile-hero-up');
+
       const motion = heroStageMotion({
         slides,
         local,
         stageHeight,
         mode: direction.mode,
         geometry: geometryCache,
+        upDeckDepth: desktop.matches ? undefined : MOBILE_UP_DECK_DEPTH,
       });
       const release = stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset), direction.mode, geometryCache, motion);
 
       if (shellEl && stageEl) {
         const nextSpan = `${release.shellHeight}px`;
-        if (shellEl.style.getPropertyValue('--hero-stage-span') !== nextSpan) {
-          shellEl.style.setProperty('--hero-stage-span', nextSpan);
+        const spanProperty = mobileUp ? '--mobile-up-stage-span' : '--hero-stage-span';
+        if (shellEl.style.getPropertyValue(spanProperty) !== nextSpan) {
+          shellEl.style.setProperty(spanProperty, nextSpan);
         }
         const nextBox = `${release.boxHeight}px`;
         if (stageEl.style.height !== nextBox) stageEl.style.height = nextBox;
@@ -294,6 +304,8 @@ export function useHeroStageMotion(rootId, mobile = false) {
       observer.disconnect();
       stageObserver.disconnect();
       root.removeAttribute('data-hero-motion');
+      root.removeAttribute('data-mobile-hero-up');
+      shellEl?.style.removeProperty('--mobile-up-stage-span');
       document.body.classList.remove('hero-stage-pin');
       desktop.removeEventListener('change', onLayout);
       reduced.removeEventListener('change', onLayout);
