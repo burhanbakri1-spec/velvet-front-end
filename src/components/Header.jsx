@@ -177,9 +177,24 @@ export default function Header({ introActive, solid = false }) {
 
   useEffect(() => {
     scrollAnchor.current = window.scrollY;
+    const mobile = window.matchMedia('(max-width: 900px)');
+    let mobileCompact;
     const onScroll = () => {
       const y = window.scrollY;
       const locked = mobileOpen || brandsOpen || aboutOpen;
+      // Mobile keeps the main logo and menu available in both directions.
+      // Collapse the utility row once; direction changes must not resize it.
+      if (mobile.matches) {
+        const nextCompact = !locked && y > TOP_OFFSET;
+        if (mobileCompact !== nextCompact) {
+          setHidden(false);
+          setCompact(nextCompact);
+          mobileCompact = nextCompact;
+        }
+        scrollAnchor.current = y;
+        return;
+      }
+      mobileCompact = undefined;
       if (locked || y <= TOP_OFFSET) {
         setHidden(false);
         setCompact(false);
@@ -201,11 +216,14 @@ export default function Header({ introActive, solid = false }) {
       scrollAnchor.current = y;
     };
     const onKey = (event) => event.key === 'Escape' && (setBrandsOpen(false), setAboutOpen(false), closeMobile());
+    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('keydown', onKey);
+    mobile.addEventListener('change', onScroll);
     return () => {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('keydown', onKey);
+      mobile.removeEventListener('change', onScroll);
     };
   }, [aboutOpen, brandsOpen, mobileOpen]);
 

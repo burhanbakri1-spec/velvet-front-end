@@ -6286,6 +6286,8 @@ html[dir="rtl"] .news-article-content ul, html[dir="rtl"] .news-article-content 
     opacity: 1;
   }
   .site-header.is-compact .mobile-utility-row {
+    /* Match the pinned stage's 72px offset immediately, even after a fling. */
+    transition: none;
     min-height: 0;
     max-height: 0;
     padding-top: 0;
