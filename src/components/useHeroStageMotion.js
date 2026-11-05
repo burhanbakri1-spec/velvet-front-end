@@ -212,14 +212,23 @@ export function useHeroStageMotion(rootId, mobile = false) {
         upDeckDepth: desktop.matches ? undefined : MOBILE_UP_DECK_DEPTH,
       });
       const release = stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset), direction.mode, geometryCache, motion);
+      // The UP deck can expose a different number of clipped banner slices
+      // from one frame to the next. Its visual pose must not resize the sticky
+      // page box: that made the shell and viewport jump at direction changes.
+      // Use the unchanged DOWN layout mapping at the same scroll position so
+      // document geometry stays path-independent while UP poses keep their
+      // existing motion model.
+      const layoutRelease = rootId === 'showcases' && mobile && !desktop.matches && mobileUp
+        ? stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset), 'down', geometryCache)
+        : release;
 
       if (shellEl && stageEl) {
-        const nextSpan = `${release.shellHeight}px`;
+        const nextSpan = `${layoutRelease.shellHeight}px`;
         const spanProperty = mobileUp ? '--mobile-up-stage-span' : '--hero-stage-span';
         if (shellEl.style.getPropertyValue(spanProperty) !== nextSpan) {
           shellEl.style.setProperty(spanProperty, nextSpan);
         }
-        const nextBox = `${release.boxHeight}px`;
+        const nextBox = `${layoutRelease.boxHeight}px`;
         if (stageEl.style.height !== nextBox) stageEl.style.height = nextBox;
       }
 

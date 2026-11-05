@@ -141,6 +141,32 @@ test('mobile UP changes the local shell length while DOWN and desktop keep the o
  }
 });
 
+test('mobile UP keeps shell and sticky-stage geometry on the unchanged DOWN scroll mapping', () => {
+ const width=390,h=370,pin=740,stage=mount(width,false,12);
+ const slides=Array.from({length:24},(_,i)=>i%2?{kind:'strip',height:240}:{kind:'hero'});
+ const geometry=math.stageGeometry(slides,h),base=928+geometry.offsets[22];
+ const assertLayoutAt=(y)=>{
+  const local=y-928;
+  const expected=math.stageReleaseBox(slides,h,pin,local,'down',geometry);
+  assert.equal(stage.root.hasAttribute('data-mobile-hero-up'),true);
+  assert.equal(stage.shell.style.getPropertyValue('--mobile-up-stage-span'),`${expected.shellHeight}px`);
+  assert.equal(stage.stage.style.height,`${expected.boxHeight}px`);
+ };
+
+ // DOWN's existing layout is unchanged at the reversal boundary.
+ stage.scroll(base);stage.flush();
+ const down=math.stageReleaseBox(slides,h,pin,geometry.offsets[22],'down',geometry);
+ assert.equal(stage.shell.style.getPropertyValue('--hero-stage-span'),`${down.shellHeight}px`);
+ assert.equal(stage.stage.style.height,`${down.boxHeight}px`);
+
+ // Crossing into UP and subsequent small reverse inputs cannot make the
+ // layout box follow the changing number of visible deck slices.
+ for(const retreat of [50,130,210,290,370]){
+  stage.scroll(base-retreat);stage.flush();assertLayoutAt(base-retreat);
+ }
+ stage.dispose();
+});
+
 test('Android toolbar resizing cannot remap a stationary mobile DOWN or UP pose', () => {
  for(const up of [false,true]) {
   const stage=mount(390,false,12),slides=Array.from({length:24},(_,i)=>i%2?{kind:'strip',height:240}:{kind:'hero'});
