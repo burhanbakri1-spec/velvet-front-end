@@ -50,6 +50,8 @@ export default function Header({ introActive, solid = false }) {
   const { copy, locale } = useI18n();
   const { location, navigate, routePath } = useRouter();
   const [search, setSearch] = useState('');
+  const mobileSearchInputRef = useRef(null);
+  const mobileSearchFocusPending = useRef(false);
   const accountPath = isAuthenticated ? '/account' : '/login';
 
   const contextBrand = useMemo(() => {
@@ -134,6 +136,7 @@ export default function Header({ introActive, solid = false }) {
   const closeMobile = () => {
     setMobileOpen(false);
     setMenuView('root');
+    mobileSearchFocusPending.current = false;
   };
 
   const toggleMobile = () => {
@@ -147,6 +150,25 @@ export default function Header({ introActive, solid = false }) {
     setHidden(false);
     setCompact(false);
   };
+
+  const openMobileSearch = () => {
+    setMobileOpen(true);
+    setMenuView('root');
+    setBrandsOpen(false);
+    setAboutOpen(false);
+    setHidden(false);
+    setCompact(false);
+    mobileSearchFocusPending.current = true;
+  };
+
+  useEffect(() => {
+    if (!mobileOpen || menuView !== 'root' || !mobileSearchFocusPending.current) return undefined;
+    mobileSearchFocusPending.current = false;
+    const frame = window.requestAnimationFrame(() => {
+      mobileSearchInputRef.current?.focus?.();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [mobileOpen, menuView]);
 
   const goAccount = () => {
     navigate(localizePath(accountPath, locale));
@@ -331,6 +353,20 @@ export default function Header({ introActive, solid = false }) {
         </div>
 
         <button
+          className="mobile-header-search-trigger"
+          type="button"
+          aria-label={copy.header.searchLabel}
+          aria-controls="mobile-navigation-drawer"
+          aria-expanded={mobileOpen}
+          onClick={openMobileSearch}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            <path d="M16 16l4.2 4.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+
+        <button
           className={`menu-toggle${mobileOpen ? ' is-open' : ''}`}
           type="button"
           aria-label={copy.header.menu}
@@ -341,7 +377,7 @@ export default function Header({ introActive, solid = false }) {
         </button>
       </div>
 
-      <div className={`mobile-drawer${mobileOpen ? ' is-open' : ''}${menuView === 'root' ? '' : ` mobile-drawer--${menuView}`}`} aria-hidden={!mobileOpen}>
+      <div id="mobile-navigation-drawer" className={`mobile-drawer${mobileOpen ? ' is-open' : ''}${menuView === 'root' ? '' : ` mobile-drawer--${menuView}`}`} aria-hidden={!mobileOpen}>
         <div className="mobile-drawer__top">
           {menuView === 'root' ? (
             <LanguageControl className="language-control--drawer" onSwitch={closeMobile} />
@@ -362,6 +398,7 @@ export default function Header({ introActive, solid = false }) {
               <form className="mobile-drawer__search" onSubmit={submitSearch} role="search">
                 <label className="sr-only" htmlFor="mobile-header-search">{copy.header.searchLabel}</label>
                 <input
+                  ref={mobileSearchInputRef}
                   id="mobile-header-search"
                   name="mobile-site-search"
                   value={search}

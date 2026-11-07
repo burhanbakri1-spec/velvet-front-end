@@ -551,6 +551,8 @@ button { color: inherit; }
 .header-icon-button svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 a.header-icon-button { text-decoration: none; }
 .menu-toggle { display: none; }
+.mobile-header-search-trigger { display: none; }
+.mobile-header-search-trigger:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 
 .mega-menu {
   position: absolute;
@@ -1034,9 +1036,9 @@ html[dir="rtl"] .brand-strip__track { animation-name: brand-strip-marquee-rtl; }
     height: var(--header-height);
     padding: 0 20px;
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     background: linear-gradient(to bottom,rgba(0,0,0,.35),transparent);
   }
     .logo { width: 78px; height: 42px; }
@@ -1095,9 +1097,9 @@ html[dir="rtl"] .brand-strip__track { animation-name: brand-strip-marquee-rtl; }
   .logo__img--brand {
     width: auto;
     height: 69.1px;
-    max-width: 302px;
+    max-width: min(302px, 100%);
     max-height: 69.1px;
-    flex: 0 0 auto;
+    flex: 0 1 auto;
   }
   .search-pill { display: none; }
   .language-control--header {
@@ -1133,8 +1135,24 @@ html[dir="rtl"] .brand-strip__track { animation-name: brand-strip-marquee-rtl; }
   .menu-toggle.is-open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
   .menu-toggle.is-open span:nth-child(2) { opacity: 0; }
   .menu-toggle.is-open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+  .mobile-header-search-trigger {
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,.18);
+    color: inherit;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    justify-self: end;
+    padding: 0;
+  }
+  .mobile-header-search-trigger svg { width: 22px; height: 22px; }
   .main-nav--desktop { display: none; }
-  .nav-bar > .logo { grid-column: 1; grid-row: 1; }
+  .nav-bar > .logo { grid-column: 1; grid-row: 1; min-width: 0; }
+  .nav-bar > .logo.logo--brand { min-width: 0; max-width: 100%; }
+  .nav-bar > .mobile-header-search-trigger { grid-column: 2; grid-row: 1; }
   .nav-bar > .menu-toggle { grid-column: 3; grid-row: 1; }
   .mobile-drawer {
     display: flex;
@@ -1377,7 +1395,8 @@ html[dir="rtl"] .brand-strip__track { animation-name: brand-strip-marquee-rtl; }
 .site-header--solid .search-pill { background: #f0f1f3; color: var(--ink); }
 .site-header--solid .nav-link,
 .site-header--solid .header-icon-button,
-.site-header--solid .menu-toggle { color: var(--ink); }
+.site-header--solid .menu-toggle,
+.site-header--solid .mobile-header-search-trigger { color: var(--ink); }
 .site-header--solid .language-control--header,
 .site-header.site-header--solid:not(.is-open) .language-control--header {
   border-color: rgba(18, 18, 20, .14) !important;
@@ -1673,10 +1692,11 @@ html[dir="rtl"] .cart-drawer__image img { direction: ltr; }
 }
 
 @media (max-width: 760px) {
-  .site-header--solid .menu-toggle { background: #f0f0ee; }
+  .site-header--solid .menu-toggle,
+  .site-header--solid .mobile-header-search-trigger { background: #f0f0ee; }
   .nav-bar {
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: center;
   }
   .logo,
@@ -6301,7 +6321,8 @@ html[dir="rtl"] .news-article-content ul, html[dir="rtl"] .news-article-content 
     box-shadow: 0 8px 30px rgba(18,18,20,.1);
   }
   .site-header.is-compact .nav-bar { background: #fff; }
-  .site-header.is-compact .menu-toggle { color: var(--ink); background: rgba(18,18,20,.06); }
+  .site-header.is-compact .menu-toggle,
+  .site-header.is-compact .mobile-header-search-trigger { color: var(--ink); background: rgba(18,18,20,.06); }
   .site-header.is-compact .menu-toggle span { background: var(--ink); }
   .site-header.is-open { animation: none; transform: none; }
   .store-main:not(.store-main--company) { padding-top: calc(var(--header-height) + var(--mobile-utility-h)); }

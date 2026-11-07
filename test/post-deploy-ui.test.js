@@ -34,7 +34,9 @@ test('router helpers strip and re-prefix locales for the same route', () => {
 });
 
 test('mobile header uses logo | controls | hamburger edges for LTR/RTL', () => {
-  assert.match(styles, /@media \(max-width:\s*900px\)[\s\S]{0,500}?grid-template-columns:\s*auto 1fr auto/);
+  assert.match(styles, /@media \(max-width:\s*900px\)[\s\S]{0,500}?grid-template-columns:\s*minmax\(0,\s*1fr\) auto auto/);
+  assert.match(styles, /\.nav-bar > \.mobile-header-search-trigger \{ grid-column:\s*2;/);
+  assert.match(styles, /\.nav-bar > \.menu-toggle \{ grid-column:\s*3;/);
   assert.match(header, /menu-toggle/);
   assert.match(header, /language-control--header/);
   assert.match(header, /nav-link--shop/);
