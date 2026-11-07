@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import { heroStageMotion, latchStageMode, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
+import { applyMobileUpHandoff, heroStageMotion, latchStageMode, mobileUpHandoff, restoreMobileUpLayout, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
 
 const MOBILE_UP_DECK_DEPTH = 8;
 
@@ -28,6 +28,9 @@ export function useHeroStageMotion(rootId, mobile = false) {
     let cleared = false;
     let observer = null;
     const observedStrips = new Set();
+    let mobileUpLayoutAnchor = null;
+    let lastLayoutRelease = null;
+    let mobileUpPoseHandoff = null;
 
     const direction = { y: window.scrollY, mode: 'down', pos: 0 };
     let shellTop = 0;
@@ -65,6 +68,9 @@ export function useHeroStageMotion(rootId, mobile = false) {
         stageEl.style.top = '';
         stageEl.style.height = '';
       }
+      mobileUpLayoutAnchor = null;
+      lastLayoutRelease = null;
+      mobileUpPoseHandoff = null;
       slides.forEach((slide) => {
         const el = slide.el;
         if (el) {
@@ -102,6 +108,8 @@ export function useHeroStageMotion(rootId, mobile = false) {
     };
 
     const measure = () => {
+      const previousStageHeight = stageHeight;
+      const previousPinHeight = pinHeight;
       // Read header offset only when needed (resize/media change)
       headerOffset = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 88;
       const viewportHeight = !desktop.matches && viewportProbe
@@ -115,6 +123,11 @@ export function useHeroStageMotion(rootId, mobile = false) {
         const divisor = window.innerWidth <= 760 ? 2 : 3;
         stageHeight = Math.max(160, Math.round((viewportHeight - headerOffset) / divisor));
         pinHeight = Math.max(stageHeight, Math.round(viewportHeight - headerOffset));
+      }
+      if (stageHeight !== previousStageHeight || pinHeight !== previousPinHeight) {
+        mobileUpLayoutAnchor = null;
+        lastLayoutRelease = null;
+        mobileUpPoseHandoff = null;
       }
 
       // Rebuild slides array and cache DOM references
@@ -189,6 +202,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
       if (!root.hasAttribute('data-hero-motion')) root.setAttribute('data-hero-motion', '');
       const delta = y - direction.y;
       const nextMode = stepHeroDirection(direction.mode, delta);
+      const previousMode = direction.mode;
 
       // Use cached geometry
       const span = geometryCache?.span ?? 0;
@@ -200,10 +214,11 @@ export function useHeroStageMotion(rootId, mobile = false) {
       if (nextMode === direction.mode) direction.mode = nextMode;
 
       const mobileUp = !desktop.matches && direction.mode === 'up';
+      const mobileShowcase = rootId === 'showcases' && mobile && !desktop.matches;
       if (mobileUp && !root.hasAttribute('data-mobile-hero-up')) root.setAttribute('data-mobile-hero-up', '');
       else if (!mobileUp && root.hasAttribute('data-mobile-hero-up')) root.removeAttribute('data-mobile-hero-up');
 
-      const motion = heroStageMotion({
+      let motion = heroStageMotion({
         slides,
         local,
         stageHeight,
@@ -211,6 +226,15 @@ export function useHeroStageMotion(rootId, mobile = false) {
         geometry: geometryCache,
         upDeckDepth: desktop.matches ? undefined : MOBILE_UP_DECK_DEPTH,
       });
+      if (mobileShowcase && mobileUp && previousMode !== 'up') {
+        const downPose = heroStageMotion({ slides, local, stageHeight, mode: 'down', geometry: geometryCache, motionPurpose: 'handoff-reference' });
+        mobileUpPoseHandoff = mobileUpHandoff(slides, downPose, motion, local, stageHeight, geometryCache);
+      } else if (!mobileShowcase || !mobileUp) {
+        mobileUpPoseHandoff = null;
+      }
+      if (mobileShowcase && mobileUp) {
+        motion = applyMobileUpHandoff(motion, slides, mobileUpPoseHandoff, local);
+      }
       const release = stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset), direction.mode, geometryCache, motion);
       // The UP deck can expose a different number of clipped banner slices
       // from one frame to the next. Its visual pose must not resize the sticky
@@ -218,9 +242,19 @@ export function useHeroStageMotion(rootId, mobile = false) {
       // Use the unchanged DOWN layout mapping at the same scroll position so
       // document geometry stays path-independent while UP poses keep their
       // existing motion model.
-      const layoutRelease = rootId === 'showcases' && mobile && !desktop.matches && mobileUp
+      if (mobileShowcase && delta < 0 && !mobileUpLayoutAnchor) {
+        const previousLocal = local - delta;
+        const previous = lastLayoutRelease || release;
+        mobileUpLayoutAnchor = { local: previousLocal, shellHeight: previous.shellHeight, boxHeight: previous.boxHeight };
+      }
+      if (!mobileShowcase || (!mobileUp && delta > 0)) mobileUpLayoutAnchor = null;
+
+      const downLayout = mobileUp
         ? stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset), 'down', geometryCache)
         : release;
+      const layoutRelease = mobileShowcase && mobileUpLayoutAnchor
+        ? restoreMobileUpLayout(downLayout, mobileUpLayoutAnchor, local, pinHeight)
+        : downLayout;
 
       if (shellEl && stageEl) {
         const nextSpan = `${layoutRelease.shellHeight}px`;
@@ -231,6 +265,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
         const nextBox = `${layoutRelease.boxHeight}px`;
         if (stageEl.style.height !== nextBox) stageEl.style.height = nextBox;
       }
+      lastLayoutRelease = layoutRelease;
 
       direction.pos = pos;
       direction.y = y;

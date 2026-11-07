@@ -148,6 +148,65 @@ export function stageReleaseBox(slides, stageHeight, pinHeight, local, mode = 'd
   return { span, lastLength, atEnd: false, boxHeight, shellHeight };
 }
 
+/** Restore the mobile UP page box over scroll distance after the terminal release. */
+export function restoreMobileUpLayout(release, anchor, local, pinHeight) {
+  if (!release || !anchor || pinHeight <= 0) return release;
+  const boxDistance = Math.max(0, pinHeight - anchor.boxHeight);
+  const shellDistance = Math.max(0, release.span + pinHeight - anchor.shellHeight);
+  const restoreDistance = Math.max(1, boxDistance, shellDistance);
+  const progress = clamp01((anchor.local - local) / restoreDistance);
+  return {
+    ...release,
+    boxHeight: roundPx(anchor.boxHeight + (pinHeight - anchor.boxHeight) * progress),
+    shellHeight: roundPx(anchor.shellHeight + (release.span + pinHeight - anchor.shellHeight) * progress),
+  };
+}
+
+/**
+ * Capture the displacement needed to make the first mobile UP-deck frame
+ * continue from the same active banner pose as the DOWN frame at that scroll
+ * position. The offset expires at the preceding full-bleed hero boundary.
+ */
+export function mobileUpHandoff(slides, downPose, upPose, local, stageHeight, geometry) {
+  if (!Array.isArray(slides) || !Array.isArray(downPose) || !Array.isArray(upPose) || !geometry) return null;
+  const active = slides.reduce((best, slide, index) => {
+    if (slide.kind !== 'hero') return best;
+    const pose = downPose[index];
+    if (!pose || pose.hidden || pose.y >= stageHeight || pose.y + stageHeight <= 0) return best;
+    const candidateUp = upPose[index];
+    if (!candidateUp || candidateUp.hidden || candidateUp.z <= 1) return best;
+    if (!best || pose.z > downPose[best.index].z) return { index };
+    return best;
+  }, null);
+  if (!active) return null;
+  const from = downPose[active.index];
+  const to = upPose[active.index];
+  let endLocal = 0;
+  slides.forEach((slide, index) => {
+    if (slide.kind === 'hero' && index < active.index && geometry.offsets[index] < local) {
+      endLocal = geometry.offsets[index];
+    }
+  });
+  if (local <= endLocal) return null;
+  return { index: active.index, offset: from.y - to.y, startLocal: local, endLocal };
+}
+
+/** Apply a scroll-linked, endpoint-preserving offset during the mobile UP handoff. */
+export function applyMobileUpHandoff(motion, slides, handoff, local) {
+  if (!handoff || !Array.isArray(motion) || !Array.isArray(slides)) return motion;
+  const distance = handoff.startLocal - handoff.endLocal;
+  if (distance <= 0) return motion;
+  const progress = clamp01((handoff.startLocal - local) / distance);
+  const eased = progress * progress * (3 - 2 * progress);
+  const offset = roundPx(handoff.offset * (1 - eased));
+  if (!offset) return motion;
+  return motion.map((pose, index) => (
+    slides[index]?.kind === 'hero' && pose && pose.z > 1 && !pose.hidden
+      ? { ...pose, y: pose.y + offset }
+      : pose
+  ));
+}
+
 /** Slide index plus progress through that slide. Hero indexes stay the equal-slot positions the deck uses. */
 export function stageSlidePos(slides, local, stageHeight, cachedGeometry) {
   if (!Array.isArray(slides) || slides.length === 0 || stageHeight <= 0) return 0;
@@ -314,7 +373,15 @@ function upDeck(slides, travel, stageHeight, depth = Infinity) {
   const firstOlder = Math.max(0, upperK - 1 - olderCount);
   const older = heroes.slice(firstOlder, upperK - 1);
   const nearestVisible = Math.min(stageHeight, distPx / span);
-  const olderVisible = Math.min(HERO_SLICE, nearestVisible);
+  // In the bounded mobile deck, the available reveal distance belongs to the
+  // whole historical stack. Giving every slice the full distance multiplies
+  // the incoming banner's travel by the number of visible slices at the first
+  // DOWN→UP handoff. Distribute that distance across the window; at the full
+  // stage endpoint each slice still reaches its original HERO_SLICE size.
+  const olderVisible = Math.min(
+    HERO_SLICE,
+    Number.isFinite(depth) && older.length > 0 ? nearestVisible / older.length : nearestVisible,
+  );
   const grow = clamp01((nearestVisible - HERO_SLICE) / (stageHeight - HERO_SLICE));
   const shift = -older.length * STEP * grow;
   const lift = HERO_SLICE_OVERLAP * grow;

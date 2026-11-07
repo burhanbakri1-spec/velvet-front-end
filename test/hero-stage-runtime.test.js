@@ -33,7 +33,7 @@ function mount(width = 375, reduced = false, heroCount = 1) {
   stage.addEventListener=()=>{}; stage.removeEventListener=()=>{};
   const context = {
     ...math,
-    heroStageMotion(input) { motionInputs.push(input); return math.heroStageMotion(input); },
+    heroStageMotion(input) { if (input.motionPurpose !== 'handoff-reference') motionInputs.push(input); return math.heroStageMotion(input); },
     useRef: current => ({current}),
     useLayoutEffect(effect) { const cleanup=effect(); if(cleanup) cleanups.push(cleanup); },
     document: { getElementById: () => root, createElement:()=>probe, documentElement: {}, body:{classList:classes()} },
@@ -141,13 +141,14 @@ test('mobile UP changes the local shell length while DOWN and desktop keep the o
  }
 });
 
-test('mobile UP keeps shell and sticky-stage geometry on the unchanged DOWN scroll mapping', () => {
+test('mobile UP starts from the DOWN layout and restores it over scroll distance', () => {
  const width=390,h=370,pin=740,stage=mount(width,false,12);
  const slides=Array.from({length:24},(_,i)=>i%2?{kind:'strip',height:240}:{kind:'hero'});
  const geometry=math.stageGeometry(slides,h),base=928+geometry.offsets[22];
  const assertLayoutAt=(y)=>{
   const local=y-928;
-  const expected=math.stageReleaseBox(slides,h,pin,local,'down',geometry);
+  const down=math.stageReleaseBox(slides,h,pin,local,'down',geometry);
+  const expected=math.restoreMobileUpLayout(down,{local:geometry.offsets[22],shellHeight:math.stageReleaseBox(slides,h,pin,geometry.offsets[22],'down',geometry).shellHeight,boxHeight:math.stageReleaseBox(slides,h,pin,geometry.offsets[22],'down',geometry).boxHeight},local,pin);
   assert.equal(stage.root.hasAttribute('data-mobile-hero-up'),true);
   assert.equal(stage.shell.style.getPropertyValue('--mobile-up-stage-span'),`${expected.shellHeight}px`);
   assert.equal(stage.stage.style.height,`${expected.boxHeight}px`);
@@ -164,6 +165,71 @@ test('mobile UP keeps shell and sticky-stage geometry on the unchanged DOWN scro
  for(const retreat of [50,130,210,290,370]){
   stage.scroll(base-retreat);stage.flush();assertLayoutAt(base-retreat);
  }
+ stage.dispose();
+});
+
+test('mobile wheel-up restores released page geometry without a terminal jump', () => {
+ const width=390,h=370,pin=740,stage=mount(width,false,12);
+ const slides=Array.from({length:24},(_,i)=>i%2?{kind:'strip',height:240}:{kind:'hero'});
+ const geometry=math.stageGeometry(slides,h),start=928+geometry.span-50;
+ stage.scroll(start);stage.flush();
+ const before=math.stageReleaseBox(slides,h,pin,geometry.span-50,'down',geometry);
+ const anchor={local:geometry.span-50,shellHeight:before.shellHeight,boxHeight:before.boxHeight};
+ const results=[];
+ for(const retreat of [120,240,360,480]){
+  const local=geometry.span-50-retreat;
+  const release=math.stageReleaseBox(slides,h,pin,local,'down',geometry);
+  const expected=math.restoreMobileUpLayout(release,anchor,local,pin);
+  stage.scroll(928+local);stage.flush();
+  const property=stage.root.hasAttribute('data-mobile-hero-up')?'--mobile-up-stage-span':'--hero-stage-span';
+  results.push({shell:Number.parseFloat(stage.shell.style.getPropertyValue(property)),box:Number.parseFloat(stage.stage.style.height),expected});
+ }
+ assert.ok(results.every(entry=>Math.abs(entry.shell-entry.expected.shellHeight)<=1&&Math.abs(entry.box-entry.expected.boxHeight)<=1));
+ assert.ok(results.every((entry,index)=>index===0||entry.shell-results[index-1].shell<140),'restoring shell height must track the 120px scroll input without a terminal jump');
+ stage.dispose();
+});
+
+test('mobile UP restores the sticky viewport at the remaining released-height distance', () => {
+ const pin=756,release={span:5447,shellHeight:5817,boxHeight:386};
+ const anchor={local:5447,shellHeight:5817,boxHeight:386};
+ const atStart=math.restoreMobileUpLayout(release,anchor,anchor.local,pin);
+ assert.equal(atStart.boxHeight,anchor.boxHeight);
+ assert.equal(atStart.shellHeight,anchor.shellHeight);
+
+ for(const retreat of [60,120,240,369]){
+  const restored=math.restoreMobileUpLayout(release,anchor,anchor.local-retreat,pin);
+  const progress=retreat/386;
+  assert.equal(restored.boxHeight,Math.round(anchor.boxHeight+(pin-anchor.boxHeight)*progress));
+  assert.equal(restored.shellHeight,Math.round(anchor.shellHeight+(release.span+pin-anchor.shellHeight)*progress));
+ }
+
+ const complete=math.restoreMobileUpLayout(release,anchor,anchor.local-386,pin);
+ assert.equal(complete.boxHeight,pin);
+ assert.equal(complete.shellHeight,release.span+pin);
+});
+
+test('mobile reverse layout remains stable while the direction latch is still DOWN', () => {
+ const width=390,h=370,pin=740,stage=mount(width,false,12);
+ const slides=Array.from({length:24},(_,i)=>i%2?{kind:'strip',height:240}:{kind:'hero'});
+ const geometry=math.stageGeometry(slides,h);
+ const y=928+geometry.offsets[21]+120;
+ stage.scroll(y);stage.flush();
+ assert.equal(stage.root.hasAttribute('data-mobile-hero-up'),false);
+
+ stage.scroll(y-20);stage.flush();
+ assert.equal(stage.root.hasAttribute('data-mobile-hero-up'),false,'the latch waits for the preceding hero boundary');
+ const anchoredShell=stage.shell.style.getPropertyValue('--hero-stage-span');
+ const anchoredBox=stage.stage.style.height;
+
+ stage.scroll(y-20);stage.flush();
+ assert.equal(stage.shell.style.getPropertyValue('--hero-stage-span'),anchoredShell,'the same-position follow-up frame must not revert the release interpolation');
+ assert.equal(stage.stage.style.height,anchoredBox,'the sticky box must not jump when delta becomes zero');
+
+ stage.scroll(y+10);stage.flush();
+ assert.equal(stage.root.hasAttribute('data-mobile-hero-up'),false);
+ const local=y+10-928;
+ const expected=math.stageReleaseBox(slides,h,pin,local,'down',geometry);
+ assert.equal(stage.shell.style.getPropertyValue('--hero-stage-span'),`${expected.shellHeight}px`,'DOWN layout is restored after the user reverses direction');
  stage.dispose();
 });
 

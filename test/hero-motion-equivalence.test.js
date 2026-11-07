@@ -39,6 +39,50 @@ test('down-stage endpoints and the multi-hero upward deck match the approved mot
  assert.equal(createHash('sha256').update(JSON.stringify(result)).digest('hex'), '1922904b9470caa1307f646f87ca590adeae906d43f111004bf79c84b4d10075');
 });
 
+test('bounded mobile UP reveal distance is shared across historical banner slices', () => {
+ const stageHeight=386;
+ const slides=Array.from({length:24},(_,i)=>i%2?{kind:'strip',height:240}:{kind:'hero'});
+ const geometry=motion.stageGeometry(slides,stageHeight);
+ const upper=22,lower=20;
+ const nearUpper=geometry.offsets[upper]-120;
+ const mobile=motion.heroStageMotion({slides,local:nearUpper,stageHeight,mode:'up',geometry,upDeckDepth:8});
+ const fullDeck=motion.heroStageMotion({slides,local:nearUpper,stageHeight,mode:'up',geometry});
+ const visible = (pose) => (pose.z <= 1 && pose.y >= stageHeight)
+  ? 0
+  : Math.max(0, stageHeight - pose.clipTop - pose.clipBottom);
+ const historical=mobile.filter((pose)=>pose.z>=10&&pose.z<40);
+ const fullHistorical=fullDeck.filter((pose)=>pose.z>=10&&pose.z<40);
+ const visibleTotal=historical.reduce((sum,pose)=>sum+visible(pose),0);
+ const fullVisibleTotal=fullHistorical.reduce((sum,pose)=>sum+visible(pose),0);
+ assert.ok(visibleTotal < fullVisibleTotal/2,`mobile historical slice reveal ${visibleTotal}px must not multiply one wheel handoff across the entire stack`);
+
+ const endpoint=motion.heroStageMotion({slides,local:geometry.offsets[upper],stageHeight,mode:'up',geometry,upDeckDepth:8});
+ const endpointFull=motion.heroStageMotion({slides,local:geometry.offsets[upper],stageHeight,mode:'up',geometry});
+ assert.deepEqual(endpoint,endpointFull,'full-bleed stage endpoint remains unchanged');
+});
+
+test('mobile UP handoff preserves the current banner pose and rejoins the original endpoint', () => {
+ const stageHeight=386;
+ const slides=Array.from({length:24},(_,i)=>i%2?{kind:'strip',height:240}:{kind:'hero'});
+ const geometry=motion.stageGeometry(slides,stageHeight);
+ const local=6540;
+ const down=motion.heroStageMotion({slides,local,stageHeight,mode:'down',geometry});
+ const up=motion.heroStageMotion({slides,local,stageHeight,mode:'up',geometry,upDeckDepth:8});
+ const handoff=motion.mobileUpHandoff(slides,down,up,local,stageHeight,geometry);
+ assert.ok(handoff,'the current visible hero should be shared by both poses');
+
+ const aligned=motion.applyMobileUpHandoff(up,slides,handoff,local);
+ assert.equal(aligned[handoff.index].y,down[handoff.index].y,'the first UP frame must continue from the current DOWN banner position');
+ assert.deepEqual(aligned.map(pose=>[pose.clipTop,pose.clipBottom,pose.z]),up.map(pose=>[pose.clipTop,pose.clipBottom,pose.z]),'handoff preserves deck clipping and stacking');
+
+ const middleLocal=(handoff.startLocal+handoff.endLocal)/2;
+ const middle=motion.applyMobileUpHandoff(up,slides,handoff,middleLocal);
+ assert.ok(Math.abs(middle[handoff.index].y-up[handoff.index].y)<Math.abs(handoff.offset),'the correction must decay with upward scroll input');
+ const endpoint=motion.heroStageMotion({slides,local:handoff.endLocal,stageHeight,mode:'up',geometry,upDeckDepth:8});
+ const endpointAligned=motion.applyMobileUpHandoff(endpoint,slides,handoff,handoff.endLocal);
+ assert.deepEqual(endpointAligned,endpoint,'the original full-bleed endpoint is unchanged');
+});
+
 test('representative normalized progress poses preserve DOM-facing styles in both directions', () => {
  const result=[];
  for (const stageHeight of [370,812]) {
