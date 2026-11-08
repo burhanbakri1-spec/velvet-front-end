@@ -4132,6 +4132,117 @@ html[dir="rtl"] .shop-filter-column__head h3 { letter-spacing: 0; text-transform
 .shop-empty__actions { display: flex; justify-content: center; gap: 1.2rem; }
 .shop-empty__actions button { border: 0; background: transparent; color: var(--red); font: inherit; font-weight: 700; cursor: pointer; border-bottom: 1px solid; padding: 0 0 2px; }
 
+/* Shop by Age — playful, grown-up toy-store details in the existing Velvet palette. */
+.age-groups {
+  padding: clamp(2.75rem, 5.2vw, 4.75rem) max(1.25rem, calc((100vw - 1320px) / 2));
+  scroll-margin-top: 6rem;
+  color: var(--ink, #171717);
+  background: #f6f5f1;
+}
+.age-groups__inner { max-width: 1320px; margin: 0 auto; }
+.age-groups__header { max-width: 700px; margin: 0 auto clamp(1.75rem, 3vw, 2.5rem); text-align: center; }
+.age-groups__eyebrow,
+.age-browse-header > p { margin: 0 0 .55rem; color: #a65e46; font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.age-groups__header h2 { margin: 0; font-size: clamp(2rem, 3.7vw, 3.2rem); line-height: 1.05; letter-spacing: -.045em; }
+.age-groups__header > p:last-child { max-width: 38rem; margin: .75rem auto 0; color: #65615e; font-size: clamp(.94rem, 1.35vw, 1.05rem); line-height: 1.6; }
+.age-groups__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(.75rem, 1.45vw, 1.25rem); }
+.age-group-card {
+  --age-card-bg: #f1d9c8;
+  --age-card-accent: #944a32;
+  position: relative;
+  display: flex;
+  min-height: clamp(218px, 18vw, 260px);
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: clamp(1.1rem, 1.8vw, 1.6rem);
+  border: 1px solid color-mix(in srgb, var(--age-card-accent) 13%, transparent);
+  border-radius: 16px;
+  color: var(--ink, #171717);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--age-card-bg) 89%, white), var(--age-card-bg));
+  text-decoration: none;
+  transition: transform .2s cubic-bezier(.22,1,.36,1), box-shadow .2s ease, border-color .2s ease;
+}
+.age-group-card--2 { --age-card-bg: #e8ebd5; --age-card-accent: #566b38; }
+.age-group-card--3 { --age-card-bg: #d5e9e7; --age-card-accent: #236d70; }
+.age-group-card--4 { --age-card-bg: #e5d9ee; --age-card-accent: #705080; }
+.age-group-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--age-card-accent) 38%, transparent); box-shadow: 0 12px 26px rgba(32, 28, 23, .09); }
+.age-group-card:focus-visible { outline: 3px solid var(--age-card-accent); outline-offset: 3px; }
+.age-group-card__index { display: inline-flex; align-self: flex-start; align-items: center; gap: .45rem; color: var(--age-card-accent); font-size: .68rem; font-weight: 800; letter-spacing: .12em; }
+.age-group-card__index::before { width: 18px; height: 2px; background: currentColor; content: ''; }
+.age-group-card__toy-mark { position: absolute; inset-block-start: 1rem; inset-inline-end: 1rem; display: block; width: 68px; height: 60px; color: var(--age-card-accent); opacity: .84; pointer-events: none; }
+.age-group-card__toy-mark i { position: absolute; display: block; }
+/* Stacked blocks */
+.age-group-card__toy-mark--1 i:nth-child(1) { inset-block-end: 2px; inset-inline-start: 2px; width: 28px; height: 28px; border-radius: 8px 8px 4px 8px; background: currentColor; }
+.age-group-card__toy-mark--1 i:nth-child(2) { inset-block-end: 2px; inset-inline-start: 33px; width: 25px; height: 25px; border: 2px solid currentColor; border-radius: 50%; }
+.age-group-card__toy-mark--1 i:nth-child(3) { inset-block-start: 2px; inset-inline-start: 23px; width: 24px; height: 24px; border-radius: 6px; background: color-mix(in srgb, currentColor 24%, transparent); transform: rotate(10deg); }
+/* Stacking rings */
+.age-group-card__toy-mark--2 i { inset-block-start: 4px; width: 29px; height: 29px; border: 6px solid currentColor; border-radius: 50%; }
+.age-group-card__toy-mark--2 i:nth-child(1) { inset-inline-start: 3px; opacity: .55; }
+.age-group-card__toy-mark--2 i:nth-child(2) { inset-inline-start: 21px; opacity: .8; }
+.age-group-card__toy-mark--2 i:nth-child(3) { inset-inline-start: 39px; opacity: 1; }
+/* Puzzle-like rounded pieces */
+.age-group-card__toy-mark--3 i:nth-child(1) { inset-block-start: 3px; inset-inline-start: 4px; width: 31px; height: 31px; border-radius: 8px 14px 8px 8px; background: currentColor; }
+.age-group-card__toy-mark--3 i:nth-child(1)::after { position: absolute; inset-block-start: 8px; inset-inline-end: -8px; width: 12px; height: 12px; border-radius: 50%; background: var(--age-card-bg); content: ''; }
+.age-group-card__toy-mark--3 i:nth-child(2) { inset-block-end: 2px; inset-inline-start: 28px; width: 31px; height: 28px; border: 2px solid currentColor; border-radius: 8px 8px 8px 14px; }
+.age-group-card__toy-mark--3 i:nth-child(3) { inset-block-start: 4px; inset-inline-end: 2px; width: 12px; height: 12px; border-radius: 50%; background: currentColor; opacity: .45; }
+/* Simple shape sorter */
+.age-group-card__toy-mark--4 i:nth-child(1) { inset-block-start: 2px; inset-inline-start: 4px; width: 24px; height: 24px; border-radius: 6px; background: currentColor; transform: rotate(12deg); }
+.age-group-card__toy-mark--4 i:nth-child(2) { inset-block-end: 2px; inset-inline-start: 5px; width: 0; height: 0; border-inline-start: 17px solid transparent; border-inline-end: 17px solid transparent; border-bottom: 30px solid color-mix(in srgb, currentColor 75%, transparent); }
+.age-group-card__toy-mark--4 i:nth-child(3) { inset-block-start: 8px; inset-inline-end: 4px; width: 25px; height: 25px; border: 5px solid currentColor; border-radius: 50%; opacity: .7; }
+.age-group-card__range { display: flex; align-items: baseline; gap: .48rem; margin-block: auto .8rem; color: var(--age-card-accent); }
+.age-group-card__range strong { direction: ltr; unicode-bidi: isolate; font-size: clamp(2.8rem, 4.2vw, 4rem); font-weight: 750; line-height: .95; letter-spacing: -.075em; font-variant-numeric: tabular-nums; }
+.age-group-card__range small { font-size: .9rem; font-weight: 650; line-height: 1.2; }
+html[lang="ar"] .age-group-card__range strong { letter-spacing: -.035em; }
+.age-group-card__action { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding-top: .7rem; border-top: 1px solid color-mix(in srgb, var(--age-card-accent) 25%, transparent); color: var(--age-card-accent); font-size: .8rem; font-weight: 700; }
+.age-group-card__action b { display: grid; width: 30px; height: 30px; place-items: center; border: 1px solid color-mix(in srgb, var(--age-card-accent) 30%, transparent); border-radius: 50%; font-size: 1rem; font-weight: 500; transition: color .2s ease, background .2s ease, transform .2s ease; }
+.age-group-card:hover .age-group-card__action b { transform: translateX(.1rem); color: var(--age-card-bg); background: var(--age-card-accent); }
+.age-browse-page { min-height: 0; }
+.age-browse-page--index { padding-bottom: 0; }
+.age-browse-page--index .age-groups { padding-inline: max(1.25rem, calc((100vw - 1320px) / 2)); }
+.age-browse-header { max-width: 1320px; margin: 0 auto .9rem; padding: clamp(.9rem, 2vw, 1.5rem) 0 0; }
+.age-browse-header h1 { margin: 0; font-size: clamp(1.85rem, 3vw, 2.85rem); line-height: 1.08; letter-spacing: -.04em; }
+.age-browse-header > span { display: block; margin-top: .45rem; color: #65615e; font-size: .94rem; line-height: 1.5; }
+.age-browse-page[data-age-route] .shop-filters { margin-top: .65rem; }
+.age-browse-page[data-age-route] .shop-filter-tools { padding-block: 2px; }
+.age-browse-page[data-age-route] .shop-content { margin-top: .55rem; }
+
+@media (max-width: 960px) {
+  .age-groups__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .age-group-card { min-height: 190px; }
+}
+@media (max-width: 760px) {
+  .age-groups { padding: 2.6rem 1rem; }
+  .age-groups__header { margin-bottom: 1.4rem; }
+  .age-groups__header h2 { font-size: clamp(1.9rem, 7vw, 2.4rem); }
+  .age-groups__header > p:last-child { margin-top: .55rem; font-size: .92rem; }
+  .age-groups__grid { gap: .65rem; }
+  .age-group-card { min-height: 158px; padding: .9rem; border-radius: 14px; }
+  .age-group-card__toy-mark { inset-block-start: .65rem; inset-inline-end: .65rem; transform: scale(.72); transform-origin: top right; }
+  html[dir="rtl"] .age-group-card__toy-mark { transform-origin: top left; }
+  .age-group-card__index { font-size: .6rem; }
+  .age-group-card__index::before { width: 13px; }
+  .age-group-card__range { gap: .35rem; margin-bottom: .6rem; }
+  .age-group-card__range strong { font-size: clamp(2rem, 8vw, 2.65rem); }
+  .age-group-card__range small { font-size: .72rem; }
+  .age-group-card__action { gap: .3rem; padding-top: .55rem; font-size: .68rem; }
+  .age-group-card__action b { width: 26px; height: 26px; flex: 0 0 26px; }
+  .age-browse-page--index .age-groups { padding-inline: 1rem; }
+  .age-browse-page.shop-page { padding-top: .65rem; }
+  .age-browse-header { margin-bottom: .55rem; padding-top: .75rem; }
+  .age-browse-header > p { margin-bottom: .35rem; font-size: .62rem; }
+  .age-browse-header h1 { font-size: clamp(1.7rem, 7vw, 2.15rem); }
+  .age-browse-header > span { margin-top: .35rem; font-size: .85rem; }
+  .age-browse-page[data-age-route] .shop-filters { margin-top: .45rem; }
+  .age-browse-page[data-age-route] .shop-content { margin-top: .35rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .age-group-card,
+  .age-group-card__action b { transition: none; }
+  .age-group-card:hover,
+  .age-group-card:hover .age-group-card__action b { transform: none; }
+}
+
 /* Mobile filters drawer */
 .shop-drawer-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(18,18,20,.4); opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
 .shop-drawer-overlay.is-open { opacity: 1; visibility: visible; }

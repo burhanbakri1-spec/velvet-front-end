@@ -28,16 +28,24 @@ export function shopHref(state, locale) {
   return localizePath(`/products${query ? `?${query}` : ''}`, locale);
 }
 
-export function useShopState() {
+export function useShopState({ basePath = '/products', fixedAgeId = '' } = {}) {
   const { location, navigate } = useRouter();
   const { locale } = useI18n();
 
-  const state = useMemo(() => sanitizeShopState(parseShopState(location.search)), [location.search]);
+  const state = useMemo(() => {
+    const parsed = sanitizeShopState(parseShopState(location.search));
+    return fixedAgeId ? { ...parsed, age: [fixedAgeId] } : parsed;
+  }, [fixedAgeId, location.search]);
 
   const go = useCallback((next, { replace = false, scroll = false } = {}) => {
-    const query = buildShopQuery(next);
-    navigate(localizePath(`/products${query ? `?${query}` : ''}`, locale), { replace, scroll });
-  }, [locale, navigate]);
+    const scoped = fixedAgeId ? { ...next, age: [fixedAgeId] } : next;
+    const query = buildShopQuery(scoped);
+    if (!fixedAgeId) {
+      navigate(localizePath(`/products${query ? `?${query}` : ''}`, locale), { replace, scroll });
+      return;
+    }
+    navigate(localizePath(`${basePath}${query ? `?${query}` : ''}`, locale), { replace, scroll });
+  }, [basePath, fixedAgeId, locale, navigate]);
 
   const select = useCallback((key, value) => go(selectPathKey(state, key, value)), [go, state]);
   const toggle = useCallback((key, id) => go(toggleMultiKey(state, key, id)), [go, state]);

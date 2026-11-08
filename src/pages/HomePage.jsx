@@ -6,6 +6,7 @@ import IntroSection from '../components/IntroSection';
 import BrandShowcase from '../components/BrandShowcase';
 import { useHeroStageMotion } from '../components/useHeroStageMotion';
 import BrandProductStrip from '../components/BrandProductStrip';
+import AgeGroupCards from '../components/AgeGroupCards';
 import CareersSection from '../components/CareersSection';
 import StoreReviewsSection from '../components/StoreReviewsSection';
 import Footer from '../components/Footer';
@@ -43,6 +44,7 @@ export default function HomePage() {
       <main>
         <Hero introActive={introActive} />
         <IntroSection />
+        <AgeGroupCards />
         <section id="showcases" aria-label={copy.home.worlds}>
           <div className="hero-stage-shell">
             <div className="hero-stage">

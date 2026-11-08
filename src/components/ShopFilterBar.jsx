@@ -20,6 +20,7 @@ const FILTER_COLUMNS = [
   { key: 'occasion', group: 'occasion', labelKey: 'occasion', variant: 'check' },
   { key: 'shopping', group: 'shopping', labelKey: 'quickShop', variant: 'chip' },
 ];
+const EMPTY_HIDDEN_GROUPS = Object.freeze([]);
 
 function FilterColumn({ column, selected, options, emptyHint, onReset, onToggle, resetLabel }) {
   const hasSelection = selected.length > 0;
@@ -164,11 +165,16 @@ export default function ShopFilterBar({
   onSearchChange,
   gridCols,
   onGridColsChange,
+  hiddenFilterGroups = EMPTY_HIDDEN_GROUPS,
 }) {
   const { copy, locale } = useI18n();
   const s = copy.shop;
   const [open, setOpen] = useState(false);
-  const tags = useMemo(() => getActiveFilterTags(state, locale), [state, locale]);
+  const hiddenGroups = useMemo(() => new Set(hiddenFilterGroups), [hiddenFilterGroups]);
+  const tags = useMemo(
+    () => getActiveFilterTags(state, locale).filter((tag) => !hiddenGroups.has(tag.groupKey)),
+    [hiddenGroups, state, locale],
+  );
   const hierarchy = useMemo(() => getFacetHierarchyOptions(state), [state]);
   const attributeOptions = useMemo(() => ({
     age: getAttributeFacetOptions(state, 'age', locale),
@@ -305,7 +311,7 @@ export default function ShopFilterBar({
             })}
           </div>
           <div className="shop-filter-panel__groups shop-filter-panel__groups--attrs">
-            {FILTER_COLUMNS.map((column) => {
+            {FILTER_COLUMNS.filter((column) => !hiddenGroups.has(column.key)).map((column) => {
               const selected = state[column.key] || [];
               return (
                 <FilterColumn

@@ -6,6 +6,7 @@ export const translations = {
     aboutNav: { about: 'About', news: 'News', contact: 'Contact Us' },
     home: {
       feature: 'VELVET feature video', play: 'Play film', pause: 'Pause film', worlds: 'Product showcases',
+      shopByAge: 'Shop by Age', ageBuyerTitle: 'Toys for Every Age', ageEyebrow: 'Find toys by age', ageIntro: 'Choose a child’s age to find toys that fit.', ageExplore: 'Shop this age', agePageIntro: 'Browse toys tagged for this age group.', ageUnit: 'years',
       introTitle: ['Reimagining play,', 'every day.'],
       introP1: 'We build bright, surprising worlds that invite everyone to get curious, make a mess, and play their own way.',
       introP2: 'From pocket-sized discoveries to big outdoor energy, our ideas begin with one question: what would make this moment more fun?',
@@ -184,6 +185,7 @@ export const translations = {
     aboutNav: { about: 'من نحن', news: 'الأخبار', contact: 'تواصل معنا' },
     home: {
       feature: 'فيديو VELVET الرئيسي', play: 'تشغيل الفيديو', pause: 'إيقاف الفيديو', worlds: 'عروض المنتجات',
+      shopByAge: 'تسوّق حسب عمر طفلك', ageBuyerTitle: 'ألعاب تناسب كل عمر', ageEyebrow: 'اختر حسب العمر', ageIntro: 'اختر عمر الطفل واكتشف ألعابًا تناسب مرحلته.', ageExplore: 'تسوّق حسب العمر', agePageIntro: 'تصفح الألعاب المصنفة لهذه الفئة العمرية.', ageUnit: 'سنوات',
       introTitle: ['نعيد ابتكار اللعب،', 'كل يوم.'],
       introP1: 'نصنع عوالم مبهجة ومفاجئة تدعو الجميع إلى الفضول والتجربة واللعب بطريقتهم الخاصة.',
       introP2: 'من الاكتشافات الصغيرة إلى مغامرات الهواء الطلق، تبدأ أفكارنا بسؤال واحد: كيف نجعل هذه اللحظة أكثر مرحاً؟',

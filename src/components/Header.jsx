@@ -314,6 +314,7 @@ export default function Header({ introActive, solid = false }) {
           </button>
           <Link className="nav-link" to="/contact">{copy.header.contact}</Link>
           <Link className="nav-link nav-link--shop" to={shopLink}>{copy.header.shop}</Link>
+          <Link className="nav-link nav-link--age" to="/shop-by-age">{copy.home.shopByAge}</Link>
         </nav>
 
         <div className="header-actions">
@@ -422,6 +423,7 @@ export default function Header({ introActive, solid = false }) {
               </button>
               <Link to="/contact" onClick={closeMobile}>{copy.header.contact}</Link>
               <Link to={shopLink} onClick={closeMobile}>{copy.header.shop}</Link>
+              <Link to="/shop-by-age" onClick={closeMobile}>{copy.home.shopByAge}</Link>
             </nav>
           </>
         )}

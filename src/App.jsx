@@ -17,6 +17,8 @@ import VlogsPage from './pages/VlogsPage';
 import CategoryPage from './pages/CategoryPage';
 import BrandPage from './pages/BrandPage';
 import BrandCategoryPage from './pages/BrandCategoryPage';
+import AgeBrowseIndexPage from './pages/AgeBrowseIndexPage';
+import AgeProductsPage from './pages/AgeProductsPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import AccountPage from './pages/AccountPage';
@@ -29,7 +31,8 @@ function RouteView() {
 
   useEffect(() => {
     const key = routePath === '/' ? 'home' : routePath.split('/')[1];
-    document.title = `${copy.meta[key] || copy.meta.site} | VELVET`;
+    const title = key === 'shop-by-age' ? copy.home.shopByAge : copy.meta[key];
+    document.title = `${title || copy.meta.site} | VELVET`;
   }, [copy, routePath]);
 
   // Push a GTM page_view after document.title has been updated.
@@ -67,6 +70,11 @@ function RouteView() {
   else if (routePath.startsWith('/categories/')) {
     const slug = decodeURIComponent(routePath.split('/').pop());
     page = <CategoryPage key={slug} slug={slug} />;
+  }
+  else if (routePath === '/shop-by-age') page = <AgeBrowseIndexPage />;
+  else if (routePath.startsWith('/shop-by-age/')) {
+    const ageId = decodeURIComponent(routePath.split('/').pop());
+    page = <AgeProductsPage key={ageId} ageId={ageId} />;
   }
   else if (routePath === '/products') page = <ProductsPage />;
   else if (routePath.startsWith('/products/')) {
