@@ -11,9 +11,9 @@ const brandPathOf = (product) => product?.velvetPath?.brandId || product?.brandI
 
 export function isStripVisibleProduct(product) {
   if (!product) return false;
-  if (product.active === false || product.visible === false) return false;
-  const status = String(product.status || '').toLowerCase();
-  if (status === 'archived' || status === 'hidden' || status === 'draft') return false;
+  if (product.active === false || product.visible === false || product.published === false || product.available === false) return false;
+  const status = String(product.status || '').trim().toLowerCase().replace(/[ _]+/g, '-');
+  if (['archived', 'hidden', 'draft', 'unpublished', 'pending', 'identity-pending', 'pending-identity', 'unavailable'].includes(status)) return false;
   return true;
 }
 
@@ -59,11 +59,29 @@ function orderPool(pool, requestedTier) {
 }
 
 export function selectBrandStripProducts(products, brandSlug, options = {}) {
-  const { limit = BRAND_STRIP_DEFAULT_LIMIT, mode = 'auto', priority = null } = options;
+  const {
+    limit = BRAND_STRIP_DEFAULT_LIMIT,
+    mode = 'auto',
+    priority = null,
+    categorySlug = '',
+    subcategorySlug = '',
+  } = options;
   if (!brandSlug) return [];
 
+  // Subcategory strips require the canonical complete taxonomy path. A
+  // brandId/categoryId fallback could leak unclassified or neighboring items.
+  if (subcategorySlug && !categorySlug) return [];
+  const scopedByTaxonomy = Boolean(categorySlug || subcategorySlug);
+
   const brandPool = (Array.isArray(products) ? products : []).filter(
-    (product) => isStripVisibleProduct(product) && brandPathOf(product) === brandSlug
+    (product) => {
+      if (!isStripVisibleProduct(product)) return false;
+      if (!scopedByTaxonomy) return brandPathOf(product) === brandSlug;
+      const path = product?.velvetPath;
+      return path?.brandId === brandSlug
+        && (!categorySlug || path.categoryId === categorySlug)
+        && (!subcategorySlug || path.subcategoryId === subcategorySlug);
+    }
   );
   // An explicit empty orderedIds list owns the strip and stays empty.
   // A list that names other brands does not hide this brand's own products.

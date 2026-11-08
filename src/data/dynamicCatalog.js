@@ -256,6 +256,11 @@ function buildProduct(raw, brandSlug, mainCategory, subSlug, index, apiUrl) {
   return {
     id: String(raw.id || `${brandSlug}-${index + 1}`),
     slug: String(raw.slug || ''),
+    active: raw.active,
+    visible: raw.visible,
+    published: raw.published,
+    available: raw.available,
+    status: raw.status,
     name: nameEn,
     nameAr,
     category: mainCategory?.name.en || '',

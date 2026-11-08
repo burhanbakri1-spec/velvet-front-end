@@ -186,7 +186,7 @@ test('auto-scroll marquee exists with duplicated groups, interaction pause and R
   assert.match(strip, /aria-hidden=\{index === 0 \? undefined : 'true'\}/);
   assert.match(strip, /is-paused/);
   assert.match(strip, /onPointerDown=\{pauseForInteraction\}/);
-  assert.match(strip, /onScroll=\{normalizeStripScroll\}/);
+  assert.match(strip, /onScroll=\{scopedBySubcategory \? undefined : normalizeStripScroll\}/);
   assert.match(strip, /'--strip-groups': stripGroups/);
 
   assert.match(styles, /@keyframes brand-strip-marquee \{/);

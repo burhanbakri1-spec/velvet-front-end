@@ -3,20 +3,32 @@ import { Link } from '../routing/Router';
 import { collectProductImages, getProductBadge, getProductName, isFeaturedBadgeLabel } from '../data/products';
 import { formatPrice } from '../data/currency';
 import { selectBrandStripProducts } from '../data/brandProductStrip';
-import { getHomePriority } from '../data/displayPriority';
+import { getHomePriority, getShopPriority } from '../data/displayPriority';
 import { getBrand, velvetProducts } from '../data/velvetCatalog';
 import { normalizeStripScroll, selectStripGroupCount } from '../hooks/stripScroll';
 import { useI18n } from '../i18n/I18nContext';
 
 const RESUME_DELAY_MS = 3200;
 
-export default function BrandProductStrip({ brandSlug, deckIndex, concealed = false }) {
+export default function BrandProductStrip({
+  brandSlug,
+  deckIndex,
+  concealed = false,
+  categorySlug = '',
+  subcategorySlug = '',
+  subcategoryName = '',
+}) {
   const { copy, locale } = useI18n();
   const arrow = locale === 'ar' ? '←' : '→';
   const source = velvetProducts;
+  const scopedBySubcategory = Boolean(categorySlug && subcategorySlug);
+  const priority = scopedBySubcategory ? getShopPriority(brandSlug) : getHomePriority(brandSlug);
   const products = useMemo(
-    () => selectBrandStripProducts(source, brandSlug, { priority: getHomePriority(brandSlug) }),
-    [source, brandSlug],
+    () => selectBrandStripProducts(source, brandSlug, {
+      priority,
+      ...(scopedBySubcategory ? { categorySlug, subcategorySlug } : {}),
+    }),
+    [source, brandSlug, categorySlug, subcategorySlug, scopedBySubcategory, priority],
   );
   const [paused, setPaused] = useState(false);
   const resumeTimerRef = useRef(null);
@@ -31,9 +43,12 @@ export default function BrandProductStrip({ brandSlug, deckIndex, concealed = fa
 
   if (!brandSlug || products.length === 0) return null;
 
-  const stripGroups = selectStripGroupCount(products.length);
+  const stripGroups = scopedBySubcategory ? 1 : selectStripGroupCount(products.length);
   const brandName = getBrand(brandSlug)?.name?.[locale] || '';
-  const viewAllTo = `/products?brand=${encodeURIComponent(brandSlug)}`;
+  const viewAllTo = scopedBySubcategory
+    ? `/products?brand=${encodeURIComponent(brandSlug)}&category=${encodeURIComponent(categorySlug)}&subcategory=${encodeURIComponent(subcategorySlug)}`
+    : `/products?brand=${encodeURIComponent(brandSlug)}`;
+  const sectionContext = subcategoryName || brandName;
 
   const renderCard = (product, focusable) => {
     const name = getProductName(product, locale);
@@ -74,7 +89,9 @@ export default function BrandProductStrip({ brandSlug, deckIndex, concealed = fa
     <section
       className={`brand-strip${concealed ? ' is-concealed' : ''}`}
       data-brand={brandSlug}
-      aria-label={brandName ? `${copy.home.featuredPicks} · ${brandName}` : copy.home.featuredPicks}
+      data-category={categorySlug || undefined}
+      data-subcategory={subcategorySlug || undefined}
+      aria-label={sectionContext ? `${copy.home.featuredPicks} · ${sectionContext}` : copy.home.featuredPicks}
       style={deckIndex == null ? undefined : { '--deck-index': deckIndex }}
     >
       <div className="brand-strip__head">
@@ -88,10 +105,10 @@ export default function BrandProductStrip({ brandSlug, deckIndex, concealed = fa
         className="brand-strip__viewport"
         onPointerDown={pauseForInteraction}
         onTouchStart={pauseForInteraction}
-        onScroll={normalizeStripScroll}
+        onScroll={scopedBySubcategory ? undefined : normalizeStripScroll}
       >
         <div
-          className={`brand-strip__track${paused ? ' is-paused' : ''}`}
+          className={`brand-strip__track${paused ? ' is-paused' : ''}${scopedBySubcategory ? ' is-subcategory' : ''}`}
           style={{ '--strip-groups': stripGroups }}
         >
           {Array.from({ length: stripGroups }, (_, index) => renderGroup(index))}

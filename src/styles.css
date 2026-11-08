@@ -814,6 +814,8 @@ html[lang="ar"] .brand-strip__all { letter-spacing: 0; text-transform: none; fon
   width: max-content;
   animation: brand-strip-marquee var(--strip-duration) linear infinite;
 }
+.brand-strip__track.is-subcategory { animation: none; }
+html[dir="rtl"] .brand-strip__track.is-subcategory { animation: none; }
 .brand-strip__group { display: flex; gap: var(--strip-gap); padding-inline-end: var(--strip-gap); }
 .brand-strip__viewport:focus-within .brand-strip__track,
 .brand-strip__track.is-paused { animation-play-state: paused; }

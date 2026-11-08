@@ -3,6 +3,7 @@ import { artwork } from '../data/products';
 import { filterProducts, getBrand, getCategory, getSubcategory } from '../data/velvetCatalog';
 import { getShopPriority, orderProductsByIds } from '../data/displayPriority';
 import BrandShowcase from '../components/BrandShowcase';
+import BrandProductStrip from '../components/BrandProductStrip';
 import CategoryProductShowcase from '../components/CategoryProductShowcase';
 import { useHeroStageMotion } from '../components/useHeroStageMotion';
 import PageNavigation from '../components/PageNavigation';
@@ -143,6 +144,13 @@ export default function BrandCategoryPage({ slug, categorySlug, subcategorySlug 
                         },
                       }}
                     />
+                    <BrandProductStrip
+                      brandSlug={slug}
+                      categorySlug={category.slug}
+                      subcategorySlug={sub.slug}
+                      subcategoryName={sub.name[locale]}
+                      deckIndex={index}
+                    />
                   </section>
                 ))}
               </div>
@@ -164,7 +172,7 @@ export default function BrandCategoryPage({ slug, categorySlug, subcategorySlug 
         </nav>
       )}
 
-      {products.length > 0 ? (
+      {(isSubMode || category.subs.length === 0) && (products.length > 0 ? (
         <CategoryProductShowcase
           key={isSubMode ? subcategory.slug : category.slug}
           category={active}
@@ -178,7 +186,7 @@ export default function BrandCategoryPage({ slug, categorySlug, subcategorySlug 
           <h2>{copy.category.empty}</h2>
           <Link to={localizePath(shopHref, locale)}>{copy.category.allProducts}</Link>
         </section>
-      )}
+      ))}
     </div>
   );
 }
