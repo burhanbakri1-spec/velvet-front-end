@@ -4139,6 +4139,7 @@ html[dir="rtl"] .shop-filter-column__head h3 { letter-spacing: 0; text-transform
   color: var(--ink, #171717);
   background: #f6f5f1;
 }
+#shop-by-age.age-groups { background: #fff; }
 .age-groups__inner { max-width: 1320px; margin: 0 auto; }
 .age-groups__header { max-width: 700px; margin: 0 auto clamp(1.75rem, 3vw, 2.5rem); text-align: center; }
 .age-groups__eyebrow,
