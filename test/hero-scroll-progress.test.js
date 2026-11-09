@@ -5,6 +5,7 @@ import {
   HERO_HOLD,
   HERO_SLICE,
   HERO_SLICE_OVERLAP,
+  activeHeroIndex,
   heroStageMotion,
   latchStageMode,
   stageGeometry,
@@ -71,6 +72,29 @@ test('down covers continuously through the same full-bleed stage endpoints', () 
   assert.equal(arrived.motion[2].y, stageHeight);
   assert.equal(arrived.motion[0].y, -stageHeight);
   assert.ok(Math.abs(before.motion[1].y - arrived.motion[1].y) <= 2);
+});
+
+test('active banner follows the largest visible area and resolves overlap by paint order', () => {
+  const list = [
+    { kind: 'hero', heroIndex: 0 },
+    { kind: 'strip', heroIndex: 0 },
+    { kind: 'hero', heroIndex: 1 },
+  ];
+  assert.equal(activeHeroIndex(list, [
+    { y: 0, clipTop: 0, clipBottom: 0, hidden: false, z: 2 },
+    { y: 812, clipTop: 0, clipBottom: 0, hidden: false, z: 1 },
+    { y: 500, clipTop: 0, clipBottom: 0, hidden: false, z: 4 },
+  ], stageHeight), 0);
+  assert.equal(activeHeroIndex(list, [
+    { y: -400, clipTop: 0, clipBottom: 0, hidden: false, z: 2 },
+    { y: 812, clipTop: 0, clipBottom: 0, hidden: false, z: 1 },
+    { y: 0, clipTop: 0, clipBottom: 0, hidden: false, z: 4 },
+  ], stageHeight), 1);
+  assert.equal(activeHeroIndex(list, [
+    { y: 0, clipTop: 0, clipBottom: 0, hidden: false, z: 30 },
+    { y: 812, clipTop: 0, clipBottom: 0, hidden: true, z: 1 },
+    { y: 0, clipTop: 0, clipBottom: 0, hidden: false, z: 40 },
+  ], stageHeight), 1, 'equal visible banners follow the frontmost layer');
 });
 
 test('a product strip moves continuously on its own height and a missing strip is skipped', () => {

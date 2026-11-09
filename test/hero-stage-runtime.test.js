@@ -14,6 +14,7 @@ function mount(width = 375, reduced = false, heroCount = 1) {
       setAttribute(key,value) { writes++; attributes.set(key,value); }, hasAttribute: key => attributes.has(key), removeAttribute(key) { attributes.delete(key); } };
   };
   const root=element(), shell=element(), stage=element(), hero=element(), strip=element(), section=element(), parent=element();
+  root.setAttribute('data-home-brand-deck', '');
   const probe=element();let smallViewportHeight=812,probeRemoved=false;
   probe.getBoundingClientRect=()=>{reads++;return {height:smallViewportHeight};};
   probe.remove=()=>{probeRemoved=true;};root.appendChild=()=>{};
@@ -49,7 +50,7 @@ function mount(width = 375, reduced = false, heroCount = 1) {
   const source=fs.readFileSync(new URL('../src/components/useHeroStageMotion.js',import.meta.url),'utf8').replace(/^import .*;\r?\n/gm,'').replace('export function useHeroStageMotion','function useHeroStageMotion');
   vm.runInNewContext(source+"\nuseHeroStageMotion('showcases',true);",context);
   const flush=()=>{const current=[...frames.values()];frames.clear();current.forEach(callback=>callback());};
-  return { root,shell,stage,strip,hero,frames,listeners,motionInputs,
+  return { root,shell,stage,strip,hero,sections,frames,listeners,motionInputs,
     get probeRemoved(){return probeRemoved;},
     resize(height,smallHeight=smallViewportHeight){viewportHeight=height;smallViewportHeight=smallHeight;listeners.get('resize')?.();},
     get reads(){return reads;},get writes(){return writes;},
@@ -60,6 +61,18 @@ function mount(width = 375, reduced = false, heroCount = 1) {
     dispose(){cleanups.forEach(fn=>fn());},observers,
   };
 }
+
+test('mobile home reversals scrub the measured banner sequence and keep one active brand', () => {
+ const home=mount(390,false,4);
+ home.scroll(1750);home.flush();
+ for(let y=1700;y>=1450&&!home.root.hasAttribute('data-mobile-hero-up');y-=50){home.scroll(y);home.flush();}
+ assert.equal(home.motionInputs.at(-1).mode,'down','home reversal must reuse the measured down-sequence geometry');
+ assert.equal(home.root.hasAttribute('data-mobile-hero-up'),true,'direction state still records native upward input');
+ assert.equal(home.sections.filter(section=>section.hasAttribute('data-active')).length,1);
+ home.scroll(1450);home.flush();
+ assert.equal(home.sections.filter(section=>section.hasAttribute('data-active')).length,1,'active brand marker moves instead of accumulating');
+ home.dispose();
+});
 
 test('scroll events coalesce into one frame using the latest position without geometry reads', () => {
  const stage=mount(); const reads=stage.reads;

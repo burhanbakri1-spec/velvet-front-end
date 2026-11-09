@@ -242,6 +242,28 @@ export function heroStageMotion({
   return downSequence(slides, local, stageHeight, geometry);
 }
 
+/** Pick the banner occupying the largest visible part of the stage. */
+export function activeHeroIndex(slides, motion, stageHeight) {
+  let winner = null;
+  let largestVisible = 0;
+  let highestLayer = -Infinity;
+  (Array.isArray(slides) ? slides : []).forEach((slide, index) => {
+    if (slide?.kind !== 'hero') return;
+    const pose = motion?.[index];
+    if (!pose || pose.hidden) return;
+    const top = pose.y + (pose.clipTop || 0);
+    const bottom = pose.y + stageHeight - (pose.clipBottom || 0);
+    const visible = Math.max(0, Math.min(stageHeight, bottom) - Math.max(0, top));
+    const layer = Number(pose.z) || 0;
+    if (visible > largestVisible + 0.5 || (visible > 0 && Math.abs(visible - largestVisible) <= 0.5 && layer > highestLayer)) {
+      winner = slide.heroIndex ?? index;
+      largestVisible = visible;
+      highestLayer = layer;
+    }
+  });
+  return winner ?? 0;
+}
+
 function progressOf(unit) {
   return clamp01(unit);
 }

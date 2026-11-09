@@ -45,7 +45,7 @@ export default function HomePage() {
         <Hero introActive={introActive} />
         <IntroSection />
         <AgeGroupCards />
-        <section id="showcases" aria-label={copy.home.worlds}>
+        <section id="showcases" data-home-brand-deck aria-label={copy.home.worlds}>
           <div className="hero-stage-shell">
             <div className="hero-stage">
           {brands.map((brand, index) => (

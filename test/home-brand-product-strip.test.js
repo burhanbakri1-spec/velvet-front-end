@@ -114,6 +114,20 @@ test('strip never pulls products from other brands', () => {
   );
 });
 
+test('Muslim mosque products stay out of Collect strips by canonical brand path', () => {
+  const products = [
+    makeProduct('velvet-src-630', 'muslim', { name: 'Al-Masjid an-Nabawi Building Blocks' }),
+    makeProduct('velvet-src-707', 'muslim', { name: 'Qibli Prayer Hall Building Blocks' }),
+    makeProduct('collect-1', 'collect'),
+  ];
+  const collect = selectBrandStripProducts(products, 'collect');
+  const muslim = selectBrandStripProducts(products, 'muslim');
+
+  assert.deepEqual(collect.map((product) => product.id), ['collect-1']);
+  assert.deepEqual(muslim.map((product) => product.id), ['velvet-src-630', 'velvet-src-707']);
+  assert.ok(collect.every((product) => product.velvetPath.brandId === 'collect'));
+});
+
 test('base selection contains unique product ids and slugs', () => {
   const products = [
     makeProduct('dup', 'build'),
@@ -393,6 +407,15 @@ test('previous-brand banner stack stays compact and hidden until scroll-up', () 
   assert.doesNotMatch(motion, /scrollTop \+= shift/);
   assert.match(styles, /@media \(max-width:\s*1100px\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*display:\s*none[^}]*height:\s*0/);
   assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*transition:\s*none/);
+});
+
+test('home brand deck uses the measured banner flow when scrolling upward on mobile', () => {
+  const home = fs.readFileSync(homePath, 'utf8');
+  const motion = fs.readFileSync(new URL('../src/components/useHeroStageMotion.js', import.meta.url), 'utf8');
+  assert.match(home, /data-home-brand-deck/);
+  assert.match(motion, /const mobileHomeDeck = root\.hasAttribute\('data-home-brand-deck'\) && mobileShowcase/);
+  assert.match(motion, /const motionMode = mobileHomeDeck \? 'down' : direction\.mode/);
+  assert.match(motion, /activeHeroIndex\(slides, motion, stageHeight\)/);
 });
 
 test('mobile motion stage uses the pre-stage banner height', () => {
