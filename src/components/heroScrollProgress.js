@@ -63,6 +63,25 @@ export function latchStageMode(mode, delta, previousPos, pos, slides) {
   return mode;
 }
 
+/** Native scrollY rounds to whole pixels while measured hero offsets can be fractional. */
+export function latchHomeDeckMode(mode, delta, previousLocal, local, slides, geometry) {
+  const wanted = stepHeroDirection(mode, delta);
+  if (!delta || wanted === mode || !geometry) return mode;
+  let firstHeroIndex = -1;
+  for (let index = 0; index < slides.length; index += 1) {
+    if (slides[index]?.kind === 'hero') { firstHeroIndex = index; break; }
+  }
+  for (let index = 0; index < slides.length; index += 1) {
+    if (slides[index]?.kind !== 'hero') continue;
+    const boundary = geometry.offsets[index];
+    if (delta < 0 && index === firstHeroIndex && previousLocal <= boundary + 1 && local <= boundary + 1) return 'up';
+    if (delta < 0 && index === firstHeroIndex && previousLocal > boundary + 1 && local <= boundary + 1) return 'up';
+    if (delta < 0 && previousLocal >= boundary - 1 && local < boundary - 1) return 'up';
+    if (delta > 0 && previousLocal <= boundary + 1 && local > boundary + 1) return 'down';
+  }
+  return mode;
+}
+
 /**
  * @param {{ kind: 'hero' | 'strip' }[]} slides
  * @param {number} local scroll distance into the stage, in px
@@ -128,9 +147,11 @@ export function stageReleaseBox(slides, stageHeight, pinHeight, local, mode = 'd
     // Up leaves untouched slides parked at the blank pose. They are not part
     // of the deck, so they must not keep the pin open.
     if (upward && pose.z <= 1 && pose.y >= stageHeight && !pose.clipTop && !pose.clipBottom) return;
-    const height = slide.kind === 'strip' && Math.round(Number(slide.height)) > 0
-      ? Math.round(Number(slide.height))
-      : stageHeight;
+    const height = Number(pose.height) > 0
+      ? Number(pose.height)
+      : slide.kind === 'strip' && Math.round(Number(slide.height)) > 0
+        ? Math.round(Number(slide.height))
+        : stageHeight;
     const slideBottom = pose.y + height - (pose.clipBottom || 0);
     if (pose.y < pinHeight && slideBottom > bottom) bottom = slideBottom;
   });
@@ -242,6 +263,131 @@ export function heroStageMotion({
   return downSequence(slides, local, stageHeight, geometry);
 }
 
+/**
+ * Home's upward deck uses measured distances between neighboring banners.
+ * Earlier real banners stay as clipped logo layers while the previous brand
+ * expands under the outgoing banner. Later brands stay parked beyond the pin.
+ */
+export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedGeometry) {
+  const geometry = cachedGeometry || stageGeometry(slides, stageHeight);
+  const heroes = heroIndexesOf(slides);
+  const travel = Math.min(Math.max(0, local), geometry.span);
+  let current = -1;
+  for (let index = 1; index < heroes.length; index += 1) {
+    const boundary = geometry.offsets[heroes[index]];
+    if (Math.abs(travel - boundary) <= 1 || travel < boundary) {
+      current = index;
+      break;
+    }
+  }
+  if (current < 0 && travel <= geometry.offsets[heroes[heroes.length - 1]]) current = heroes.length - 1;
+  if (current < 0 || travel <= geometry.offsets[heroes[0]]) {
+    const firstIndex = heroes[0];
+    const motion = slides.map(() => ({ y: pinHeight, clipTop: 0, clipBottom: 0, hidden: true, z: 1 }));
+    motion[firstIndex] = { y: 0, height: pinHeight, clipTop: 0, clipBottom: 0, hidden: false, z: 50 };
+    const stripIndex = firstIndex + 1;
+    if (slides[stripIndex]?.kind === 'strip') {
+      motion[stripIndex] = { y: pinHeight, clipTop: 0, clipBottom: 0, hidden: false, z: 51 };
+    }
+    return { motion, activeHero: slides[firstIndex].heroIndex, firstBanner: true, progress: 1 };
+  }
+
+  const previousIndex = heroes[current - 1];
+  const currentIndex = heroes[current];
+  const start = geometry.offsets[previousIndex];
+  const end = geometry.offsets[currentIndex];
+  const progress = clamp01((end - travel) / Math.max(1, end - start));
+  const motion = slides.map((slide) => ({
+    y: pinHeight,
+    clipTop: 0,
+    clipBottom: 0,
+    hidden: true,
+    z: 1,
+  }));
+
+  // Keep every earlier real banner as a clipped logo peek above the main
+  // scene. Use upDeck's 64px slice and 6px overlap as the target geometry,
+  // sizing the slices to fill the available stack without leaving a blank band.
+  const settleTolerance = 1 / Math.max(1, end - start);
+  const settledAtPrevious = progress >= 1 - settleTolerance;
+  const settledAtCurrent = progress <= settleTolerance;
+  const older = heroes.filter((index) => index < currentIndex);
+  const stackRoom = Math.max(0, pinHeight - stageHeight);
+  const stackOverlap = older.length > 1
+    ? Math.max(HERO_SLICE_OVERLAP, Math.ceil((48 * older.length - stackRoom) / (older.length - 1)))
+    : HERO_SLICE_OVERLAP;
+  const slice = older.length
+    ? Math.min(stackRoom, (stackRoom + stackOverlap * (older.length - 1)) / older.length)
+    : 0;
+  const step = Math.max(0, slice - stackOverlap);
+  const stackHeight = Math.min(stackRoom, older.length ? older.length * slice - (older.length - 1) * stackOverlap : 0);
+  const mainY = roundPx(stackHeight);
+  const exitDistance = Math.max(0, pinHeight - stackHeight);
+  const outgoingY = mainY + roundPx(progress * exitDistance);
+  older.forEach((index, stackIndex) => {
+    const edge = logoEdge(stageHeight, slice);
+    const slotY = stackIndex * step;
+    const isPrevious = index === previousIndex;
+    const isFirstBanner = isPrevious && previousIndex === heroes[0];
+    const baseY = roundPx(slotY - edge.clipTop);
+    const y = isFirstBanner ? 0 : isPrevious ? Math.max(baseY, roundPx(outgoingY - stageHeight)) : baseY;
+    const clipTop = isFirstBanner ? 0 : isPrevious ? Math.max(0, edge.clipTop - (y - baseY)) : edge.clipTop;
+    motion[index] = {
+      y,
+      ...(isFirstBanner ? { height: outgoingY } : {}),
+      clipTop,
+      clipBottom: isFirstBanner ? 0 : isPrevious ? roundPx(Math.max(0, y + stageHeight - outgoingY)) : edge.clipBottom,
+      hidden: false,
+      z: 10 + stackIndex,
+    };
+  });
+
+  // As the incoming banner moves down, the last anchored peek must continue
+  // covering the space up to its new top edge. Keep its logo edge and position
+  // fixed, revealing more of that same banner's artwork below the logo. Without
+  // this extension a white seam opens between the stationary stack and the
+  // translated incoming banner.
+  const lastPeekIndex = heroes[current - 2];
+  if (lastPeekIndex != null) {
+    const lastPeek = motion[lastPeekIndex];
+    const incoming = motion[previousIndex];
+    const existingBottom = lastPeek.y + stageHeight - lastPeek.clipBottom;
+    const incomingTop = incoming.y + incoming.clipTop;
+    if (incomingTop > existingBottom) {
+      lastPeek.clipBottom = roundPx(Math.max(0, stageHeight - (incomingTop - lastPeek.y)));
+    }
+  }
+
+  motion[previousIndex].z = 40;
+  motion[currentIndex] = { y: outgoingY, clipTop: 0, clipBottom: 0, hidden: false, z: 50 };
+
+  if (settledAtPrevious || settledAtCurrent) {
+    const settledHeroIndex = settledAtPrevious ? previousIndex : currentIndex;
+    const stripIndex = settledHeroIndex + 1;
+    if (slides[stripIndex]?.kind === 'strip') {
+      motion[stripIndex] = {
+        y: motion[settledHeroIndex].y + (motion[settledHeroIndex].height || stageHeight),
+        clipTop: 0,
+        clipBottom: 0,
+        hidden: false,
+        z: 51,
+      };
+    }
+  }
+
+  return {
+    motion,
+    activeHero: previousIndex === heroes[0]
+      ? activeHeroIndex(slides, motion, pinHeight)
+      : outgoingY < mainY + stageHeight / 2
+        ? slides[currentIndex].heroIndex
+        : slides[previousIndex].heroIndex,
+    previousHero: slides[previousIndex].heroIndex,
+    currentHero: slides[currentIndex].heroIndex,
+    progress,
+  };
+}
+
 /** Pick the banner occupying the largest visible part of the stage. */
 export function activeHeroIndex(slides, motion, stageHeight) {
   let winner = null;
@@ -252,7 +398,8 @@ export function activeHeroIndex(slides, motion, stageHeight) {
     const pose = motion?.[index];
     if (!pose || pose.hidden) return;
     const top = pose.y + (pose.clipTop || 0);
-    const bottom = pose.y + stageHeight - (pose.clipBottom || 0);
+    const slideHeight = Number(pose.height) > 0 ? Number(pose.height) : stageHeight;
+    const bottom = pose.y + slideHeight - (pose.clipBottom || 0);
     const visible = Math.max(0, Math.min(stageHeight, bottom) - Math.max(0, top));
     const layer = Number(pose.z) || 0;
     if (visible > largestVisible + 0.5 || (visible > 0 && Math.abs(visible - largestVisible) <= 0.5 && layer > highestLayer)) {

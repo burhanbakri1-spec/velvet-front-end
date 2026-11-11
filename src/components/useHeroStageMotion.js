@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import { activeHeroIndex, applyMobileUpHandoff, heroStageMotion, latchStageMode, mobileUpHandoff, restoreMobileUpLayout, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
+import { activeHeroIndex, applyMobileUpHandoff, heroStageMotion, homeReverseMotion, latchHomeDeckMode, latchStageMode, mobileUpHandoff, restoreMobileUpLayout, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
 
 const MOBILE_UP_DECK_DEPTH = 8;
 
@@ -209,24 +209,27 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const local = Math.min(span, Math.max(0, y - (shellTop - headerOffset)));
       const pos = stageSlidePos(slides, local, stageHeight, geometryCache);
 
-      direction.mode = latchStageMode(direction.mode, delta, direction.pos, pos, slides);
+      const mobileShowcase = rootId === 'showcases' && mobile && !desktop.matches;
+      const mobileHomeDeck = root.hasAttribute('data-home-brand-deck') && mobileShowcase;
+      const previousLocal = Math.min(span, Math.max(0, direction.y - (shellTop - headerOffset)));
+      direction.mode = mobileHomeDeck
+        ? latchHomeDeckMode(direction.mode, delta, previousLocal, local, slides, geometryCache)
+        : latchStageMode(direction.mode, delta, direction.pos, pos, slides);
       if (direction.mode !== 'up') direction.mode = 'down';
       if (nextMode === direction.mode) direction.mode = nextMode;
 
       const mobileUp = !desktop.matches && direction.mode === 'up';
-      const mobileShowcase = rootId === 'showcases' && mobile && !desktop.matches;
-      const mobileHomeDeck = root.hasAttribute('data-home-brand-deck') && mobileShowcase;
       if (mobileUp && !root.hasAttribute('data-mobile-hero-up')) root.setAttribute('data-mobile-hero-up', '');
       else if (!mobileUp && root.hasAttribute('data-mobile-hero-up')) root.removeAttribute('data-mobile-hero-up');
 
-      // The home banner stack has real, variable-height product strips between
-      // banners. The mobile reverse deck treated each strip like a full banner
-      // slot, so every strip was painted into the same place during scroll-up.
-      // Scrub the measured down sequence in both directions on Home; it preserves
-      // native scroll and keeps each strip with its own brand. Other stages keep
-      // their established reverse deck animation.
+      // Home's reverse pose uses measured hero and strip offsets. Earlier
+      // banner peeks stay anchored while the previous banner opens beneath the
+      // outgoing one. Forward Home and other stages retain their existing pose.
+      const homeReverse = mobileHomeDeck && mobileUp
+        ? homeReverseMotion(slides, local, stageHeight, pinHeight, geometryCache)
+        : null;
       const motionMode = mobileHomeDeck ? 'down' : direction.mode;
-      let motion = heroStageMotion({
+      let motion = homeReverse?.motion || heroStageMotion({
         slides,
         local,
         stageHeight,
@@ -259,9 +262,11 @@ export function useHeroStageMotion(rootId, mobile = false) {
         mobileUpLayoutAnchor = { local: previousLocal, shellHeight: previous.shellHeight, boxHeight: previous.boxHeight };
       }
       if (!mobileShowcase || (!mobileUp && delta > 0)) mobileUpLayoutAnchor = null;
-      const layoutRelease = mobileShowcase && mobileUpLayoutAnchor
-        ? restoreMobileUpLayout(downLayout, mobileUpLayoutAnchor, local, pinHeight)
-        : downLayout;
+      const layoutRelease = homeReverse
+        ? { ...downLayout, boxHeight: pinHeight, shellHeight: span + pinHeight }
+        : mobileShowcase && mobileUpLayoutAnchor
+          ? restoreMobileUpLayout(downLayout, mobileUpLayoutAnchor, local, pinHeight)
+          : downLayout;
 
       if (shellEl && stageEl) {
         const nextSpan = `${layoutRelease.shellHeight}px`;
@@ -276,7 +281,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
       direction.pos = pos;
       direction.y = y;
 
-      if (release.atEnd) {
+      if (release.atEnd && !homeReverse) {
         slides.forEach((slide, index) => {
           if (index === slides.length - 1) return;
           const away = slide.kind === 'strip' && slide.height > 0 ? Math.round(slide.height) : stageHeight;
@@ -289,7 +294,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
         document.body.classList.toggle('hero-stage-pin', pin);
       }
 
-      const activeHero = activeHeroIndex(slides, motion, stageHeight);
+      const activeHero = homeReverse?.activeHero ?? activeHeroIndex(slides, motion, stageHeight);
 
       // Apply styles using cached element references from slides array
       slides.forEach((slide, index) => {
@@ -306,6 +311,10 @@ export function useHeroStageMotion(rootId, mobile = false) {
           if (previous.transform !== transform) { el.style.transform = transform; previous.transform = transform; }
           if (previous.clip !== clip) { el.style.clipPath = clip; previous.clip = clip; }
           if (previous.zIndex !== zIndex) { el.style.zIndex = zIndex; previous.zIndex = zIndex; }
+          if (slide.kind === 'hero') {
+            const height = desktop.matches ? '' : `${pose.height || stageHeight}px`;
+            if (el.style.height !== height) el.style.height = height;
+          }
         }
         if (slide.kind === 'strip') {
           el?.classList.toggle('is-concealed', Boolean(pose.hidden));

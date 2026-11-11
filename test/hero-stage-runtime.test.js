@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import test from 'node:test';
 import * as math from '../src/components/heroScrollProgress.js';
 
-function mount(width = 375, reduced = false, heroCount = 1) {
+function mount(width = 375, reduced = false, heroCount = 1, homeDeck = false) {
   let y = 0, top = 1000, stripHeight = 240, reads = 0, writes = 0, rafId = 0, viewportHeight = 812;
   const frames = new Map(), listeners = new Map(), cleanups = [], observers = [], motionInputs = [];
   const classes = () => { const values = new Set(); return { contains: key => values.has(key), add: key => values.add(key), remove: key => values.delete(key), toggle(key,on) { if (on) values.add(key); else values.delete(key); } }; };
@@ -14,7 +14,7 @@ function mount(width = 375, reduced = false, heroCount = 1) {
       setAttribute(key,value) { writes++; attributes.set(key,value); }, hasAttribute: key => attributes.has(key), removeAttribute(key) { attributes.delete(key); } };
   };
   const root=element(), shell=element(), stage=element(), hero=element(), strip=element(), section=element(), parent=element();
-  root.setAttribute('data-home-brand-deck', '');
+  if (homeDeck) root.setAttribute('data-home-brand-deck', '');
   const probe=element();let smallViewportHeight=812,probeRemoved=false;
   probe.getBoundingClientRect=()=>{reads++;return {height:smallViewportHeight};};
   probe.remove=()=>{probeRemoved=true;};root.appendChild=()=>{};
@@ -62,14 +62,18 @@ function mount(width = 375, reduced = false, heroCount = 1) {
   };
 }
 
-test('mobile home reversals scrub the measured banner sequence and keep one active brand', () => {
- const home=mount(390,false,4);
+test('mobile Home reverse unfolds the previous banner and keeps one active brand', () => {
+ const home=mount(390,false,4,true);
  home.scroll(1750);home.flush();
  for(let y=1700;y>=1450&&!home.root.hasAttribute('data-mobile-hero-up');y-=50){home.scroll(y);home.flush();}
- assert.equal(home.motionInputs.at(-1).mode,'down','home reversal must reuse the measured down-sequence geometry');
  assert.equal(home.root.hasAttribute('data-mobile-hero-up'),true,'direction state still records native upward input');
  assert.equal(home.sections.filter(section=>section.hasAttribute('data-active')).length,1);
  home.scroll(1450);home.flush();
+ const previous = home.sections[0].querySelector(':scope > .brand-showcase');
+ assert.equal(previous.style.transform,'translate3d(0, 0px, 0)','Baby remains anchored at the first-banner boundary');
+ assert.ok(Number.parseFloat(previous.style.height)>370,'Baby expands to cover the space left by Kids');
+ assert.ok(Number.parseFloat(home.sections[1].querySelector(':scope > .brand-showcase').style.transform.split(',')[1])>370,'outgoing Kids banner moves down');
+ assert.equal(home.stage.style.height,'740px','reverse composition keeps the full pinned viewport height');
  assert.equal(home.sections.filter(section=>section.hasAttribute('data-active')).length,1,'active brand marker moves instead of accumulating');
  home.dispose();
 });

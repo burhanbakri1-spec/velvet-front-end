@@ -33,6 +33,103 @@ async function scrollWheel(page, deltaY) {
   return { before, after: await page.evaluate(() => scrollY) };
 }
 
+async function waitForNativeTouchSettle(page) {
+  let previous = await page.evaluate(() => scrollY);
+  let stillFrames = 0;
+  for (let sample = 0; sample < 40 && stillFrames < 3; sample += 1) {
+    await page.waitForTimeout(50);
+    const current = await page.evaluate(() => scrollY);
+    stillFrames = current === previous ? stillFrames + 1 : 0;
+    previous = current;
+  }
+  expect(stillFrames).toBe(3);
+}
+
+test('mobile reverse reveals the stacked previous banner and parks later brands', async ({ browser }) => {
+  const { context, page, errors } = await openHome(browser, { width: 390, height: 844 });
+  const createY = await page.evaluate(() => {
+    const root = document.querySelector('#showcases');
+    const sections = [...root.querySelectorAll('.home-brand')];
+    const stageHeight = sections[0].querySelector('.brand-showcase').getBoundingClientRect().height;
+    const header = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 72;
+    const beforeCreate = sections.slice(0, 5).reduce((total, section) => (
+      total + stageHeight + (section.querySelector('.brand-strip')?.offsetHeight || 0)
+    ), 0);
+    return root.querySelector('.hero-stage-shell').getBoundingClientRect().top + scrollY - header + beforeCreate;
+  });
+  await page.evaluate((y) => scrollTo(0, y), createY);
+  await page.waitForTimeout(100);
+  const first = await scrollWheel(page, -100);
+  expect(first.after).toBeLessThan(first.before);
+  await expect(page.locator('#showcases')).toHaveAttribute('data-mobile-hero-up');
+  const poses = await page.locator('#showcases').evaluate((root) => {
+    const heroY = (index) => new DOMMatrix(getComputedStyle(root.querySelectorAll('.home-brand')[index].querySelector('.brand-showcase')).transform).m42;
+    const learnHero = root.querySelectorAll('.home-brand')[4].querySelector('.brand-showcase');
+    return {
+      learn: heroY(4),
+      create: heroY(5),
+      games: heroY(6),
+      learnClip: getComputedStyle(learnHero).clipPath,
+      pinHeight: root.querySelector('.hero-stage').getBoundingClientRect().height,
+      stageHeight: root.querySelector('.hero-stage').getBoundingClientRect().height,
+      active: root.querySelectorAll('.home-brand[data-active]').length,
+    };
+  });
+  expect(poses.learn).toBeGreaterThanOrEqual(0);
+  expect(poses.learn).toBeLessThan(poses.create);
+  expect(poses.learnClip).toContain('inset(');
+  expect(poses.create).toBeGreaterThan(0);
+  expect(poses.games).toBeGreaterThanOrEqual(poses.pinHeight);
+  expect(poses.stageHeight).toBe(844 - 72);
+  expect(poses.active).toBe(1);
+  const reverse = await scrollWheel(page, 100);
+  expect(reverse.after).toBeGreaterThan(reverse.before);
+  expect(await page.locator('.home-brand[data-active]').count()).toBe(1);
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('native page scrolling resumes beyond both ends of the mobile Home deck', async ({ browser }) => {
+  const { context, page, errors } = await openHome(browser, { width: 390, height: 844 });
+  const { start, beyondEnd } = await page.locator('#showcases .hero-stage-shell').evaluate((shell) => {
+    const top = shell.getBoundingClientRect().top + scrollY;
+    const span = Number.parseFloat(shell.style.getPropertyValue('--hero-stage-span'));
+    return { start: top, beyondEnd: top + span + 100 };
+  });
+  await page.evaluate((y) => scrollTo(0, y), start + 100);
+  await page.waitForTimeout(100);
+  const above = await scrollWheel(page, -260);
+  expect(above.after).toBeLessThan(start);
+  await expect(page.locator('body')).not.toHaveClass(/hero-stage-pin/);
+
+  await page.evaluate((y) => scrollTo(0, y), beyondEnd);
+  await page.waitForTimeout(100);
+  await expect(page.locator('body')).not.toHaveClass(/hero-stage-pin/);
+  const below = await scrollWheel(page, 220);
+  expect(below.after).toBeGreaterThan(below.before);
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('reduced motion keeps the mobile Home brands in native page flow', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true,
+    reducedMotion: 'reduce',
+  });
+  await context.addInitScript(() => localStorage.setItem('play-language', 'en'));
+  const page = await context.newPage();
+  await page.goto('/en?view=showcases', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#showcases .home-brand')).toHaveCount(12);
+  await expect(page.locator('#showcases')).not.toHaveAttribute('data-hero-motion');
+  const firstBanner = page.locator('#showcases .brand-showcase').first();
+  expect(await firstBanner.evaluate((element) => getComputedStyle(element).position)).toBe('relative');
+  const movement = await scrollWheel(page, 300);
+  expect(movement.after).toBeGreaterThan(movement.before);
+  await context.close();
+});
+
 test('home order, canonical strip scope, and unique exposed cards stay correct', async ({ browser }) => {
   const { context, page, errors } = await openHome(browser, { width: 390, height: 844 });
   const brands = await page.locator('.home-brand').evaluateAll((sections) => sections.map((section) => ({
@@ -77,6 +174,7 @@ for (const viewport of [
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await page.waitForTimeout(100);
     expect(await page.evaluate(() => scrollY)).toBeGreaterThan(y);
+    await waitForNativeTouchSettle(page);
 
     for (const delta of [-180, 180, -180, 180]) {
       const result = await scrollWheel(page, delta);

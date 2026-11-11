@@ -7,6 +7,8 @@ import {
   HERO_SLICE_OVERLAP,
   activeHeroIndex,
   heroStageMotion,
+  homeReverseMotion,
+  latchHomeDeckMode,
   latchStageMode,
   stageGeometry,
   stageReleaseBox,
@@ -95,6 +97,120 @@ test('active banner follows the largest visible area and resolves overlap by pai
     { y: 812, clipTop: 0, clipBottom: 0, hidden: true, z: 1 },
     { y: 0, clipTop: 0, clipBottom: 0, hidden: false, z: 40 },
   ], stageHeight), 1, 'equal visible banners follow the frontmost layer');
+});
+
+test('Home reverse stacks every previous banner and expands the destination beneath the exiting banner', () => {
+  const list = [210, 295, 180, 260].flatMap((height, heroIndex) => [
+    { kind: 'hero', heroIndex },
+    { kind: 'strip', heroIndex, height },
+  ]);
+  const geometry = stageGeometry(list, 386);
+  const pinHeight = 772;
+  for (let current = 1; current < 4; current += 1) {
+    const previousIndex = (current - 1) * 2;
+    const currentIndex = current * 2;
+    const start = geometry.offsets[previousIndex];
+    const end = geometry.offsets[currentIndex];
+    const atCurrent = homeReverseMotion(list, end, 386, pinHeight, geometry);
+    const priorHeroes = Array.from({ length: current }, (_, index) => index * 2);
+    const stackHeight = atCurrent.motion[currentIndex].y;
+    priorHeroes.forEach((index) => {
+      const pose = atCurrent.motion[index];
+      assert.equal(pose.hidden, false, `previous hero ${index / 2} stays visible in the deck`);
+      assert.ok(pose.clipBottom < 386, 'each peek exposes some original banner artwork');
+    });
+    assert.equal(atCurrent.motion[currentIndex + 1].hidden, false, 'settled active brand restores its strip');
+    assert.equal(atCurrent.motion[currentIndex].y, stackHeight);
+    assert.ok(atCurrent.motion[previousIndex].y < stackHeight);
+    assert.equal(atCurrent.activeHero ?? activeHeroIndex(list, atCurrent.motion, 386), current);
+
+    const outgoingPositions = [];
+    for (const progress of [0.1, 0.3, 0.6, 0.9]) {
+      const state = homeReverseMotion(list, end - (end - start) * progress, 386, pinHeight, geometry);
+      assert.equal(state.previousHero, current - 1);
+      assert.equal(state.currentHero, current);
+      priorHeroes.slice(0, -1).forEach((index) => {
+        assert.equal(state.motion[index].y, atCurrent.motion[index].y, 'older deck layers remain anchored');
+      });
+      assert.ok(state.motion[previousIndex].y >= atCurrent.motion[previousIndex].y);
+      assert.ok(state.motion[previousIndex].clipBottom <= atCurrent.motion[previousIndex].clipBottom);
+      assert.ok(state.motion[previousIndex].clipBottom >= 0);
+      assert.ok(state.motion[previousIndex].clipBottom <= 386);
+      assert.equal(state.motion[previousIndex + 1].hidden, true, 'product strips stay out of the transition');
+      assert.equal(state.motion[currentIndex + 1].hidden, true, 'outgoing product strips stay out of the transition');
+      list.forEach((slide, index) => {
+        if (priorHeroes.includes(index) || index === currentIndex || index === currentIndex + 1) return;
+        assert.ok(state.motion[index].y >= pinHeight, 'unrelated banners stay outside the stage');
+        if (slide.kind === 'strip') assert.equal(state.motion[index].hidden, true);
+      });
+      outgoingPositions.push(state.motion[currentIndex].y);
+    }
+    assert.deepEqual(outgoingPositions, [...outgoingPositions].sort((a, b) => a - b));
+    const atPrevious = homeReverseMotion(list, start, 386, pinHeight, geometry);
+    if (current > 1) {
+      assert.equal(atPrevious.motion[currentIndex].hidden, true);
+      assert.equal(atPrevious.motion[previousIndex].hidden, false);
+      assert.equal(atPrevious.motion[previousIndex].clipTop, 0);
+      assert.equal(atPrevious.motion[previousIndex].clipBottom, 0);
+      assert.equal(atPrevious.motion[previousIndex + 1].hidden, false);
+      assert.equal(atPrevious.motion[previousIndex + 1].y, atPrevious.motion[previousIndex].y + (atPrevious.motion[previousIndex].height || 386));
+    }
+    assert.equal(atPrevious.activeHero ?? activeHeroIndex(list, atPrevious.motion, 386), current - 1);
+  }
+});
+
+test('the first Home banner expands in place instead of moving down without a preceding brand', () => {
+  const list = [210, 295, 180, 260].flatMap((height, heroIndex) => [
+    { kind: 'hero', heroIndex },
+    { kind: 'strip', heroIndex, height },
+  ]);
+  const geometry = stageGeometry(list, 386);
+  const pinHeight = 772;
+  const babyIndex = 0;
+  const kidsIndex = 2;
+  const end = geometry.offsets[kidsIndex];
+
+  for (const progress of [0, 0.25, 0.5, 0.9, 0.999]) {
+    const state = homeReverseMotion(list, end * (1 - progress), 386, pinHeight, geometry);
+    const baby = state.motion[babyIndex];
+    const kids = state.motion[kidsIndex];
+    assert.equal(baby.y, 0, 'Baby stays anchored at the top while the deck reverses to its first brand');
+    assert.equal(baby.height, kids.y, 'Baby expands exactly to the moving Kids edge');
+    assert.equal(baby.hidden, false);
+    assert.ok(baby.height >= 386 && baby.height <= pinHeight);
+    assert.equal(kids.hidden, false);
+    if (progress > 0.001 && progress < 0.999) {
+      assert.equal(state.motion[1].hidden, true, 'Baby product strip stays hidden while banners move');
+      assert.equal(state.motion[3].hidden, true, 'Kids product strip stays hidden while banners move');
+    }
+    assert.equal(activeHeroIndex(list, state.motion, pinHeight), state.activeHero);
+    assert.equal(baby.y + baby.height, kids.y, 'no white interval opens between Baby and Kids');
+  }
+
+  const settled = homeReverseMotion(list, 0, 386, pinHeight, geometry);
+  assert.equal(settled.firstBanner, true);
+  assert.equal(settled.activeHero, 0);
+  assert.equal(settled.motion[babyIndex].y, 0);
+  assert.equal(settled.motion[babyIndex].height, pinHeight);
+  assert.equal(settled.motion[kidsIndex].y, pinHeight, 'later brands remain parked outside the stage');
+  assert.equal(settled.motion[1].y, pinHeight, 'the settled Baby strip follows its full-height banner');
+});
+
+test('Home direction latch accepts a settled banner within one pixel of its measured boundary', () => {
+  const list = [0, 1, 2].flatMap((heroIndex) => [
+    { kind: 'hero', heroIndex },
+    { kind: 'strip', heroIndex, height: 235 },
+  ]);
+  const geometry = stageGeometry(list, 386);
+  const boundary = geometry.offsets[4];
+  assert.equal(latchHomeDeckMode('down', -100, boundary - 0.125, boundary - 100.125, list, geometry), 'up');
+  assert.equal(latchHomeDeckMode('up', 100, boundary + 0.125, boundary + 100.125, list, geometry), 'down');
+  assert.equal(latchHomeDeckMode('down', -20, boundary + 80, boundary + 60, list, geometry), 'down');
+  assert.equal(latchHomeDeckMode('up', 20, boundary - 80, boundary - 60, list, geometry), 'up');
+  assert.equal(latchHomeDeckMode('down', -20, 12, 0, list, geometry), 'up', 'upward crossing at the clamped first boundary enters reverse ownership');
+  assert.equal(latchHomeDeckMode('down', -20, 0, 0, list, geometry), 'up', 'the first upward gesture at Baby keeps the full banner as the deck exits');
+  assert.equal(latchHomeDeckMode('up', -20, 0, 0, list, geometry), 'up', 'continued upward scrolling keeps reverse ownership above the first boundary');
+  assert.equal(latchHomeDeckMode('up', 20, 0, 20, list, geometry), 'down', 'downward re-entry crosses the same first boundary');
 });
 
 test('a product strip moves continuously on its own height and a missing strip is skipped', () => {
