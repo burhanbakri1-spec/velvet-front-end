@@ -22,10 +22,10 @@ function normalizedTitle(value) {
 
 /**
  * Ordered title slider, independent of gallery images.
- * Arabic canonical, then English canonical, then slideTitles by sortOrder.
+ * Selected-locale canonical, then other locale canonical, then slideTitles by sortOrder.
  * Exact normalized text is kept once. galleryImageId is ignored.
  */
-export function buildProductTitleSequence(product) {
+export function buildProductTitleSequence(product, locale = 'ar') {
   const seen = new Set();
   const sequence = [];
   const push = (value) => {
@@ -35,8 +35,10 @@ export function buildProductTitleSequence(product) {
     sequence.push(title);
   };
   const names = canonicalProductNames(product);
-  push(names.ar);
-  push(names.en);
+  const primaryLocale = locale === 'en' ? 'en' : 'ar';
+  const secondaryLocale = primaryLocale === 'ar' ? 'en' : 'ar';
+  push(names[primaryLocale]);
+  push(names[secondaryLocale]);
   normalizeEntries(product?.slideTitles).sort(byOrder).forEach((entry) => push(entry.title));
   return sequence;
 }

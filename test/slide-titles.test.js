@@ -59,6 +59,12 @@ test('initial title is the Arabic canonical name, then English, then custom titl
   assert.equal(frames[3].title, 'Build Club Maker Kit');
 });
 
+test('English locale starts the title sequence with the English canonical name', () => {
+  assert.deepEqual(buildProductTitleSequence(product, 'en'), [
+    'Build Club Maker Kit', 'طقم البناء', 'عنوان البناء', 'Build Club', 'Studio set', 'Fourth title',
+  ]);
+});
+
 test('four or more custom titles stay in sort order and ignore gallery image ids', () => {
   const titles = buildProductTitleSequence({
     ...product,

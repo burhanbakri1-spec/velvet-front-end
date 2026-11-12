@@ -95,7 +95,7 @@ export default function ProductDetailsPage({ slug }) {
     () => resolveProductSlides(routeProduct, selections),
     [routeProduct, selections],
   );
-  const titles = useMemo(() => buildProductTitleSequence(routeProduct), [routeProduct]);
+  const titles = useMemo(() => buildProductTitleSequence(routeProduct, locale), [routeProduct, locale]);
   const images = useMemo(() => slides.map((slide) => slide.src), [slides]);
   const hasGallery = images.length > 1;
 
