@@ -1,17 +1,18 @@
 import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
+import { installRealContentFixture } from './realContentFixture.js';
 
 const viewports = [
   { width: 375, height: 812 },
-  { width: 390, height: 844 },
-  { width: 412, height: 915 },
+  { width: 390, height: 812 },
+  { width: 412, height: 812 },
 ];
 const locales = ['en', 'ar'];
 const runViewports = process.env.REVIEW_QUICK === '1' ? [viewports[0]] : viewports;
 const runLocales = process.env.REVIEW_QUICK === '1' ? [process.env.REVIEW_AR === '1' ? 'ar' : 'en'] : locales;
 const expectedReverseOrder = ['create', 'learn', 'build', 'play', 'kids', 'baby'];
-const evidenceRoot = path.resolve('brand-motion-evidence', 'first-banner-boundary');
+const evidenceRoot = path.resolve('brand-motion-evidence', 'first-banner-architecture');
 
 async function readState(page) {
   return page.evaluate(() => {
@@ -24,8 +25,10 @@ async function readState(page) {
     const stageBox = stage.getBoundingClientRect();
     const hero = (section) => {
       const article = section.querySelector('.brand-showcase');
+      const image = article.querySelector('.brand-showcase__image');
       const style = getComputedStyle(article);
       const rect = article.getBoundingClientRect();
+      const imageRect = image?.getBoundingClientRect();
       const transform = new DOMMatrix(style.transform);
       const inset = style.clipPath.match(/[\d.]+px/g)?.map((value) => Number.parseFloat(value)) || [];
       const clipTop = inset[0] || 0;
@@ -33,21 +36,39 @@ async function readState(page) {
       return {
         brand: slug(section), y: transform.m42, height: rect.height,
         rect: { top: rect.top, bottom: rect.bottom, height: rect.height },
+        imageRect: imageRect ? { top: imageRect.top, bottom: imageRect.bottom, width: imageRect.width, height: imageRect.height } : null,
         visibleTop: rect.top + clipTop, visibleBottom: rect.bottom - clipBottom,
         clipTop, clipBottom, clipPath: style.clipPath, z: style.zIndex,
         visibility: style.visibility, opacity: Number(style.opacity),
-        imageLoaded: (() => { const image = article.querySelector('.brand-showcase__image'); return Boolean(image?.complete && image.naturalWidth > 0); })(),
+        imageLoaded: Boolean(image?.complete && image.naturalWidth > 0),
       };
     };
     const stripRows = sections.map((section) => {
-      const strip = section.querySelector(':scope > .brand-strip');
+      const strip = section.querySelector(':scope > .home-brand__product-layer > .brand-strip');
       if (!strip) return null;
       const rect = strip.getBoundingClientRect();
       const style = getComputedStyle(strip);
+      const viewport = strip.querySelector('.brand-strip__viewport');
+      const viewportRect = viewport?.getBoundingClientRect();
+      const cards = [...strip.querySelectorAll('.brand-strip-card')];
+      const cardRows = cards.map((card) => {
+        const box = card.getBoundingClientRect();
+        const image = card.querySelector('.brand-strip-card__image');
+        return {
+          href: card.getAttribute('href'),
+          visible: Boolean(viewportRect && box.right > viewportRect.left && box.left < viewportRect.right),
+          imageSrc: image?.currentSrc || image?.src || '',
+          imageLoaded: Boolean(image?.complete && image.naturalWidth > 0),
+        };
+      });
       return {
         brand: strip.dataset.brand, hidden: strip.classList.contains('is-concealed') || style.visibility === 'hidden',
         y: new DOMMatrix(style.transform).m42, height: rect.height,
         top: rect.top, bottom: rect.bottom,
+        uniqueProducts: [...new Set(cardRows.map((card) => card.href))].length,
+        visibleProducts: [...new Set(cardRows.filter((card) => card.visible).map((card) => card.href))].length,
+        visibleLoadedProducts: [...new Set(cardRows.filter((card) => card.visible && card.imageLoaded).map((card) => card.href))].length,
+        imageUrls: [...new Set(cardRows.map((card) => card.imageSrc))],
       };
     });
     const shellRect = shell.getBoundingClientRect();
@@ -58,7 +79,7 @@ async function readState(page) {
     let offset = 0;
     const brandOffsets = sections.map((section) => {
       const result = offset;
-      const strip = section.querySelector(':scope > .brand-strip');
+      const strip = section.querySelector(':scope > .home-brand__product-layer > .brand-strip');
       offset += baseHeroHeight + (strip?.offsetHeight || 0);
       return result;
     });
@@ -90,7 +111,7 @@ async function readState(page) {
     return {
       scrollY, rootStart, localRaw, local: Math.max(0, localRaw),
       firstPairProgress: Math.min(1, Math.max(0, (brandOffsets[1] - Math.max(0, localRaw)) / Math.max(1, brandOffsets[1]))),
-      brandOffsets, active: slug(sections.find((section) => section.hasAttribute('data-active'))),
+      brandOffsets, pinHeight: Math.max(baseHeroHeight, Math.round(innerHeight - header)), active: slug(sections.find((section) => section.hasAttribute('data-active'))),
       activeCount: sections.filter((section) => section.hasAttribute('data-active')).length,
       babyCopies: [...document.querySelectorAll('.brand-showcase__link')].filter((link) => link.getAttribute('href')?.split('/').filter(Boolean).at(-1) === 'baby').length,
       mobileUp: root.hasAttribute('data-mobile-hero-up'), motion: root.hasAttribute('data-hero-motion'),
@@ -151,6 +172,7 @@ async function saveFrame(page, directory, name) {
 }
 
 test('real mobile scrolling keeps Baby continuous through the first-banner and document handoff', async ({ browser }) => {
+  test.setTimeout(300_000);
   fs.mkdirSync(evidenceRoot, { recursive: true });
   const manifest = [];
   const gallery = ['<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Velvet first-banner boundary review</title>',
@@ -166,8 +188,12 @@ test('real mobile scrolling keeps Baby continuous through the first-banner and d
       viewport: { width: viewport.width, height: viewport.height }, isMobile: true, hasTouch: true, deviceScaleFactor: 1,
       locale: locale === 'ar' ? 'ar' : 'en-US',
     });
-    await context.addInitScript((language) => localStorage.setItem('play-language', language), locale);
+    await context.addInitScript((language) => {
+      localStorage.setItem('play-language', language);
+      if (document.documentElement) document.documentElement.style.scrollBehavior = 'auto';
+    }, locale);
     const page = await context.newPage();
+    await installRealContentFixture(page, locale, { brandLimit: 6, includeBabyProductMedia: true });
     await page.goto('/?view=showcases', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#showcases[data-home-brand-deck] .home-brand')).toHaveCount(12);
     await page.waitForTimeout(160);
@@ -189,26 +215,47 @@ test('real mobile scrolling keeps Baby continuous through the first-banner and d
       journey.push(state);
       if (state.active) seen.add(state.active);
     }
+    await expect.poll(() => page.locator('#showcases .home-brand[data-active] .brand-showcase__image').evaluate((image) => (
+      image.getAttribute('src')?.includes('/2-1789208751356-b2j4wn.webp')
+      && image.complete && image.naturalWidth > 0
+    )), { timeout: 45_000, message: 'real Staging Baby banner finishes loading before geometry acceptance' }).toBe(true);
+    state = await readState(page);
     expect(state.active).toBe('baby');
     for (const brand of expectedReverseOrder) expect(seen.has(brand), `real scroll visited ${brand}`).toBe(true);
     expect(state.babyCopies).toBe(1);
     expect(state.baby.visibility).toBe('visible');
     expect(state.baby.imageLoaded).toBe(true);
-    expect(state.baby.y).toBe(0);
-    expect(state.baby.height).toBeGreaterThanOrEqual(state.kids.y - 1);
+    expect(state.baby.visibleTop).toBe(state.stage.top, 'Baby stays anchored to the scene edge through its reveal');
+    expect(state.baby.height).toBe(state.kids.height, 'the fixed-size banner boxes stay consistent');
+    expect(state.baby.imageRect.height).toBe(state.baby.height, 'the image box keeps the banner height');
     expect(state.maxStageGap).toBeLessThanOrEqual(1);
 
     const boundaryFrames = [];
     const captureBoundary = async (label) => {
       const frame = `${key}-boundary-${String(boundaryFrames.length).padStart(3, '0')}.png`;
-      const sample = await readState(page);
+      let sample = await readState(page);
       expect(sample.activeCount).toBe(1);
       expect(sample.babyCopies).toBe(1);
       expect(sample.baby.visibility).toBe('visible');
       expect(sample.baby.opacity).toBe(1);
       expect(sample.baby.imageLoaded).toBe(true);
+      expect(sample.baby.imageRect.height).toBe(sample.baby.height, 'Baby image geometry stays fixed during handoff');
       if (sample.maxStageGap > 1) console.log('Uncovered stage diagnostics', JSON.stringify({ label, scrollY: sample.scrollY, rootStart: sample.rootStart, local: sample.local, mobileUp: sample.mobileUp, baby: sample.baby, kids: sample.kids, stage: sample.stage, strips: sample.strips, heroes: sample.heroes.map(({ brand, y, height, rect, visibleTop, visibleBottom, clipTop, clipBottom, z, visibility }) => ({ brand, y, height, rect, visibleTop, visibleBottom, clipTop, clipBottom, z, visibility })) }, null, 2));
       expect(sample.maxStageGap, `no uncovered stage band at ${label}`).toBeLessThanOrEqual(1);
+      const babyStrip = sample.strips.find((strip) => strip.brand === 'baby');
+      if (sample.localRaw <= 1 && sample.active === 'baby' && babyStrip) {
+        await expect.poll(async () => (await readState(page)).strips.find((strip) => strip.brand === 'baby')?.visibleLoadedProducts ?? 0, {
+          timeout: 30_000,
+          message: 'visible Baby product images finish loading from their Staging URLs',
+        }).toBeGreaterThanOrEqual(3);
+        sample = await readState(page);
+        const settledBabyStrip = sample.strips.find((strip) => strip.brand === 'baby');
+        expect(settledBabyStrip.hidden, 'Baby product strip is restored once Baby settles').toBe(false);
+        expect(settledBabyStrip.uniqueProducts, 'Baby uses the six eligible Staging products').toBe(6);
+        expect(settledBabyStrip.visibleProducts, 'Baby product cards enter the strip viewport').toBeGreaterThanOrEqual(3);
+        expect(settledBabyStrip.visibleLoadedProducts, 'visible Baby product images load from Staging').toBeGreaterThanOrEqual(3);
+        expect(Math.abs(settledBabyStrip.top - sample.baby.rect.bottom), 'Baby strip begins directly beneath its fixed banner').toBeLessThanOrEqual(1);
+      }
       await saveFrame(page, directory, frame);
 
       boundaryFrames.push({ frame, label, ...sample });
@@ -227,7 +274,7 @@ test('real mobile scrolling keeps Baby continuous through the first-banner and d
     state = await readState(page);
 
     const documentFrames = [];
-    for (let step = 0; step < 42 && state.scrollY > state.rootStart - 1120; step += 1) {
+    for (let step = 0; step < 80 && state.scrollY > 0; step += 1) {
       await wheel(page, -30, 40);
       state = await readState(page);
       expect(state.babyCopies).toBe(1);
@@ -263,6 +310,7 @@ test('real mobile scrolling keeps Baby continuous through the first-banner and d
     expect(afterDown.activeCount).toBe(1);
     expect(afterDown.baby.rect.bottom).toBeGreaterThan(0);
     expect(afterDown.baby.opacity).toBe(1);
+    expect(afterDown.baby.imageRect.height).toBe(afterDown.baby.height);
     expect(afterDown.maxStageGap).toBeLessThanOrEqual(1);
     await saveFrame(page, directory, `${key}-down-reversal.png`);
     const upMove = await wheel(page, -80, 80);
@@ -270,9 +318,11 @@ test('real mobile scrolling keeps Baby continuous through the first-banner and d
     expect(upMove.after).toBeLessThan(upMove.before);
     expect(afterUp.localRaw).toBeLessThan(0);
     expect(afterUp.mobileUp).toBe(true, 'clamped first boundary restores UP ownership');
-    expect(afterUp.baby.y).toBe(0);
-    expect(afterUp.baby.height).toBe(afterUp.stage.height);
-    expect(afterUp.baby.rect.bottom).toBeGreaterThan(viewport.height - 2);
+    expect(afterUp.baby.visibleTop).toBe(afterUp.stage.top);
+    expect(afterUp.baby.height).toBe(afterUp.kids.height, 'Baby keeps the fixed measured banner box');
+    expect(afterUp.baby.imageRect.height).toBe(afterUp.baby.height);
+    expect(afterUp.baby.height).toBeLessThan(afterUp.pinHeight, 'the banner does not expand to fill the pinned viewport');
+    expect(afterUp.baby.rect.bottom).toBeLessThan(viewport.height - 2, 'normal page content can enter below the banner');
     expect(afterUp.maxStageGap).toBeLessThanOrEqual(1);
     await saveFrame(page, directory, `${key}-up-reversal.png`);
 

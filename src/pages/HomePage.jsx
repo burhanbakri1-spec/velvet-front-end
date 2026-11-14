@@ -50,19 +50,26 @@ export default function HomePage() {
             <div className="hero-stage">
           {brands.map((brand, index) => (
             <section className="home-brand" key={brand.slug}>
-              <BrandShowcase
-                variant="full-banner"
-                showBrandLogo
-                deckIndex={index}
-                mediaLoading={index === 0 ? 'eager' : 'lazy'}
-                mediaFetchPriority={index === 0 ? 'high' : undefined}
-                brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
-              />
-              <BrandProductStrip
-                brandSlug={brand.slug}
-                deckIndex={index}
-              />
-              <div className="home-brand__runway" aria-hidden="true" />
+              <div className="home-brand__banner-layer">
+                <BrandShowcase
+                  variant="full-banner"
+                  showBrandLogo
+                  deckIndex={index}
+                  // The reverse stack keeps every earlier poster/logo visible;
+                  // eager fetching prevents a newly exposed card from waiting
+                  // on a lazy image request. Decoding remains asynchronous.
+                  mediaLoading="eager"
+                  mediaFetchPriority={index === 0 ? 'high' : undefined}
+                  brand={{ ...brand, image: brand.image, palette: brand.home.palette, scene: brand.home.scene }}
+                />
+                <div className="home-brand__runway" aria-hidden="true" />
+              </div>
+              <div className="home-brand__product-layer">
+                <BrandProductStrip
+                  brandSlug={brand.slug}
+                  deckIndex={index}
+                />
+              </div>
             </section>
           ))}
             </div>

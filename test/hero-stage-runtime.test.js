@@ -22,12 +22,12 @@ function mount(width = 375, reduced = false, heroCount = 1, homeDeck = false) {
   shell.getBoundingClientRect = () => { reads++; return {top:top-y}; };
   root.parentElement=parent;
   root.querySelector = selector => selector === '.hero-stage-shell' ? shell : selector === '.hero-stage' ? stage : null;
-  section.querySelector = selector => selector === ':scope > .brand-showcase' ? hero : strip;
+  section.querySelector = selector => selector === ':scope > .home-brand__banner-layer > .brand-showcase' ? hero : strip;
   const sections=[section];
   for(let index=1;index<heroCount;index++) {
     const nextSection=element(),nextHero=element(),nextStrip=element();
     Object.defineProperty(nextStrip,'offsetHeight',{get(){reads++;return stripHeight;}});
-    nextSection.querySelector=selector=>selector===':scope > .brand-showcase'?nextHero:nextStrip;
+    nextSection.querySelector=selector=>selector===':scope > .home-brand__banner-layer > .brand-showcase'?nextHero:nextStrip;
     sections.push(nextSection);
   }
   stage.querySelectorAll = () => sections;
@@ -62,18 +62,22 @@ function mount(width = 375, reduced = false, heroCount = 1, homeDeck = false) {
   };
 }
 
-test('mobile Home reverse unfolds the previous banner and keeps one active brand', () => {
+test('mobile Home reverse keeps card dimensions fixed and reveals Baby behind the outgoing card', () => {
  const home=mount(390,false,4,true);
  home.scroll(1750);home.flush();
  for(let y=1700;y>=1450&&!home.root.hasAttribute('data-mobile-hero-up');y-=50){home.scroll(y);home.flush();}
  assert.equal(home.root.hasAttribute('data-mobile-hero-up'),true,'direction state still records native upward input');
  assert.equal(home.sections.filter(section=>section.hasAttribute('data-active')).length,1);
  home.scroll(1450);home.flush();
- const previous = home.sections[0].querySelector(':scope > .brand-showcase');
- assert.equal(previous.style.transform,'translate3d(0, 0px, 0)','Baby remains anchored at the first-banner boundary');
- assert.ok(Number.parseFloat(previous.style.height)>370,'Baby expands to cover the space left by Kids');
- assert.ok(Number.parseFloat(home.sections[1].querySelector(':scope > .brand-showcase').style.transform.split(',')[1])>370,'outgoing Kids banner moves down');
- assert.equal(home.stage.style.height,'740px','reverse composition keeps the full pinned viewport height');
+ const previous = home.sections[0].querySelector(':scope > .home-brand__banner-layer > .brand-showcase');
+ const previousY=Number.parseFloat(previous.style.transform.split(',')[1]);
+ const previousClipTop=Number.parseFloat(previous.style.clipPath.match(/inset\((\d+(?:\.\d+)?)px/)[1]);
+ assert.equal(previousY+previousClipTop,0,'Baby remains visually anchored at the first-banner boundary');
+ assert.equal(previous.style.height,'370px','Baby keeps its measured card height throughout the reverse gesture');
+ const outgoingY=Number.parseFloat(home.sections[1].querySelector(':scope > .home-brand__banner-layer > .brand-showcase').style.transform.split(',')[1]);
+ assert.ok(outgoingY>0&&outgoingY<=370,'outgoing Kids moves within the fixed card lane');
+ assert.equal(home.sections[0].querySelector(':scope > .home-brand__product-layer > .brand-strip').classList.contains('is-concealed'),true,'the destination strip stays out of the card transition');
+ assert.equal(home.stage.style.height,'740px','the pinned scene height stays fixed through an in-flight brand transition');
  assert.equal(home.sections.filter(section=>section.hasAttribute('data-active')).length,1,'active brand marker moves instead of accumulating');
  home.dispose();
 });

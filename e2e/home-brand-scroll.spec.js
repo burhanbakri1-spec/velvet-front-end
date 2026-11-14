@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { installRealContentFixture } from './realContentFixture.js';
 
 const expectedBrands = [
   'VELVET BABY', 'VELVET KIDS', 'VELVET PLAY', 'VELVET BUILD', 'VELVET LEARN', 'VELVET CREATE',
@@ -13,10 +14,18 @@ async function openHome(browser, { width, height, locale = 'en', mobile = true }
     deviceScaleFactor: mobile ? 1 : undefined,
     locale: locale === 'ar' ? 'ar' : 'en-US',
   });
-  await context.addInitScript((selectedLocale) => localStorage.setItem('play-language', selectedLocale), locale);
+  await context.addInitScript((selectedLocale) => {
+    localStorage.setItem('play-language', selectedLocale);
+    const disableSmoothScroll = () => {
+      if (document.documentElement) document.documentElement.style.scrollBehavior = 'auto';
+    };
+    disableSmoothScroll();
+    document.addEventListener('DOMContentLoaded', disableSmoothScroll, { once: true });
+  }, locale);
   const page = await context.newPage();
+  await installRealContentFixture(page, locale);
   const errors = [];
-  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('pageerror', (error) => errors.push(error.stack || error.message));
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(message.text());
   });
@@ -27,9 +36,15 @@ async function openHome(browser, { width, height, locale = 'en', mobile = true }
 }
 
 async function scrollWheel(page, deltaY) {
+  const viewport = page.viewportSize();
+  await page.mouse.move(Math.round(viewport.width / 2), Math.round(viewport.height / 3));
   const before = await page.evaluate(() => scrollY);
   await page.mouse.wheel(0, deltaY);
-  await page.waitForTimeout(80);
+  for (let sample = 0; sample < 20; sample += 1) {
+    await page.waitForTimeout(20);
+    if (await page.evaluate(() => scrollY) !== before) break;
+  }
+  await page.waitForTimeout(60);
   return { before, after: await page.evaluate(() => scrollY) };
 }
 
@@ -91,10 +106,10 @@ test('mobile reverse reveals the stacked previous banner and parks later brands'
 
 test('native page scrolling resumes beyond both ends of the mobile Home deck', async ({ browser }) => {
   const { context, page, errors } = await openHome(browser, { width: 390, height: 844 });
-  const { start, beyondEnd } = await page.locator('#showcases .hero-stage-shell').evaluate((shell) => {
+  const { start, stageEnd } = await page.locator('#showcases .hero-stage-shell').evaluate((shell) => {
     const top = shell.getBoundingClientRect().top + scrollY;
     const span = Number.parseFloat(shell.style.getPropertyValue('--hero-stage-span'));
-    return { start: top, beyondEnd: top + span + 100 };
+    return { start: top, stageEnd: top + span };
   });
   await page.evaluate((y) => scrollTo(0, y), start + 100);
   await page.waitForTimeout(100);
@@ -102,11 +117,19 @@ test('native page scrolling resumes beyond both ends of the mobile Home deck', a
   expect(above.after).toBeLessThan(start);
   await expect(page.locator('body')).not.toHaveClass(/hero-stage-pin/);
 
-  await page.evaluate((y) => scrollTo(0, y), beyondEnd);
+  await page.evaluate((y) => { document.documentElement.scrollTop = y; }, Math.max(start, stageEnd - 50));
   await page.waitForTimeout(100);
   await expect(page.locator('body')).not.toHaveClass(/hero-stage-pin/);
-  const below = await scrollWheel(page, 220);
+  let below = await scrollWheel(page, 220);
   expect(below.after).toBeGreaterThan(below.before);
+  const handoff = await page.locator('#showcases .hero-stage-shell').evaluate((shell) => ({
+    shellBottom: shell.getBoundingClientRect().bottom,
+    footerTop: document.querySelector('#footer')?.getBoundingClientRect().top ?? Infinity,
+    viewportHeight: innerHeight,
+  }));
+  expect(handoff.footerTop).toBeLessThan(handoff.viewportHeight);
+  expect(handoff.shellBottom).toBeLessThanOrEqual(handoff.footerTop + 1);
+  await expect(page.locator('body')).not.toHaveClass(/hero-stage-pin/);
   expect(errors).toEqual([]);
   await context.close();
 });
@@ -120,6 +143,7 @@ test('reduced motion keeps the mobile Home brands in native page flow', async ({
   });
   await context.addInitScript(() => localStorage.setItem('play-language', 'en'));
   const page = await context.newPage();
+  await installRealContentFixture(page, 'en');
   await page.goto('/en?view=showcases', { waitUntil: 'domcontentloaded' });
   await expect(page.locator('#showcases .home-brand')).toHaveCount(12);
   await expect(page.locator('#showcases')).not.toHaveAttribute('data-hero-motion');
@@ -226,7 +250,16 @@ test('desktop banner sequence remains ordered and scrolls in both directions', a
 
 test('mobile Home Hero keeps native wheel and touch scrolling', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await context.addInitScript(() => {
+    localStorage.setItem('play-language', 'en');
+    const disableSmoothScroll = () => {
+      if (document.documentElement) document.documentElement.style.scrollBehavior = 'auto';
+    };
+    disableSmoothScroll();
+    document.addEventListener('DOMContentLoaded', disableSmoothScroll, { once: true });
+  });
   const page = await context.newPage();
+  await installRealContentFixture(page, 'en');
   await page.goto('/?view=top', { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => scrollTo(0, 0));
   const wheel = await scrollWheel(page, 320);
@@ -245,6 +278,7 @@ test('brand subcategory page still renders with mobile scroll', async ({ browser
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await context.addInitScript(() => localStorage.setItem('play-language', 'en'));
   const page = await context.newPage();
+  await installRealContentFixture(page, 'en');
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/en/brands/muslim/category/quran-learning', { waitUntil: 'domcontentloaded' });

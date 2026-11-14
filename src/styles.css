@@ -2442,21 +2442,23 @@ html[dir="rtl"] .news-card:hover .news-card__link i { transform: translateX(-8px
   inherits: false;
 }
 #showcases { --brand-hero-edge: 140px; --brand-rail-height: 0px; overflow-anchor: none; }
-#showcases > .home-brand { margin: 0; padding: 0; }
-#showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
+#showcases .home-brand { margin: 0; padding: 0; }
+#showcases .home-brand__banner-layer,
+#showcases .home-brand__product-layer { display: contents; }
+#showcases .home-brand__banner-layer > .brand-showcase.brand-showcase--full-banner {
   position: sticky;
   top: var(--header-height);
   z-index: 1;
   transition: top .55s cubic-bezier(.22, 1, .36, 1);
 }
-body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
+body:has(.site-header.is-hidden) #showcases .home-brand__banner-layer > .brand-showcase.brand-showcase--full-banner {
   top: var(--brand-rail-height, 0px);
 }
-#showcases > .home-brand > .brand-strip {
+#showcases .home-brand__product-layer > .brand-strip {
   position: relative;
   z-index: 2;
 }
-#showcases > .home-brand > .home-brand__runway {
+#showcases .home-brand__banner-layer > .home-brand__runway {
   height: 0;
   pointer-events: none;
 }
@@ -2464,8 +2466,8 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
 #showcases > .hero-stage-shell,
 #showcases > .hero-stage-shell > .hero-stage { display: contents; }
 @media (min-width: 1101px) {
-  #showcases > .home-brand { display: contents; }
-  #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
+  #showcases .home-brand { display: contents; }
+  #showcases .home-brand__banner-layer > .brand-showcase.brand-showcase--full-banner {
     position: relative;
     top: auto;
     z-index: 3;
@@ -2521,14 +2523,14 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     object-fit: cover;
     object-position: center top;
   }
-  #showcases > .home-brand > .brand-strip { z-index: 1; }
-  #showcases > .home-brand > .brand-strip.is-concealed {
+  #showcases .home-brand__product-layer > .brand-strip { z-index: 1; }
+  #showcases .home-brand__product-layer > .brand-strip.is-concealed {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
     transition: none;
   }
-  #showcases > .home-brand > .home-brand__runway { height: 0; }
+  #showcases .home-brand__banner-layer > .home-brand__runway { height: 0; }
 }
 @media (min-width: 1101px) and (prefers-reduced-motion: no-preference) {
   html:has(#showcases[data-hero-motion]) { overflow-anchor: none; }
@@ -2548,6 +2550,17 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
     z-index: 2;
   }
   #showcases > .hero-stage-shell > .hero-stage > .home-brand { display: contents; }
+  #showcases > .hero-stage-shell > .hero-stage .home-brand__banner-layer,
+  #showcases > .hero-stage-shell > .hero-stage .home-brand__product-layer {
+    display: block;
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    z-index: auto;
+    pointer-events: none;
+  }
+  #showcases > .hero-stage-shell > .hero-stage .home-brand__banner-layer > .brand-showcase,
+  #showcases > .hero-stage-shell > .hero-stage .home-brand__product-layer > .brand-strip { pointer-events: auto; }
   #showcases > .hero-stage-shell > .hero-stage .brand-showcase.brand-showcase--full-banner {
     position: absolute;
     inset: 0;
@@ -2592,7 +2605,7 @@ body:has(.site-header.is-hidden) #showcases > .home-brand > .brand-showcase.bran
 }
 body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
 @media (max-width: 1100px) {
-  #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
+  #showcases .home-brand__banner-layer > .brand-showcase.brand-showcase--full-banner {
     /* relative, not static: static is not a containing block, so the
        absolute banner image/link/copy escape to the viewport and the
        last brand paints over the hero after its image loads. */
@@ -2601,9 +2614,9 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
     z-index: auto;
     transition: none;
   }
-  #showcases > .home-brand > .brand-strip { z-index: auto; }
-  #showcases > .home-brand { margin-bottom: 0; }
-  #showcases > .home-brand > .home-brand__runway { height: 0; }
+  #showcases .home-brand__product-layer > .brand-strip { z-index: auto; }
+  #showcases .home-brand { margin-bottom: 0; }
+  #showcases .home-brand__banner-layer > .home-brand__runway { height: 0; }
   #showcases > .brand-banner-stack { display: none; height: 0; transition: none; }
 }
 @media (max-width: 1100px) and (prefers-reduced-motion: no-preference) {
@@ -2628,6 +2641,17 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
     z-index: 2;
   }
   #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage > .home-brand { display: contents; }
+  #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage .home-brand__banner-layer,
+  #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage .home-brand__product-layer {
+    display: block;
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    z-index: auto;
+    pointer-events: none;
+  }
+  #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage .home-brand__banner-layer > .brand-showcase,
+  #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage .home-brand__product-layer > .brand-strip { pointer-events: auto; }
   #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage .brand-showcase.brand-showcase--full-banner {
     position: absolute;
     top: 0;
@@ -2677,7 +2701,7 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner {
+  #showcases .home-brand__banner-layer > .brand-showcase.brand-showcase--full-banner {
     position: relative;
     top: auto;
     z-index: auto;
@@ -2687,7 +2711,7 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
     overflow: visible;
     transition: none;
   }
-  #showcases > .home-brand > .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
+  #showcases .home-brand__banner-layer > .brand-showcase.brand-showcase--full-banner .brand-showcase__image {
     position: relative;
     inset: auto;
     width: 100%;
@@ -2695,9 +2719,9 @@ body:has(.site-header.is-hidden) #showcases > .brand-banner-stack { top: 0; }
     object-fit: contain;
     object-position: center;
   }
-  #showcases > .home-brand > .brand-strip { z-index: auto; }
-  #showcases > .home-brand { margin-bottom: 0; }
-  #showcases > .home-brand > .home-brand__runway { height: 0; }
+  #showcases .home-brand__product-layer > .brand-strip { z-index: auto; }
+  #showcases .home-brand { margin-bottom: 0; }
+  #showcases .home-brand__banner-layer > .home-brand__runway { height: 0; }
   #showcases > .brand-banner-stack { display: none; height: 0; transition: none; }
 }
 /* BrandPage Main Category banners reuse the exact same approved stack:

@@ -165,7 +165,7 @@ test('brand category banners reuse the home sticky stack, scoped and layout-neut
   assert.match(homeStack, /top:\s*var\(--header-height\)/);
   assert.match(homeStack, /z-index:\s*1/);
   assert.match(styles, /--brand-hero-edge:\s*140px/);
-  assert.match(styles, /#showcases > \.home-brand > \.brand-strip \{[^}]*z-index:\s*2/);
+  assert.match(styles, /#showcases \.home-brand__product-layer > \.brand-strip \{[^}]*z-index:\s*2/);
   assert.doesNotMatch(styles, /--brand-deck-slice|brand-deck-tab|is-collapsed/);
   assert.match(categoryStack, /top:\s*0/);
 
@@ -176,17 +176,18 @@ test('brand category banners reuse the home sticky stack, scoped and layout-neut
   assert.doesNotMatch(styles, /\.category-product-showcase[^{]*\{[^}]*position:\s*sticky/);
 });
 
-test('homepage prioritizes first banner media and lazy-loads the rest', () => {
+test('homepage eagerly fetches stack media and prioritizes the first banner', () => {
   const homePage = fs.readFileSync(new URL('../src/pages/HomePage.jsx', import.meta.url), 'utf8');
   const showcase = fs.readFileSync(new URL('../src/components/BrandShowcase.jsx', import.meta.url), 'utf8');
   const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
   const main = fs.readFileSync(new URL('../src/main.jsx', import.meta.url), 'utf8');
 
-  assert.match(homePage, /mediaLoading=\{index === 0 \? 'eager' : 'lazy'\}/);
+  assert.match(homePage, /mediaLoading="eager"/);
   assert.match(homePage, /mediaFetchPriority=\{index === 0 \? 'high' : undefined\}/);
   assert.doesNotMatch(homePage, /velvet-home-intro-seen|sessionStorage/);
   assert.match(showcase, /mediaLoading = 'lazy'/);
   assert.match(showcase, /loading=\{mediaLoading\}/);
+  assert.match(showcase, /decoding="async"/);
   assert.match(main, /preconnect/);
   assert.match(styles, /\.brand-showcase\.brand-showcase--full-banner \.brand-showcase__tint[\s\S]{0,280}?linear-gradient/);
   assert.match(styles, /\.category-hero__shade[\s\S]{0,280}?linear-gradient/);

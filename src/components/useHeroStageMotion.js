@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import { activeHeroIndex, applyMobileUpHandoff, heroStageMotion, homeReverseMotion, latchHomeDeckMode, latchStageMode, mobileUpHandoff, restoreMobileUpLayout, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
+import { activeHeroIndex, applyMobileUpHandoff, heroStageMotion, homeReverseEntry, homeReverseMotion, latchHomeDeckMode, latchStageMode, mobileUpHandoff, restoreMobileUpLayout, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
 
 const MOBILE_UP_DECK_DEPTH = 8;
 
@@ -31,6 +31,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
     let mobileUpLayoutAnchor = null;
     let lastLayoutRelease = null;
     let mobileUpPoseHandoff = null;
+    let mobileHomeReverseEntry = null;
 
     const direction = { y: window.scrollY, mode: 'down', pos: 0 };
     let shellTop = 0;
@@ -60,6 +61,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
       cleared = true;
       root.removeAttribute('data-hero-motion');
       root.removeAttribute('data-mobile-hero-up');
+      root.removeAttribute('data-mobile-reverse-phase');
       root.style.setProperty('--brand-rail-height', '0px');
       document.body.classList.remove('hero-stage-pin');
       shellEl?.style.removeProperty('--hero-stage-span');
@@ -67,6 +69,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
       mobileUpLayoutAnchor = null;
       lastLayoutRelease = null;
       mobileUpPoseHandoff = null;
+      mobileHomeReverseEntry = null;
       if (stageEl) {
         stageEl.style.top = '';
         stageEl.style.height = '';
@@ -128,13 +131,14 @@ export function useHeroStageMotion(rootId, mobile = false) {
         mobileUpLayoutAnchor = null;
         lastLayoutRelease = null;
         mobileUpPoseHandoff = null;
+        mobileHomeReverseEntry = null;
       }
 
       // Rebuild slides array and cache DOM references
       slides = [];
       stageEl?.querySelectorAll(':scope > .home-brand').forEach((section, heroIndex) => {
-        const hero = section.querySelector(':scope > .brand-showcase');
-        const strip = section.querySelector(':scope > .brand-strip');
+        const hero = section.querySelector(':scope > .home-brand__banner-layer > .brand-showcase');
+        const strip = section.querySelector(':scope > .home-brand__product-layer > .brand-strip');
         if (hero) slides.push({ kind: 'hero', heroIndex, el: hero, section });
         if (strip) {
           const height = strip.offsetHeight;
@@ -218,6 +222,19 @@ export function useHeroStageMotion(rootId, mobile = false) {
       if (direction.mode !== 'up') direction.mode = 'down';
       if (nextMode === direction.mode) direction.mode = nextMode;
 
+      if (mobileHomeDeck && direction.mode === 'up' && previousMode !== 'up') {
+        mobileHomeReverseEntry = homeReverseEntry(
+          slides,
+          previousLocal,
+          local,
+          stageHeight,
+          pinHeight,
+          geometryCache,
+        );
+      } else if (!mobileHomeDeck || direction.mode !== 'up') {
+        mobileHomeReverseEntry = null;
+      }
+
       const mobileUp = !desktop.matches && direction.mode === 'up';
       if (mobileUp && !root.hasAttribute('data-mobile-hero-up')) root.setAttribute('data-mobile-hero-up', '');
       else if (!mobileUp && root.hasAttribute('data-mobile-hero-up')) root.removeAttribute('data-mobile-hero-up');
@@ -226,8 +243,10 @@ export function useHeroStageMotion(rootId, mobile = false) {
       // banner peeks stay anchored while the previous banner opens beneath the
       // outgoing one. Forward Home and other stages retain their existing pose.
       const homeReverse = mobileHomeDeck && mobileUp
-        ? homeReverseMotion(slides, local, stageHeight, pinHeight, geometryCache)
+        ? homeReverseMotion(slides, local, stageHeight, pinHeight, geometryCache, mobileHomeReverseEntry)
         : null;
+      if (homeReverse) root.setAttribute('data-mobile-reverse-phase', homeReverse.phase);
+      else root.removeAttribute('data-mobile-reverse-phase');
       const motionMode = mobileHomeDeck ? 'down' : direction.mode;
       let motion = homeReverse?.motion || heroStageMotion({
         slides,
@@ -274,7 +293,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
         if (shellEl.style.getPropertyValue(spanProperty) !== nextSpan) {
           shellEl.style.setProperty(spanProperty, nextSpan);
         }
-        const nextBox = `${layoutRelease.boxHeight}px`;
+        const nextBox = `${homeReverse?.sceneHeight ?? layoutRelease.boxHeight}px`;
         if (stageEl.style.height !== nextBox) stageEl.style.height = nextBox;
       }
       lastLayoutRelease = layoutRelease;

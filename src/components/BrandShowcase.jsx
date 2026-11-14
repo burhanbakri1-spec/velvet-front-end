@@ -50,7 +50,7 @@ export default function BrandShowcase({
         src={brand.image}
         alt=""
         loading={mediaLoading}
-        decoding={mediaLoading === 'eager' ? 'sync' : 'async'}
+        decoding="async"
         {...(mediaFetchPriority ? { fetchPriority: mediaFetchPriority } : {})}
       />
       <div className="brand-showcase__tint" aria-hidden="true" />

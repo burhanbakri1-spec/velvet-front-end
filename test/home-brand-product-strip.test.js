@@ -26,12 +26,12 @@ const makeProduct = (id, brandId, extra = {}) => ({
   ...extra,
 });
 
-test('each Home brand banner renders its own product strip directly after it', () => {
+test('each Home brand banner and product strip occupy separate scene layers', () => {
   const home = fs.readFileSync(homePath, 'utf8');
 
   assert.match(home, /import BrandProductStrip from '\.\.\/components\/BrandProductStrip'/);
   assert.match(home, /<section className="home-brand" key=\{brand\.slug\}>/);
-  assert.match(home, /<BrandShowcase[\s\S]*deckIndex=\{index\}[\s\S]*?\/>\s*<BrandProductStrip[\s\S]*?brandSlug=\{brand\.slug\}[\s\S]*?deckIndex=\{index\}[\s\S]*?\/>/);
+  assert.match(home, /<div className="home-brand__banner-layer">[\s\S]*?<BrandShowcase[\s\S]*deckIndex=\{index\}[\s\S]*?\/>[\s\S]*?<\/div>\s*<div className="home-brand__product-layer">\s*<BrandProductStrip[\s\S]*?brandSlug=\{brand\.slug\}[\s\S]*?deckIndex=\{index\}[\s\S]*?\/>\s*<\/div>/);
   assert.match(home, /<\/section>/);
   assert.doesNotMatch(home, /<BrandShowcase[\s\S]*?<BrandShowcase/, 'banners must not collapse into one another');
 });
@@ -352,27 +352,27 @@ test('strip stays Home-only and does not touch BrandPage or the Shop grid', () =
 test('home brand banners stick as a scroll deck and the strip paints above its banner', () => {
   const styles = fs.readFileSync(stylesPath, 'utf8');
 
-  assert.match(styles, /#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*sticky;[^}]*top:\s*var\(--header-height\);[^}]*z-index:\s*1/);
+  assert.match(styles, /#showcases \.home-brand__banner-layer > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*sticky;[^}]*top:\s*var\(--header-height\);[^}]*z-index:\s*1/);
   assert.match(styles, /--brand-hero-edge:\s*140px/);
   assert.match(styles, /--brand-rail-height:\s*0px/);
-  assert.match(styles, /@media \(min-width:\s*1101px\) \{\s*#showcases > \.home-brand \{[^}]*display:\s*contents/);
-  assert.match(styles, /@media \(min-width:\s*1101px\) \{[\s\S]*?#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative[^}]*top:\s*auto[^}]*transition:\s*none/);
+  assert.match(styles, /@media \(min-width:\s*1101px\) \{\s*#showcases \.home-brand \{[^}]*display:\s*contents/);
+  assert.match(styles, /@media \(min-width:\s*1101px\) \{[\s\S]*?#showcases \.home-brand__banner-layer > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative[^}]*top:\s*auto[^}]*transition:\s*none/);
   assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*position:\s*fixed[^}]*overflow:\s*hidden/);
   assert.match(styles, /\.brand-banner-slice__stage \.brand-showcase__image \{[^}]*object-fit:\s*cover/);
   assert.match(fs.readFileSync(homePath, 'utf8'), /useHeroStageMotion\('showcases', true\)/);
   assert.match(fs.readFileSync(new URL('../src/components/useHeroStageMotion.js', import.meta.url), 'utf8'), /heroStageMotion/);
-  assert.match(styles, /#showcases > \.home-brand > \.brand-strip \{ z-index:\s*1; \}/);
+  assert.match(styles, /#showcases \.home-brand__product-layer > \.brand-strip \{ z-index:\s*1; \}/);
   assert.doesNotMatch(styles, /--brand-deck-slice|brand-deck-tab|is-collapsed/);
   assert.doesNotMatch(fs.readFileSync(homePath, 'utf8'), /brand-deck-tab|getBrandLogo|is-collapsed|is-upcoming/);
-  assert.match(styles, /#showcases > \.home-brand > \.brand-strip \{[^}]*z-index:\s*2/);
+  assert.match(styles, /#showcases \.home-brand__product-layer > \.brand-strip \{[^}]*z-index:\s*2/);
   assert.match(styles, /\.brand-strip-card__image \{[^}]*object-fit:\s*contain/);
   assert.match(styles, /\.brand-strip-card__image \{[^}]*transform:\s*scale\(0\.68\)/);
   assert.match(styles, /\.brand-strip-card__media \{[^}]*background:\s*#fefefe/);
   assert.match(styles, /\.brand-strip-card__media \{[^}]*aspect-ratio: 1 \/ 1/);
   assert.match(styles, /\.category-showcases > \.brand-showcase\.brand-showcase--full-banner,[\s\S]*?position: sticky;[\s\S]*?top: 0;/);
-  assert.match(styles, /@media \(max-width:\s*1100px\) \{[^}]*#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative/);
-  assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[^}]*#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative/);
-  assert.doesNotMatch(styles, /@media \(max-width:\s*1100px\) \{[^}]*#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);
+  assert.match(styles, /@media \(max-width:\s*1100px\) \{[^}]*#showcases \.home-brand__banner-layer > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative/);
+  assert.match(styles, /@media \(prefers-reduced-motion:\s*reduce\) \{[^}]*#showcases \.home-brand__banner-layer > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative/);
+  assert.doesNotMatch(styles, /@media \(max-width:\s*1100px\) \{[^}]*#showcases \.home-brand__banner-layer > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*static/);
   assert.match(styles, /\.brand-strip \{[^}]*position: relative/);
   assert.match(styles, /#showcases \{[^}]*gap:\s*0/);
 });
@@ -402,7 +402,7 @@ test('previous-brand banner stack stays compact and hidden until scroll-up', () 
   assert.match(motion, /classList\.toggle\('is-concealed'/);
   assert.doesNotMatch(motion, /data-stack-open|motion\.held|stackOpen/);
   assert.match(styles, /\.brand-strip\.is-concealed \{[^}]*opacity:\s*0[^}]*visibility:\s*hidden[^}]*pointer-events:\s*none/);
-  assert.match(styles, /@media \(min-width:\s*1101px\) \{[\s\S]*?#showcases > \.home-brand > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative[^}]*transition:\s*none/);
+  assert.match(styles, /@media \(min-width:\s*1101px\) \{[\s\S]*?#showcases \.home-brand__banner-layer > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative[^}]*transition:\s*none/);
   assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*transform:\s*translate3d\(0, -18px, 0\)/);
   assert.doesNotMatch(motion, /scrollTop \+= shift/);
   assert.match(styles, /@media \(max-width:\s*1100px\) \{[\s\S]*?#showcases > \.brand-banner-stack \{[^}]*display:\s*none[^}]*height:\s*0/);
