@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import { activeHeroIndex, applyMobileUpHandoff, heroStageMotion, homeReverseEntry, homeReverseMotion, latchHomeDeckMode, latchStageMode, mobileUpHandoff, restoreMobileUpLayout, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
+import { activeHeroIndex, applyMobileUpHandoff, canDeferOffscreenPoseWrite, heroStageMotion, homeReverseEntry, homeReverseMotion, latchHomeDeckMode, latchStageMode, mobileUpHandoff, restoreMobileUpLayout, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
 
 const MOBILE_UP_DECK_DEPTH = 8;
 
@@ -62,6 +62,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
       root.removeAttribute('data-hero-motion');
       root.removeAttribute('data-mobile-hero-up');
       root.removeAttribute('data-mobile-reverse-phase');
+      root.removeAttribute('data-home-reverse-phase');
       root.style.setProperty('--brand-rail-height', '0px');
       document.body.classList.remove('hero-stage-pin');
       shellEl?.style.removeProperty('--hero-stage-span');
@@ -118,14 +119,31 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const viewportHeight = !desktop.matches && viewportProbe
         ? viewportProbe.getBoundingClientRect().height || window.innerHeight
         : window.innerHeight;
+      const availableHeight = Math.max(1, Math.round(viewportHeight - headerOffset));
 
       if (desktop.matches) {
-        stageHeight = Math.max(1, Math.round(viewportHeight - headerOffset));
-        pinHeight = stageHeight;
+        // Keep the existing desktop artwork cap and use the remaining viewport
+        // as stack room. On short desktop viewports the card scales down.
+        stageHeight = Math.max(1, Math.min(520, Math.round(window.innerWidth * 0.82), Math.round(availableHeight * 0.78)));
+        pinHeight = availableHeight;
       } else {
         const divisor = window.innerWidth <= 760 ? 2 : 3;
         stageHeight = Math.max(160, Math.round((viewportHeight - headerOffset) / divisor));
-        pinHeight = Math.max(stageHeight, Math.round(viewportHeight - headerOffset));
+        // Tablet banner/product pairs must be able to cover the pinned scene
+        // without leaving a white tail under the outgoing banner. Fit the
+        // banner to the shortest real strip in this Home deck, measured only
+        // during layout work (never in the scroll frame).
+        const homeDeck = rootId === 'showcases' && root.hasAttribute('data-home-brand-deck');
+        if (homeDeck && window.innerWidth > 760 && window.innerWidth <= 1100) {
+          const stripHeights = [...root.querySelectorAll('.home-brand__product-layer > .brand-strip')]
+            .map((strip) => Math.round(strip.offsetHeight))
+            .filter((height) => height > 0);
+          if (stripHeights.length) {
+            const shortestStrip = Math.min(...stripHeights);
+            stageHeight = Math.max(stageHeight, availableHeight - shortestStrip);
+          }
+        }
+        pinHeight = Math.max(stageHeight, availableHeight);
       }
       if (stageHeight !== previousStageHeight || pinHeight !== previousPinHeight) {
         mobileUpLayoutAnchor = null;
@@ -168,7 +186,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
         if (slide.kind !== 'hero') return;
         // The pose rounds to CSS pixels; use that same height for the image
         // box so fractional viewport divisions cannot leave a hairline seam.
-        const height = enabled && !desktop.matches ? `${stageHeight}px` : '';
+        const height = enabled ? `${stageHeight}px` : '';
         if (slide.el.style.height !== height) slide.el.style.height = height;
       });
       if (shellEl && stageEl && enabled) {
@@ -214,15 +232,17 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const pos = stageSlidePos(slides, local, stageHeight, geometryCache);
 
       const mobileShowcase = rootId === 'showcases' && mobile && !desktop.matches;
-      const mobileHomeDeck = root.hasAttribute('data-home-brand-deck') && mobileShowcase;
+      const isHomeDeck = rootId === 'showcases' && root.hasAttribute('data-home-brand-deck');
+      const mobileHomeDeck = isHomeDeck && mobileShowcase;
+      const homeReverseDeck = isHomeDeck && (mobile || desktop.matches);
       const previousLocal = Math.min(span, Math.max(0, direction.y - (shellTop - headerOffset)));
-      direction.mode = mobileHomeDeck
+      direction.mode = homeReverseDeck
         ? latchHomeDeckMode(direction.mode, delta, previousLocal, local, slides, geometryCache)
         : latchStageMode(direction.mode, delta, direction.pos, pos, slides);
       if (direction.mode !== 'up') direction.mode = 'down';
       if (nextMode === direction.mode) direction.mode = nextMode;
 
-      if (mobileHomeDeck && direction.mode === 'up' && previousMode !== 'up') {
+      if (homeReverseDeck && direction.mode === 'up' && previousMode !== 'up') {
         mobileHomeReverseEntry = homeReverseEntry(
           slides,
           previousLocal,
@@ -231,7 +251,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
           pinHeight,
           geometryCache,
         );
-      } else if (!mobileHomeDeck || direction.mode !== 'up') {
+      } else if (!homeReverseDeck || direction.mode !== 'up') {
         mobileHomeReverseEntry = null;
       }
 
@@ -242,12 +262,17 @@ export function useHeroStageMotion(rootId, mobile = false) {
       // Home's reverse pose uses measured hero and strip offsets. Earlier
       // banner peeks stay anchored while the previous banner opens beneath the
       // outgoing one. Forward Home and other stages retain their existing pose.
-      const homeReverse = mobileHomeDeck && mobileUp
+      const homeReverse = homeReverseDeck && direction.mode === 'up'
         ? homeReverseMotion(slides, local, stageHeight, pinHeight, geometryCache, mobileHomeReverseEntry)
         : null;
-      if (homeReverse) root.setAttribute('data-mobile-reverse-phase', homeReverse.phase);
-      else root.removeAttribute('data-mobile-reverse-phase');
-      const motionMode = mobileHomeDeck ? 'down' : direction.mode;
+      if (homeReverse) {
+        if (root.getAttribute('data-home-reverse-phase') !== homeReverse.phase) root.setAttribute('data-home-reverse-phase', homeReverse.phase);
+        if (root.getAttribute('data-mobile-reverse-phase') !== homeReverse.phase) root.setAttribute('data-mobile-reverse-phase', homeReverse.phase);
+      } else {
+        root.removeAttribute('data-home-reverse-phase');
+        root.removeAttribute('data-mobile-reverse-phase');
+      }
+      const motionMode = homeReverseDeck ? 'down' : direction.mode;
       let motion = homeReverse?.motion || heroStageMotion({
         slides,
         local,
@@ -321,17 +346,33 @@ export function useHeroStageMotion(rootId, mobile = false) {
         const clip = (pose.clipTop || pose.clipBottom) ? `inset(${pose.clipTop}px 0 ${pose.clipBottom}px 0)` : '';
         const el = slide.el;
         if (el) {
-          const transform = `translate3d(0, ${pose.y}px, 0)`;
-          const zIndex = String(pose.z || 1);
-          // CSSOM serializes zero units and inset shorthand differently from
-          // our input strings. Cache the last writes instead of comparing those
-          // serialized strings, so parked/held slides really skip DOM work.
           const previous = slide.appliedStyle || (slide.appliedStyle = {});
-          if (previous.transform !== transform) { el.style.transform = transform; previous.transform = transform; }
-          if (previous.clip !== clip) { el.style.clipPath = clip; previous.clip = clip; }
-          if (previous.zIndex !== zIndex) { el.style.zIndex = zIndex; previous.zIndex = zIndex; }
+          const slideHeight = Number(pose.height) > 0
+            ? Number(pose.height)
+            : slide.kind === 'strip' && Number(slide.height) > 0
+              ? Number(slide.height)
+              : stageHeight;
+          const deferStyleWrite = canDeferOffscreenPoseWrite({
+            pose,
+            height: slideHeight,
+            pinHeight,
+            previous,
+            concealed: slide.kind === 'strip' && Boolean(pose.hidden),
+          });
+          if (!deferStyleWrite) {
+            const transform = `translate3d(0, ${pose.y}px, 0)`;
+            const zIndex = String(pose.z || 1);
+            // CSSOM serializes zero units and inset shorthand differently from
+            // our input strings. Cache writes so unchanged poses skip DOM work.
+            if (previous.transform !== transform) { el.style.transform = transform; previous.transform = transform; }
+            if (previous.clip !== clip) { el.style.clipPath = clip; previous.clip = clip; }
+            if (previous.zIndex !== zIndex) { el.style.zIndex = zIndex; previous.zIndex = zIndex; }
+            previous.y = pose.y;
+            previous.clipTop = pose.clipTop || 0;
+            previous.clipBottom = pose.clipBottom || 0;
+          }
           if (slide.kind === 'hero') {
-            const height = desktop.matches ? '' : `${pose.height || stageHeight}px`;
+            const height = `${pose.height || stageHeight}px`;
             if (el.style.height !== height) el.style.height = height;
           }
         }

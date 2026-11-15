@@ -172,6 +172,7 @@ async function saveFrame(page, directory, name) {
 }
 
 test('real mobile scrolling keeps Baby continuous through the first-banner and document handoff', async ({ browser }) => {
+  test.skip(process.env.REAL_CONTENT_FIXTURE !== '1', 'requires the opt-in cached real-content fixture');
   test.setTimeout(300_000);
   fs.mkdirSync(evidenceRoot, { recursive: true });
   const manifest = [];

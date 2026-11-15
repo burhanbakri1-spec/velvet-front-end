@@ -402,6 +402,9 @@ test('previous-brand banner stack stays compact and hidden until scroll-up', () 
   assert.match(motion, /classList\.toggle\('is-concealed'/);
   assert.doesNotMatch(motion, /data-stack-open|motion\.held|stackOpen/);
   assert.match(styles, /\.brand-strip\.is-concealed \{[^}]*opacity:\s*0[^}]*visibility:\s*hidden[^}]*pointer-events:\s*none/);
+  const concealedRule = styles.indexOf('#showcases .home-brand__product-layer > .brand-strip.is-concealed');
+  const motionSceneRule = styles.indexOf('#showcases > .hero-stage-shell');
+  assert.ok(concealedRule >= 0 && concealedRule < motionSceneRule, 'concealed strip visibility applies before desktop-only motion rules');
   assert.match(styles, /@media \(min-width:\s*1101px\) \{[\s\S]*?#showcases \.home-brand__banner-layer > \.brand-showcase\.brand-showcase--full-banner \{[^}]*position:\s*relative[^}]*transition:\s*none/);
   assert.match(styles, /#showcases > \.brand-banner-stack \{[^}]*transform:\s*translate3d\(0, -18px, 0\)/);
   assert.doesNotMatch(motion, /scrollTop \+= shift/);
@@ -413,8 +416,9 @@ test('home brand deck uses the measured banner flow when scrolling upward on mob
   const home = fs.readFileSync(homePath, 'utf8');
   const motion = fs.readFileSync(new URL('../src/components/useHeroStageMotion.js', import.meta.url), 'utf8');
   assert.match(home, /data-home-brand-deck/);
-  assert.match(motion, /const mobileHomeDeck = root\.hasAttribute\('data-home-brand-deck'\) && mobileShowcase/);
-  assert.match(motion, /const motionMode = mobileHomeDeck \? 'down' : direction\.mode/);
+  assert.match(motion, /const mobileHomeDeck = isHomeDeck && mobileShowcase/);
+  assert.match(motion, /const homeReverseDeck = isHomeDeck && \(mobile \|\| desktop\.matches\)/);
+  assert.match(motion, /const motionMode = homeReverseDeck \? 'down' : direction\.mode/);
   assert.match(motion, /activeHeroIndex\(slides, motion, stageHeight\)/);
 });
 
@@ -423,8 +427,10 @@ test('mobile motion stage uses the pre-stage banner height', () => {
   const styles = fs.readFileSync(stylesPath, 'utf8');
   assert.match(motion, /window\.innerWidth <= 760 \? 2 : 3/);
   assert.match(motion, /Math\.max\(160, Math\.round\(\(viewportHeight - headerOffset\) \/ divisor\)\)/);
-  assert.match(motion, /desktop\.matches\) \{\s*stageHeight = Math\.max\(1, Math\.round\(viewportHeight - headerOffset\)\)/);
-  assert.match(motion, /pinHeight = Math\.max\(stageHeight, Math\.round\(viewportHeight - headerOffset\)\)/);
+  assert.match(motion, /desktop\.matches\) \{\s*\/\/ Keep the existing desktop artwork cap[\s\S]*?stageHeight = Math\.max\(1, Math\.min\(520, Math\.round\(window\.innerWidth \* 0\.82\), Math\.round\(availableHeight \* 0\.78\)\)\)/);
+  assert.match(motion, /pinHeight = availableHeight/);
+  assert.match(motion, /stageHeight = Math\.max\(stageHeight, availableHeight - shortestStrip\)/);
+  assert.match(motion, /pinHeight = Math\.max\(stageHeight, availableHeight\)/);
   // Optimized: uses cached geometryCache.span instead of calling stageGeometry() every frame
   assert.match(motion, /geometryCache\.span/);
   assert.match(motion, /stageReleaseBox/);

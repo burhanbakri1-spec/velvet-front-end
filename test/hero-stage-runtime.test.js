@@ -11,7 +11,7 @@ function mount(width = 375, reduced = false, heroCount = 1, homeDeck = false) {
   const element = () => {
     const values = {}, attributes = new Map();
     return { classList: classes(), style: new Proxy({ getPropertyValue: key => values[key] || '', setProperty(key,value) { writes++; values[key]=value; }, removeProperty(key) { writes++; delete values[key]; } }, { get(target,key) { return key in target ? target[key] : values[key] || ''; }, set(target,key,value) { writes++; values[key]=value; return true; } }),
-      setAttribute(key,value) { writes++; attributes.set(key,value); }, hasAttribute: key => attributes.has(key), removeAttribute(key) { attributes.delete(key); } };
+      setAttribute(key,value) { writes++; attributes.set(key,value); }, getAttribute: key => attributes.has(key) ? attributes.get(key) : null, hasAttribute: key => attributes.has(key), removeAttribute(key) { attributes.delete(key); } };
   };
   const root=element(), shell=element(), stage=element(), hero=element(), strip=element(), section=element(), parent=element();
   if (homeDeck) root.setAttribute('data-home-brand-deck', '');
@@ -138,7 +138,7 @@ test('only the existing mobile breakpoint opts into the bounded UP deck', () => 
 test('mobile UP changes the local shell length while DOWN and desktop keep the original property', () => {
  for(const width of [390,1440]) {
   const stage=mount(width,false,12);
-  const h=width<1101?370:740;
+  const h=width<1101?370:520;
   const slides=Array.from({length:24},(_,i)=>i%2?{kind:'strip',height:240}:{kind:'hero'});
   const geometry=math.stageGeometry(slides,h),boundary=928+geometry.offsets[22];
   stage.scroll(boundary);stage.flush();
@@ -155,7 +155,7 @@ test('mobile UP changes the local shell length while DOWN and desktop keep the o
   stage.scroll(boundary+10);stage.flush();
   assert.equal(stage.root.hasAttribute('data-mobile-hero-up'),false);
   const local=boundary+10-928;
-  const expected=math.stageReleaseBox(slides,h,width<1101?740:h,local,'down',geometry);
+  const expected=math.stageReleaseBox(slides,h,740,local,'down',geometry);
   assert.equal(stage.shell.style.getPropertyValue('--hero-stage-span'),`${expected.shellHeight}px`);
   stage.dispose();
   assert.equal(stage.shell.style.getPropertyValue('--mobile-up-stage-span'),'');
@@ -273,12 +273,12 @@ test('Android toolbar resizing cannot remap a stationary mobile DOWN or UP pose'
  }
 });
 
-test('real small-viewport resizing still remeasures mobile geometry, while desktop uses innerHeight', () => {
+test('real small-viewport resizing remeasures mobile geometry while desktop stage remains capped', () => {
  const mobile=mount(390);mobile.resize(915,915);mobile.flush();
  assert.equal(mobile.motionInputs.at(-1).stageHeight,422);
  assert.equal(mobile.hero.style.height,'422px','rendered height must match the rounded pose height');
  mobile.dispose();
  const desktop=mount(1440);desktop.resize(868,812);desktop.flush();
- assert.equal(desktop.motionInputs.at(-1).stageHeight,796);
- assert.equal(desktop.hero.style.height,'');desktop.dispose();
+ assert.equal(desktop.motionInputs.at(-1).stageHeight,520);
+ assert.equal(desktop.hero.style.height,'520px');desktop.dispose();
 });

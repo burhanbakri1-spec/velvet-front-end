@@ -9,9 +9,29 @@ const API_ORIGIN = 'https://api-staging.igroup.website';
 const COMPANY_ID = 'kids-velvet';
 const SITE_ID = 'kids-velvet-storefront';
 const MEDIA_PREFIX = `${API_ORIGIN}/uploads/${COMPANY_ID}/`;
+const MEDIA_CACHE_DIR = path.resolve('brand-motion-evidence', 'real-content', 'media-cache');
 const mediaResponses = new Map();
 let activeMediaFetches = 0;
 const mediaFetchWaiters = [];
+let mediaCacheIndex;
+
+function readCachedStagingMedia(url) {
+  if (mediaCacheIndex === undefined) {
+    const indexFile = path.join(MEDIA_CACHE_DIR, 'index.json');
+    mediaCacheIndex = fs.existsSync(indexFile)
+      ? JSON.parse(fs.readFileSync(indexFile, 'utf8'))
+      : null;
+  }
+  const item = mediaCacheIndex?.assets?.find((asset) => asset.url === url && asset.ok);
+  if (!item || path.basename(item.file) !== item.file) return null;
+  const file = path.join(MEDIA_CACHE_DIR, item.file);
+  if (!fs.existsSync(file)) return null;
+  return {
+    body: fs.readFileSync(file),
+    contentType: item.contentType || 'application/octet-stream',
+    status: 200,
+  };
+}
 
 async function acquireMediaFetch() {
   if (activeMediaFetches < 4) {
@@ -31,11 +51,13 @@ function readStagingMedia(url) {
   if (!url.startsWith(MEDIA_PREFIX)) throw new Error(`Unexpected Velvet media URL: ${url}`);
   if (!mediaResponses.has(url)) {
     const responsePromise = (async () => {
+      const cached = readCachedStagingMedia(url);
+      if (cached) return cached;
       let lastError;
       for (let attempt = 0; attempt < 3; attempt += 1) {
         await acquireMediaFetch();
         try {
-          const response = await fetch(url);
+          const response = await fetch(url, { signal: AbortSignal.timeout(15_000) });
           if (response.status !== 200) throw new Error(`Staging media GET ${response.status}: ${url}`);
           const contentType = response.headers.get('content-type') || 'application/octet-stream';
           if (!contentType.startsWith('image/')) throw new Error(`Staging media is not an image (${contentType}): ${url}`);
@@ -44,7 +66,7 @@ function readStagingMedia(url) {
           return { body, contentType, status: response.status };
         } catch (error) {
           lastError = error;
-          const transient = /fetch failed|timeout|ECONN|ENOTFOUND/i.test(`${error?.message} ${error?.cause?.name} ${error?.cause?.message}`);
+          const transient = /fetch failed|timeout|ECONN|ENOTFOUND|AbortError|TimeoutError/i.test(`${error?.message} ${error?.cause?.name} ${error?.cause?.message}`);
           if (!transient || attempt === 2) throw error;
         } finally {
           releaseMediaFetch();

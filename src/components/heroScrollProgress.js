@@ -43,6 +43,33 @@ function blank(stageHeight) {
   return { y: stageHeight, clipTop: 0, clipBottom: 0, hidden: false, z: 1 };
 }
 
+function poseOutsidePin(pose, height, pinHeight) {
+  const y = Number(pose?.y);
+  const clipTop = Number(pose?.clipTop) || 0;
+  const clipBottom = Number(pose?.clipBottom) || 0;
+  if (!Number.isFinite(y) || !(height > 0) || !(pinHeight > 0)) return 'visible';
+  if (y + height - clipBottom <= 0) return 'above';
+  if (y + clipTop >= pinHeight) return 'below';
+  return 'visible';
+}
+
+/**
+ * Whether a pose style write can wait without changing the visible stage.
+ * Concealed strips are hidden by their class; other slides are deferred only
+ * while both their current DOM pose and next pose are beyond the same pin edge.
+ */
+export function canDeferOffscreenPoseWrite({ pose, height, pinHeight, previous, concealed = false }) {
+  if (concealed) return true;
+  const nextSide = poseOutsidePin(pose, height, pinHeight);
+  if (nextSide === 'visible' || !Number.isFinite(previous?.y)) return false;
+  const appliedSide = poseOutsidePin({
+    y: previous.y,
+    clipTop: previous.clipTop,
+    clipBottom: previous.clipBottom,
+  }, height, pinHeight);
+  return appliedSide === nextSide;
+}
+
 /**
  * Keep the current mode until scroll crosses a hero index.
  * Both modes draw the same full-bleed frame on that index, so the
@@ -451,7 +478,37 @@ export function activeHeroIndex(slides, motion, stageHeight) {
       highestLayer = layer;
     }
   });
-  return winner ?? 0;
+  if (winner != null) return winner;
+
+  // A measured product strip can own the stage between two banners. Keep its
+  // brand as the active owner instead of falling back to Baby while no hero
+  // intersects the scene. This only affects ownership metadata, not poses.
+  let stripWinner = null;
+  let largestStrip = 0;
+  let highestStripLayer = -Infinity;
+  (Array.isArray(slides) ? slides : []).forEach((slide, index) => {
+    if (slide?.kind !== 'strip') return;
+    const pose = motion?.[index];
+    if (!pose || pose.hidden) return;
+    const y = Number(pose.y);
+    const height = Number(pose.height) > 0
+      ? Number(pose.height)
+      : Math.round(Number(slide.height)) > 0
+        ? Math.round(Number(slide.height))
+        : stageHeight;
+    const top = y + (pose.clipTop || 0);
+    const bottom = y + height - (pose.clipBottom || 0);
+    const visible = Math.max(0, Math.min(stageHeight, bottom) - Math.max(0, top));
+    const layer = Number(pose.z) || 0;
+    if (visible > largestStrip + 0.5 || (visible > 0 && Math.abs(visible - largestStrip) <= 0.5 && layer > highestStripLayer)) {
+      stripWinner = slide.heroIndex ?? index;
+      largestStrip = visible;
+      highestStripLayer = layer;
+    }
+  });
+  if (stripWinner != null) return stripWinner;
+  const firstHero = (Array.isArray(slides) ? slides : []).find((slide) => slide?.kind === 'hero');
+  return firstHero?.heroIndex ?? 0;
 }
 
 function progressOf(unit) {

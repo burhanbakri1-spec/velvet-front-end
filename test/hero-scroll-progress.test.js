@@ -6,6 +6,7 @@ import {
   HERO_SLICE,
   HERO_SLICE_OVERLAP,
   activeHeroIndex,
+  canDeferOffscreenPoseWrite,
   heroStageMotion,
   homeReverseEntry,
   homeReverseMotion,
@@ -18,6 +19,53 @@ import {
 } from '../src/components/heroScrollProgress.js';
 
 const stageHeight = 812;
+
+test('offscreen pose writes defer only while the applied and target poses stay beyond the same pin edge', () => {
+  assert.equal(canDeferOffscreenPoseWrite({
+    pose: { y: 900, clipTop: 0, clipBottom: 0 },
+    height: 100,
+    pinHeight: 812,
+    previous: { y: 850, clipTop: 0, clipBottom: 0 },
+  }), true);
+
+  assert.equal(canDeferOffscreenPoseWrite({
+    pose: { y: 900, clipTop: 0, clipBottom: 0 },
+    height: 100,
+    pinHeight: 812,
+    previous: { y: 750, clipTop: 0, clipBottom: 0 },
+  }), false, 'the first write that moves a visible pose outside still applies');
+
+  assert.equal(canDeferOffscreenPoseWrite({
+    pose: { y: 30, clipTop: 0, clipBottom: 0 },
+    height: 100,
+    pinHeight: 812,
+    previous: { y: 30, clipTop: 0, clipBottom: 0 },
+  }), false, 'visible poses always apply');
+
+  assert.equal(canDeferOffscreenPoseWrite({
+    pose: { y: 30, clipTop: 0, clipBottom: 0 },
+    height: 100,
+    pinHeight: 812,
+    previous: { y: 900, clipTop: 0, clipBottom: 0 },
+  }), false, 'a pose re-entering the pin applies on its first visible frame');
+
+  assert.equal(canDeferOffscreenPoseWrite({
+    pose: { y: -120, clipTop: 0, clipBottom: 0 },
+    height: 100,
+    pinHeight: 812,
+    previous: { y: -90, clipTop: 0, clipBottom: 0 },
+  }), false, 'crossing between opposite offscreen edges applies');
+});
+
+test('concealed product strips may defer pose writes because visibility is controlled by their concealment class', () => {
+  assert.equal(canDeferOffscreenPoseWrite({
+    pose: { y: 240, clipTop: 0, clipBottom: 0 },
+    height: 220,
+    pinHeight: 812,
+    previous: { y: 0, clipTop: 0, clipBottom: 0 },
+    concealed: true,
+  }), true);
+});
 
 function slides(pattern) {
   return pattern.map((kind) => ({ kind }));
@@ -98,6 +146,20 @@ test('active banner follows the largest visible area and resolves overlap by pai
     { y: 812, clipTop: 0, clipBottom: 0, hidden: true, z: 1 },
     { y: 0, clipTop: 0, clipBottom: 0, hidden: false, z: 40 },
   ], stageHeight), 1, 'equal visible banners follow the frontmost layer');
+});
+
+test('a visible product strip retains its brand ownership when no banner intersects the stage', () => {
+  const list = [
+    { kind: 'hero', heroIndex: 0 },
+    { kind: 'strip', heroIndex: 1, height: 380 },
+    { kind: 'hero', heroIndex: 2 },
+  ];
+  const pose = [
+    { y: -229, z: 1, hidden: false },
+    { y: 0, z: 4, hidden: false },
+    { y: 354, z: 3, hidden: false },
+  ];
+  assert.equal(activeHeroIndex(list, pose, 229), 1);
 });
 
 test('Home reverse enters the stack as a group, then moves one banner while locked', () => {
@@ -182,6 +244,33 @@ test('Home reverse enters the stack as a group, then moves one banner while lock
   assert.deepEqual(reversedAgain, entranceMiddle, 'direction reversal retraces the same scroll-derived pose');
 });
 
+test('Home reverse keeps every earlier desktop card inside the responsive pinned viewport', () => {
+  const height = 520;
+  const pinHeight = 680;
+  const list = Array.from({ length: 12 }, (_, heroIndex) => ({ kind: 'hero', heroIndex }));
+  const geometry = stageGeometry(list, height);
+  const boundary = geometry.offsets[11];
+  const entry = homeReverseEntry(list, boundary + 12, boundary - 12, height, pinHeight, geometry);
+  const locked = homeReverseMotion(list, entry.lockLocal, height, pinHeight, geometry, entry);
+  const quarter = homeReverseMotion(list, entry.lockLocal - Math.round(height * 0.25), height, pinHeight, geometry, entry);
+  const threeQuarter = homeReverseMotion(list, entry.lockLocal - Math.round(height * 0.75), height, pinHeight, geometry, entry);
+  const nearEnd = homeReverseMotion(list, geometry.offsets[10] + 2, height, pinHeight, geometry, entry);
+  const visible = (pose) => Math.max(0, Math.min(pinHeight, pose.y + height - (pose.clipBottom || 0)) - Math.max(0, pose.y + (pose.clipTop || 0)));
+
+  assert.equal(locked.phase, 'banner');
+  assert.equal(locked.currentHero, 11);
+  assert.ok(locked.stackStep > 0 && locked.stackStep < HERO_SLICE - HERO_SLICE_OVERLAP);
+  for (let index = 0; index < 10; index += 1) {
+    assert.equal(visible(locked.motion[index]), HERO_SLICE, `earlier banner ${index} retains a visible logo slice`);
+    assert.ok(locked.motion[index].y < locked.motion[index + 1].y, `earlier banner ${index} stays in canonical stack order`);
+    assert.equal(quarter.motion[index].y, threeQuarter.motion[index].y, `earlier banner ${index} remains anchored while current banner moves`);
+  }
+  assert.ok(visible(threeQuarter.motion[10]) > HERO_SLICE, 'the previous banner is revealed progressively below the stack');
+  assert.ok(visible(nearEnd.motion[10]) >= height - 1, 'the previous banner reaches full visibility at the transition endpoint');
+  assert.ok(threeQuarter.motion[11].y > quarter.motion[11].y, 'the outgoing banner moves continuously with scroll progress');
+  assert.equal(locked.sceneHeight, pinHeight, 'the desktop pin remains a fixed viewport box during the transition');
+});
+
 test('the first Home banner keeps its fixed geometry and returns to natural page order', () => {
   const list = [210, 295, 180, 260].flatMap((height, heroIndex) => [
     { kind: 'hero', heroIndex },
@@ -207,7 +296,7 @@ test('the first Home banner keeps its fixed geometry and returns to natural page
     if (progress < 0.999) {
       assert.equal(state.phase, 'banner');
       assert.equal(state.motion[1].hidden, true, 'Baby product content stays out of the banner stack');
-      assert.equal(state.motion[3].hidden, false, 'Kids product content occupies a separate lower lane');
+      assert.equal(state.motion[3].hidden, false, 'the outgoing product lane stays attached to its banner');
       assert.equal(state.motion[3].y, kids.y + 386, 'the outgoing strip follows the fixed Kids banner');
       assert.equal(state.sceneHeight, pinHeight, 'the pinned stage height stays fixed during reverse motion');
     }

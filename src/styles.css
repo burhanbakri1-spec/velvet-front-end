@@ -772,6 +772,12 @@ html[lang="ar"] .intro-cta__meta { letter-spacing: 0; text-transform: none; font
   border-bottom: 1px solid rgba(18,18,20,.08);
   color: var(--ink, #121214);
 }
+#showcases .home-brand__product-layer > .brand-strip.is-concealed {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: none;
+}
 .brand-strip__head {
   display: flex;
   align-items: center;

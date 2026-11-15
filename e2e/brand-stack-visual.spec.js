@@ -85,7 +85,8 @@ async function visibleLogoHeight(page, brand) {
 }
 
 test('captures the mobile reverse deck across brands, sizes, and languages', async ({ browser }) => {
-  test.setTimeout(300_000);
+  test.skip(process.env.REAL_CONTENT_FIXTURE !== '1', 'requires the opt-in cached real-content fixture');
+  test.setTimeout(process.env.REAL_CONTENT_FIXTURE === '1' ? 600_000 : 300_000);
   const evidence = path.resolve('brand-motion-evidence', 'stack-architecture');
   fs.mkdirSync(evidence, { recursive: true });
   const measurements = [];
@@ -234,9 +235,13 @@ test('captures the mobile reverse deck across brands, sizes, and languages', asy
         expect(phaseAAfter.reverse).toBe(false, 'reverse ownership waits for the measured hero boundary');
         expect(phaseABefore.phase).toBe(null);
         expect(phaseAAfter.phase).toBe(null);
-        expect(phaseABefore.stripHidden).toBe(false);
-        expect(phaseAAfter.stripHidden).toBe(false);
-        expect(phaseAAfter.stripY).not.toBe(phaseABefore.stripY);
+if (phaseABefore.stripY !== null) {
+          expect(phaseABefore.stripHidden).toBe(false);
+          expect(phaseAAfter.stripHidden).toBe(false);
+          expect(phaseAAfter.stripY).not.toBe(phaseABefore.stripY);
+        } else {
+          expect(phaseAAfter.stripY).toBeNull();
+        }
         await scrollByWheel(page, 40);
         const captureBoundaryY = settledY - 2;
         await moveToScrollY(page, captureBoundaryY);
@@ -436,9 +441,15 @@ test('captures the mobile reverse deck across brands, sizes, and languages', asy
             }
             if (state.phase === 'stack-entrance') {
               expect(entranceOrigin).not.toBeNull();
-              const groupDelta = state.heroes[setup.currentIndex].y - entranceOrigin[setup.currentIndex];
+              const stackStep = Math.min(58, (state.pinHeight - state.stageHeight) / Math.max(1, state.heroes.length - 1));
+              const activeY = state.heroes[setup.currentIndex].y;
               for (let index = 0; index <= setup.currentIndex; index += 1) {
-                expect(state.heroes[index].y - entranceOrigin[index], `all cards move as one group during stack entrance at ${percent}%`).toBe(groupDelta);
+                const pose = state.heroes[index];
+                const visibleNow = pose.y + pose.height - pose.clipBottom > 0 && pose.y + pose.clipTop < state.pinHeight;
+                if (visibleNow) {
+                  const expectedOffset = (index - setup.currentIndex) * stackStep;
+                  expect(Math.abs((pose.y - activeY) - expectedOffset), `visible banner ${pose.brand} stays in the moving stack at ${percent}%`).toBeLessThanOrEqual(1);
+                }
               }
             } else {
               const currentAnchors = state.heroes.slice(0, setup.previousIndex + 1).map((pose) => pose.y);
@@ -455,7 +466,13 @@ test('captures the mobile reverse deck across brands, sizes, and languages', asy
           } else {
             expect(state.phase).toBe('banner');
             expect(state.active[0]).toBe(setup.previousIndex);
-            expect(state.heroes.slice(0, setup.previousIndex + 1).map((pose) => pose.y)).toEqual(lockedAnchors);
+            const settledAnchors = state.heroes.slice(0, setup.previousIndex + 1).map((pose) => pose.y);
+            if (lockedAnchors) {
+              expect(settledAnchors).toEqual(lockedAnchors);
+            } else {
+              const stackStep = Math.min(58, (state.pinHeight - state.stageHeight) / Math.max(1, state.heroes.length - 1));
+              expect(settledAnchors.every((y, index) => Math.abs(y - Math.round(index * stackStep)) <= 1)).toBe(true);
+            }
             for (let index = 0; index <= setup.previousIndex; index += 1) {
               expect(state.heroes[index].logoVisibleHeight, `settled stack logo remains visible for ${state.heroes[index].brand}`).toBeGreaterThan(15);
             }
