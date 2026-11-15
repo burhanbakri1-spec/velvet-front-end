@@ -122,10 +122,10 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const availableHeight = Math.max(1, Math.round(viewportHeight - headerOffset));
 
       if (desktop.matches) {
-        // Keep the existing desktop artwork cap and use the remaining viewport
-        // as stack room. On short desktop viewports the card scales down.
-        stageHeight = Math.max(1, Math.min(520, Math.round(window.innerWidth * 0.82), Math.round(availableHeight * 0.78)));
-        pinHeight = availableHeight;
+        // Match the original desktop banner geometry: the banner fills the
+        // pinned stage, with no per-banner inline height cap.
+        stageHeight = availableHeight;
+        pinHeight = stageHeight;
       } else {
         const divisor = window.innerWidth <= 760 ? 2 : 3;
         stageHeight = Math.max(160, Math.round((viewportHeight - headerOffset) / divisor));

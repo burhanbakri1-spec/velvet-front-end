@@ -427,8 +427,8 @@ test('mobile motion stage uses the pre-stage banner height', () => {
   const styles = fs.readFileSync(stylesPath, 'utf8');
   assert.match(motion, /window\.innerWidth <= 760 \? 2 : 3/);
   assert.match(motion, /Math\.max\(160, Math\.round\(\(viewportHeight - headerOffset\) \/ divisor\)\)/);
-  assert.match(motion, /desktop\.matches\) \{\s*\/\/ Keep the existing desktop artwork cap[\s\S]*?stageHeight = Math\.max\(1, Math\.min\(520, Math\.round\(window\.innerWidth \* 0\.82\), Math\.round\(availableHeight \* 0\.78\)\)\)/);
-  assert.match(motion, /pinHeight = availableHeight/);
+  assert.match(motion, /desktop\.matches\) \{\s*\/\/ Match the original desktop banner geometry[\s\S]*?stageHeight = availableHeight;\s*pinHeight = stageHeight;/);
+  assert.match(motion, /const height = enabled \? `\$\{stageHeight\}px` : ''/);
   assert.match(motion, /stageHeight = Math\.max\(stageHeight, availableHeight - shortestStrip\)/);
   assert.match(motion, /pinHeight = Math\.max\(stageHeight, availableHeight\)/);
   // Optimized: uses cached geometryCache.span instead of calling stageGeometry() every frame

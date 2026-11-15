@@ -9,7 +9,8 @@ const API_ORIGIN = 'https://api-staging.igroup.website';
 const COMPANY_ID = 'kids-velvet';
 const SITE_ID = 'kids-velvet-storefront';
 const MEDIA_PREFIX = `${API_ORIGIN}/uploads/${COMPANY_ID}/`;
-const MEDIA_CACHE_DIR = path.resolve('brand-motion-evidence', 'real-content', 'media-cache');
+const EVIDENCE_DIR = path.resolve(process.env.PERF009_EVIDENCE_DIR || 'brand-motion-evidence');
+const MEDIA_CACHE_DIR = path.join(EVIDENCE_DIR, 'real-content', 'media-cache');
 const mediaResponses = new Map();
 let activeMediaFetches = 0;
 const mediaFetchWaiters = [];
@@ -90,7 +91,7 @@ export async function installRealContentFixture(page, locale, { brandLimit, incl
   if (process.env.REAL_CONTENT_FIXTURE !== '1') return;
 
   const fixtureLocale = locale === 'ar' ? 'ar' : 'en';
-  const file = path.resolve('brand-motion-evidence', 'real-content', `content.${fixtureLocale}.json`);
+  const file = path.join(EVIDENCE_DIR, 'real-content', `content.${fixtureLocale}.json`);
   const body = fs.readFileSync(file, 'utf8');
   const payload = JSON.parse(body);
   if (payload.site?.companyId !== COMPANY_ID || payload.site?.id !== SITE_ID) {

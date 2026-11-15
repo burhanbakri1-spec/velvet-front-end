@@ -5,12 +5,14 @@ import { installRealContentFixture } from './realContentFixture.js';
 
 const cases = [
   { width: 1024, height: 768, label: 'tablet-1024x768' },
+  { width: 1280, height: 800, label: 'desktop-1280x800' },
   { width: 1366, height: 768, label: 'desktop-1366x768' },
   { width: 1440, height: 900, label: 'desktop-1440x900' },
+  { width: 1920, height: 1080, label: 'desktop-1920x1080' },
 ];
 const locales = ['en', 'ar'];
 const canonicalOrder = ['baby', 'kids', 'play', 'build', 'learn', 'create', 'games', 'move', 'collect', 'plush', 'books', 'muslim'];
-const evidenceDirectory = path.resolve('brand-motion-evidence', 'perf008-desktop-parity');
+const evidenceDirectory = path.join(path.resolve(process.env.PERF009_EVIDENCE_DIR || 'brand-motion-evidence'), 'perf009-desktop-parity');
 
 async function waitFrames(page, count = 2) {
   await page.evaluate((frameCount) => new Promise((resolve) => {
@@ -63,6 +65,7 @@ async function snapshot(page) {
       const image = hero?.querySelector('.brand-showcase__image');
       const logo = hero?.querySelector('.brand-showcase__brand-logo');
       const style = getComputedStyle(hero);
+      const imageStyle = image ? getComputedStyle(image) : null;
       const rect = hero.getBoundingClientRect();
       const imageRect = image?.getBoundingClientRect();
       const logoRect = logo?.getBoundingClientRect();
@@ -102,6 +105,10 @@ async function snapshot(page) {
         imageLoaded: Boolean(image?.complete && image.naturalWidth > 0),
         imageNaturalWidth: image?.naturalWidth || 0,
         imageBoxHeight: imageRect?.height || 0,
+        imageFit: imageStyle?.objectFit || '',
+        imagePosition: imageStyle?.objectPosition || '',
+        logoLoaded: Boolean(logo?.complete && logo.naturalWidth > 0),
+        logoNaturalWidth: logo?.naturalWidth || 0,
         clientTop: rect.top,
         clientBottom: rect.bottom,
         strip: strip ? {
@@ -240,10 +247,17 @@ for (const viewport of cases) {
       expect(layout.brands.map((brand) => brand.slug), `${viewport.label} ${locale} canonical brand order`).toEqual(canonicalOrder);
       expect(state.horizontalOverflow, `${viewport.label} ${locale} initial horizontal overflow`).toBe(false);
       expect(layout.stageHeight, `${viewport.label} ${locale} banner geometry`).toBeGreaterThan(0);
-      if (viewport.width >= 1101) expect(layout.stageHeight, `${viewport.label} desktop banner cap`).toBeLessThanOrEqual(520);
+      expect(state.heroes, `${viewport.label} ${locale} all 12 full-size banners`).toHaveLength(12);
+      for (const banner of state.heroes) {
+        expect(banner.imageLoaded, `${viewport.label} ${locale} ${banner.slug} real banner image`).toBe(true);
+        expect(banner.imageBoxHeight, `${viewport.label} ${locale} ${banner.slug} restored full-stage height`).toBeCloseTo(layout.stageHeight, 0);
+        expect(banner.imageFit, `${viewport.label} ${locale} ${banner.slug} baseline cover crop`).toBe('cover');
+        expect(banner.logoLoaded, `${viewport.label} ${locale} ${banner.slug} real brand logo`).toBe(true);
+      }
+      if (viewport.width >= 1101) expect(layout.stageHeight, `${viewport.label} desktop banner fills the original pinned stage`).toBeCloseTo(layout.pinHeight, 0);
       if (viewport.width === 1024) expect(layout.stageHeight, `${viewport.label} tablet banner fit`).toBeLessThan(layout.pinHeight);
       if (viewport.width === 1024) expect(layout.stageHeight, `${viewport.label} tablet minimum`).toBeGreaterThanOrEqual(160);
-      if (viewport.width === 1366 || viewport.width === 1440) expect(layout.pinHeight - layout.stageHeight, `${viewport.label} responsive stack room`).toBeGreaterThan(0);
+      if (viewport.width >= 1101) expect(Math.min(436, layout.stageHeight), `${viewport.label} overlay reverse stack room`).toBeGreaterThan(0);
       expect(layout.brands.find((brand) => brand.slug === 'baby')?.stripProducts, 'Baby has real eligible products').toBeGreaterThan(0);
       console.log(`${viewport.label} ${locale} real layout`, JSON.stringify(layout));
 
@@ -270,7 +284,7 @@ for (const viewport of cases) {
       expect(finalBanner.active, `${screenshotBase} final forward brand`).toBe('muslim');
       await page.screenshot({ path: path.join(evidenceDirectory, `${screenshotBase}-forward-terminal.png`) });
 
-      const stackRoom = Math.max(0, layout.pinHeight - layout.stageHeight);
+      const stackRoom = Math.max(0, layout.pinHeight - layout.stageHeight, Math.min(436, layout.stageHeight));
       const step = Math.min(58, stackRoom / Math.max(1, canonicalOrder.length - 1));
       // Cover every ownership pair from the end back to Baby. For each pair,
       // enter from its actual banner boundary, inspect the locked full stack,
@@ -310,7 +324,12 @@ for (const viewport of cases) {
         const midpoint = await setLocal(page, layout.shellStart, midpointLocal);
         const nearEnd = await setLocal(page, layout.shellStart, Math.max(lower + 2, lower + Math.round((localLock - lower) * 0.02)));
         expect(midpoint.active, `${screenshotBase} pair ${current} midway owner`).toBe(canonicalOrder[current]);
-        expect(nearEnd.heroes[current].y, `${screenshotBase} pair ${current} moves down progressively`).toBeGreaterThan(midpoint.heroes[current].y);
+        if (midpoint.heroes[current].y >= layout.pinHeight) {
+          expect(midpoint.heroes[current].visiblePx, `${screenshotBase} pair ${current} offstage midpoint is not painted`).toBe(0);
+          expect(nearEnd.heroes[current].visiblePx, `${screenshotBase} pair ${current} offstage endpoint is not painted`).toBe(0);
+        } else {
+          expect(nearEnd.heroes[current].y, `${screenshotBase} pair ${current} visible banner moves down progressively`).toBeGreaterThan(midpoint.heroes[current].y);
+        }
         for (let earlier = 0; earlier < current; earlier += 1) {
           expect(midpoint.heroes[earlier].y, `${screenshotBase} pair ${current} older card ${canonicalOrder[earlier]} remains anchored`).toBe(locked.heroes[earlier].y);
           expect(nearEnd.heroes[earlier].y, `${screenshotBase} pair ${current} older card ${canonicalOrder[earlier]} remains anchored near end`).toBe(locked.heroes[earlier].y);
@@ -345,6 +364,10 @@ for (const viewport of cases) {
         await wheelBy(page, 12);
         const retraced = await wheelBy(page, -12);
         expect(retraced.active, `${screenshotBase} pair ${current} reversal owner stable`).toBe(firstPose.active);
+        if (firstPose.heroes[current].visiblePx > 0 || retraced.heroes[current].visiblePx > 0) {
+          expect(Math.abs(retraced.heroes[current].y - firstPose.heroes[current].y),
+            `${screenshotBase} pair ${current} visible re-entry ${canonicalOrder[current]} has no stale pose`).toBeLessThanOrEqual(1);
+        }
         for (let earlier = 0; earlier < current; earlier += 1) {
           expect(Math.abs(retraced.heroes[earlier].y - firstPose.heroes[earlier].y),
             `${screenshotBase} pair ${current} re-entry ${canonicalOrder[earlier]} has no jump`).toBeLessThanOrEqual(1);
@@ -429,7 +452,17 @@ for (const viewport of cases) {
 
       expect(pageErrors, `${screenshotBase} page errors`).toEqual([]);
       expect(failedMedia, `${screenshotBase} real media request failures`).toEqual([]);
-      report.push({ viewport, locale, layout, baby: { height: baby.height, productCount: baby.strip?.productCount, loadedProducts: baby.strip?.loadedProducts }, boundaryFrames: boundarySummary, boundaries: snapshotsByBoundary });
+      report.push({
+        viewport,
+        locale,
+        layout,
+        banners: state.heroes.map(({ slug, height, imageBoxHeight, imageNaturalWidth, imageFit, imagePosition, imageSrc, logoLoaded, logoNaturalWidth }) => ({
+          slug, height, imageBoxHeight, imageNaturalWidth, imageFit, imagePosition, imageSrc, logoLoaded, logoNaturalWidth,
+        })),
+        baby: { height: baby.height, productCount: baby.strip?.productCount, loadedProducts: baby.strip?.loadedProducts },
+        boundaryFrames: boundarySummary,
+        boundaries: snapshotsByBoundary,
+      });
       await context.close();
     }
     fs.writeFileSync(path.join(evidenceDirectory, `${viewport.label}-summary.json`), JSON.stringify(report, null, 2));

@@ -244,8 +244,8 @@ test('Home reverse enters the stack as a group, then moves one banner while lock
   assert.deepEqual(reversedAgain, entranceMiddle, 'direction reversal retraces the same scroll-derived pose');
 });
 
-test('Home reverse keeps every earlier desktop card inside the responsive pinned viewport', () => {
-  const height = 520;
+test('Home reverse keeps the full-height desktop banners and overlays the compact stack', () => {
+  const height = 680;
   const pinHeight = 680;
   const list = Array.from({ length: 12 }, (_, heroIndex) => ({ kind: 'hero', heroIndex }));
   const geometry = stageGeometry(list, height);
@@ -265,9 +265,9 @@ test('Home reverse keeps every earlier desktop card inside the responsive pinned
     assert.ok(locked.motion[index].y < locked.motion[index + 1].y, `earlier banner ${index} stays in canonical stack order`);
     assert.equal(quarter.motion[index].y, threeQuarter.motion[index].y, `earlier banner ${index} remains anchored while current banner moves`);
   }
-  assert.ok(visible(threeQuarter.motion[10]) > HERO_SLICE, 'the previous banner is revealed progressively below the stack');
-  assert.ok(visible(nearEnd.motion[10]) >= height - 1, 'the previous banner reaches full visibility at the transition endpoint');
-  assert.ok(threeQuarter.motion[11].y > quarter.motion[11].y, 'the outgoing banner moves continuously with scroll progress');
+  assert.ok(visible(quarter.motion[10]) > visible(locked.motion[10]), 'the full-size previous banner is progressively revealed beneath the stack');
+  assert.ok(visible(nearEnd.motion[10]) > visible(locked.motion[10]), 'the previous banner remains revealed through the ownership boundary');
+  assert.ok(quarter.motion[11].y > locked.motion[11].y, 'the outgoing banner moves continuously while visible within the full-height stage');
   assert.equal(locked.sceneHeight, pinHeight, 'the desktop pin remains a fixed viewport box during the transition');
 });
 

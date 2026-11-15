@@ -138,7 +138,7 @@ test('only the existing mobile breakpoint opts into the bounded UP deck', () => 
 test('mobile UP changes the local shell length while DOWN and desktop keep the original property', () => {
  for(const width of [390,1440]) {
   const stage=mount(width,false,12);
-  const h=width<1101?370:520;
+  const h=width<1101?370:740;
   const slides=Array.from({length:24},(_,i)=>i%2?{kind:'strip',height:240}:{kind:'hero'});
   const geometry=math.stageGeometry(slides,h),boundary=928+geometry.offsets[22];
   stage.scroll(boundary);stage.flush();
@@ -273,12 +273,12 @@ test('Android toolbar resizing cannot remap a stationary mobile DOWN or UP pose'
  }
 });
 
-test('real small-viewport resizing remeasures mobile geometry while desktop stage remains capped', () => {
+test('real small-viewport resizing remeasures mobile geometry and restores full desktop stage height', () => {
  const mobile=mount(390);mobile.resize(915,915);mobile.flush();
  assert.equal(mobile.motionInputs.at(-1).stageHeight,422);
  assert.equal(mobile.hero.style.height,'422px','rendered height must match the rounded pose height');
  mobile.dispose();
  const desktop=mount(1440);desktop.resize(868,812);desktop.flush();
- assert.equal(desktop.motionInputs.at(-1).stageHeight,520);
- assert.equal(desktop.hero.style.height,'520px');desktop.dispose();
+ assert.equal(desktop.motionInputs.at(-1).stageHeight,796);
+ assert.equal(desktop.hero.style.height,'796px','desktop banner keeps its restored full-height geometry when the stage expands for its product lane');desktop.dispose();
 });

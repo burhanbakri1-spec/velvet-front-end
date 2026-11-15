@@ -26,6 +26,15 @@ export const HERO_SLICE = 64;
 /** Tuck between stacked card edges. */
 export const HERO_SLICE_OVERLAP = 6;
 
+const HOME_REVERSE_STACK_ROOM = 436;
+
+function homeReverseStackRoom(stageHeight, pinHeight) {
+  // Taller mobile/tablet pins already provide a dedicated lower lane. Desktop
+  // banners fill the viewport, so their compact reverse stack overlays the
+  // banner stage instead of shrinking each banner to manufacture empty space.
+  return Math.max(0, pinHeight - stageHeight, Math.min(HOME_REVERSE_STACK_ROOM, stageHeight));
+}
+
 /** Logo card starts just below the top of the banner. */
 const HERO_LOGO_TOP = 30;
 
@@ -114,7 +123,7 @@ export function homeReverseEntry(slides, previousLocal, local, stageHeight, pinH
   if (!Array.isArray(slides) || local >= previousLocal || stageHeight <= 0 || pinHeight <= 0) return null;
   const geometry = cachedGeometry || stageGeometry(slides, stageHeight);
   const heroes = heroIndexesOf(slides);
-  const stackRoom = Math.max(0, pinHeight - stageHeight);
+  const stackRoom = homeReverseStackRoom(stageHeight, pinHeight);
   const step = heroes.length > 1
     ? Math.min(HERO_SLICE - HERO_SLICE_OVERLAP, stackRoom / (heroes.length - 1))
     : 0;
@@ -362,7 +371,7 @@ export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedG
   const start = geometry.offsets[previousIndex];
   const end = geometry.offsets[currentIndex];
   const currentOrdinal = heroes.indexOf(currentIndex);
-  const stackRoom = Math.max(0, pinHeight - stageHeight);
+  const stackRoom = homeReverseStackRoom(stageHeight, pinHeight);
   const step = heroes.length > 1
     ? Math.min(HERO_SLICE - HERO_SLICE_OVERLAP, stackRoom / (heroes.length - 1))
     : 0;
