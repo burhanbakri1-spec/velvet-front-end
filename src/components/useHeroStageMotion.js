@@ -237,7 +237,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const homeReverseDeck = isHomeDeck && (mobile || desktop.matches);
       const previousLocal = Math.min(span, Math.max(0, direction.y - (shellTop - headerOffset)));
       direction.mode = homeReverseDeck
-        ? latchHomeDeckMode(direction.mode, delta, previousLocal, local, slides, geometryCache)
+        ? latchHomeDeckMode(direction.mode, delta, previousLocal, local, slides, geometryCache, mobileHomeReverseEntry)
         : latchStageMode(direction.mode, delta, direction.pos, pos, slides);
       if (direction.mode !== 'up') direction.mode = 'down';
       if (nextMode === direction.mode) direction.mode = nextMode;

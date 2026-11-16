@@ -100,9 +100,18 @@ export function latchStageMode(mode, delta, previousPos, pos, slides) {
 }
 
 /** Native scrollY rounds to whole pixels while measured hero offsets can be fractional. */
-export function latchHomeDeckMode(mode, delta, previousLocal, local, slides, geometry) {
+export function latchHomeDeckMode(mode, delta, previousLocal, local, slides, geometry, reverseEntry = null) {
   const wanted = stepHeroDirection(mode, delta);
   if (!delta || wanted === mode || !geometry) return mode;
+  // A reverse deck owns its whole return path, not just the next brand slot.
+  // Keep its entry boundary until the user scrolls back past the same point;
+  // switching to the forward cover at an interior boundary drops every older
+  // stacked banner in a single frame.
+  if (mode === 'up' && delta > 0 && Number.isFinite(reverseEntry?.startLocal)) {
+    const boundary = reverseEntry.startLocal;
+    if (previousLocal > boundary + 1 || local > boundary + 1) return 'down';
+    return 'up';
+  }
   let firstHeroIndex = -1;
   for (let index = 0; index < slides.length; index += 1) {
     if (slides[index]?.kind === 'hero') { firstHeroIndex = index; break; }
@@ -135,10 +144,17 @@ export function homeReverseEntry(slides, previousLocal, local, stageHeight, pinH
     const boundary = geometry.offsets[slideIndex];
     if (previousLocal < boundary - 1 || local > boundary + 1) continue;
     const stackDistance = ordinal * step;
+    const previousBoundary = geometry.offsets[heroes[ordinal - 1]];
+    const ownerDistance = Math.max(0, boundary - previousBoundary);
+    const ownerHandoff = Math.min(HERO_SLICE, Math.max(0, ownerDistance - 1));
     return {
       heroIndex: slides[slideIndex].heroIndex ?? ordinal,
       startLocal: boundary,
-      lockLocal: boundary - stackDistance,
+      // Keep the same on-screen stack depth, but finish its entrance early
+      // when it would otherwise consume the entire distance to the previous
+      // hero boundary. The remaining scroll band lets that outgoing banner
+      // clear continuously before ownership changes.
+      lockLocal: Math.max(boundary - stackDistance, previousBoundary + ownerHandoff),
       stackDistance,
     };
   }
@@ -395,6 +411,34 @@ export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedG
     hidden: true,
     z: 1,
   }));
+
+  // In a taller mobile pin, the next banner's settled reverse pose can still
+  // intersect the lower viewport when ownership switches. Stage that card
+  // from the pin edge over the last logo-slice of the current slot so the
+  // owner boundary does not introduce a large new image band in one frame.
+  const incomingIndex = heroes[currentOrdinal + 1];
+  if (incomingIndex !== undefined && !inEntrance
+    && entry?.heroIndex !== slides[incomingIndex].heroIndex) {
+    const incomingBoundary = geometry.offsets[currentIndex];
+    const ownerDistance = Math.max(0, incomingBoundary - start);
+    const handoffDistance = Math.min(HERO_SLICE, Math.max(0, ownerDistance - 1));
+    const incomingPreviousY = roundPx(currentOrdinal * step);
+    const incomingExitY = incomingPreviousY + stageHeight;
+    const offstageDistance = pinHeight - incomingExitY;
+    const handoffStart = incomingBoundary - handoffDistance;
+    if (offstageDistance > HERO_SLICE && handoffDistance > 0
+      && travel >= handoffStart && travel <= incomingBoundary + 1) {
+      const handoffLinear = clamp01((travel - handoffStart) / handoffDistance);
+      const handoffProgress = 1 - ((1 - handoffLinear) ** 2);
+      motion[incomingIndex] = {
+        y: roundPx(pinHeight - offstageDistance * handoffProgress),
+        clipTop: 0,
+        clipBottom: 0,
+        hidden: false,
+        z: 49,
+      };
+    }
+  }
 
   // Cards keep the measured stageHeight. The reverse pose changes only their
   // position and clip. A fixed per-brand step keeps a compact stack at every

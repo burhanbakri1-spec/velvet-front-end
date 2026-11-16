@@ -244,6 +244,73 @@ test('Home reverse enters the stack as a group, then moves one banner while lock
   assert.deepEqual(reversedAgain, entranceMiddle, 'direction reversal retraces the same scroll-derived pose');
 });
 
+test('Home reverse reserves a continuous owner handoff when stack depth fills the prior hero interval', () => {
+  const list = Array.from({ length: 12 }, (_, heroIndex) => ({ kind: 'hero', heroIndex }));
+  const height = 324;
+  const pinHeight = 648;
+  const geometry = stageGeometry(list, height);
+  const entryOrdinal = 11;
+  const boundary = geometry.offsets[entryOrdinal];
+  const previousBoundary = geometry.offsets[entryOrdinal - 1];
+  const entry = homeReverseEntry(list, boundary + 12, boundary - 12, height, pinHeight, geometry);
+  const beforeHandoff = homeReverseMotion(list, previousBoundary + 1, height, pinHeight, geometry, entry);
+  const handoff = homeReverseMotion(list, previousBoundary + 2, height, pinHeight, geometry, entry);
+  const justBeforeSettle = homeReverseMotion(list, entry.lockLocal - 1, height, pinHeight, geometry, entry);
+  const settled = homeReverseMotion(list, entry.lockLocal, height, pinHeight, geometry, entry);
+
+  assert.equal(entry.stackDistance, pinHeight - height,
+    'the compact reverse stack still uses its existing depth');
+  assert.equal(entry.lockLocal, previousBoundary + HERO_SLICE,
+    'a full-depth stack reserves one logo-slice of travel after the previous hero boundary');
+  assert.equal(handoff.currentHero, entryOrdinal);
+  assert.equal(beforeHandoff.currentHero, entryOrdinal - 1);
+  assert.ok(handoff.motion[entryOrdinal - 1].clipBottom <= 8,
+    'the previous owner remains nearly fully visible at the start of the handoff band');
+  assert.ok(handoff.motion[entryOrdinal].y > beforeHandoff.motion[entryOrdinal - 1].y + height - 64,
+    'the entering banner remains below the previous owner instead of replacing it');
+  assert.ok(Math.abs(handoff.motion[entryOrdinal - 1].y - beforeHandoff.motion[entryOrdinal - 1].y) <= 1,
+    'the outgoing owner keeps its pose across the boundary');
+  assert.ok(Math.abs(handoff.motion[entryOrdinal - 1].clipBottom - beforeHandoff.motion[entryOrdinal - 1].clipBottom) <= 8,
+    'the outgoing owner is uncovered continuously across the boundary');
+  assert.equal(settled.motion[entryOrdinal].y, settled.stackHeight,
+    'the entering banner reaches its stable stack pose at the end of the reserved band');
+  assert.ok(settled.motion[entryOrdinal - 1].clipBottom > 0,
+    'the previous owner begins to uncover only after the entering banner reaches its stack pose');
+  assert.ok(justBeforeSettle.motion[entryOrdinal].y > settled.motion[entryOrdinal].y,
+    'the handoff pose changes monotonically across the reserved scroll band');
+});
+
+test('Home reverse stages a lower-lane banner before ownership switches in a tall mobile pin', () => {
+  const list = Array.from({ length: 12 }, (_, heroIndex) => ({ kind: 'hero', heroIndex }));
+  const height = 324;
+  const pinHeight = 648;
+  const geometry = stageGeometry(list, height);
+  const entryBoundary = geometry.offsets[11];
+  const entry = homeReverseEntry(list, entryBoundary + 12, entryBoundary - 12, height, pinHeight, geometry);
+  const currentOrdinal = 8;
+  const boundary = geometry.offsets[currentOrdinal];
+  const incomingIndex = currentOrdinal + 1;
+  const samples = [];
+  for (let local = boundary - HERO_SLICE; local <= boundary + 2; local += 1) {
+    samples.push({ local, state: homeReverseMotion(list, local, height, pinHeight, geometry, entry) });
+  }
+  const visible = samples.map(({ state }) => {
+    const pose = state.motion[incomingIndex];
+    return Math.max(0, Math.min(pinHeight, pose.y + height - pose.clipBottom) - Math.max(0, pose.y + pose.clipTop));
+  });
+  const targetYAtBoundary = homeReverseMotion(list, boundary + 1, height, pinHeight, geometry, entry).motion[incomingIndex].y;
+  const targetYAfterBoundary = homeReverseMotion(list, boundary + 2, height, pinHeight, geometry, entry).motion[incomingIndex].y;
+
+  assert.equal(visible[0], 0, 'the incoming banner starts just beyond the pinned viewport');
+  assert.ok(visible.at(-1) > 0, 'the incoming banner reaches its visible lower-lane pose at the owner boundary');
+  assert.ok(visible.slice(1).every((value, index) => value >= visible[index]),
+    'the incoming banner reveals monotonically as scroll advances');
+  assert.ok(Math.max(...visible.slice(1).map((value, index) => Math.abs(value - visible[index]))) <= 8,
+    'the incoming banner does not jump by a large slice on a one-pixel scroll');
+  assert.ok(Math.abs(targetYAtBoundary - targetYAfterBoundary) <= 2,
+    'the incoming banner keeps a continuous transform as ownership changes');
+});
+
 test('Home reverse keeps the full-height desktop banners and overlays the compact stack', () => {
   const height = 680;
   const pinHeight = 680;
@@ -336,6 +403,19 @@ test('Home direction latch accepts a settled banner within one pixel of its meas
   assert.equal(latchHomeDeckMode('down', -20, 0, 0, list, geometry), 'up', 'the first upward gesture at Baby keeps the full banner as the deck exits');
   assert.equal(latchHomeDeckMode('up', -20, 0, 0, list, geometry), 'up', 'continued upward scrolling keeps reverse ownership above the first boundary');
   assert.equal(latchHomeDeckMode('up', 20, 0, 20, list, geometry), 'down', 'downward re-entry crosses the same first boundary');
+
+  const reverseEntry = { heroIndex: 2, startLocal: geometry.offsets[4], lockLocal: geometry.offsets[4] - 80 };
+  const internalBoundary = geometry.offsets[2];
+  assert.equal(
+    latchHomeDeckMode('up', 4, internalBoundary - 2, internalBoundary + 2, list, geometry, reverseEntry),
+    'up',
+    'a downward reversal through an interior brand boundary keeps the reverse deck owner',
+  );
+  assert.equal(
+    latchHomeDeckMode('up', 4, reverseEntry.startLocal - 1, reverseEntry.startLocal + 2, list, geometry, reverseEntry),
+    'down',
+    'the forward pose resumes only after the original reverse-entry boundary is crossed',
+  );
 });
 
 test('a product strip moves continuously on its own height and a missing strip is skipped', () => {
