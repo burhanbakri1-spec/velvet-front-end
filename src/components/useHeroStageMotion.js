@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react';
-import { activeHeroIndex, applyMobileUpHandoff, canDeferOffscreenPoseWrite, heroStageMotion, homeReverseEntry, homeReverseMotion, latchHomeDeckMode, latchStageMode, mobileUpHandoff, restoreMobileUpLayout, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
+import { activeHeroIndex, applyMobileUpHandoff, canDeferOffscreenPoseWrite, heroStageMotion, HOME_REVERSE_POSE_HANDOFF_DISTANCE, homeReverseEntry, homeReverseMotion, latchHomeDeckMode, latchStageMode, mobileUpHandoff, restoreMobileUpLayout, stageGeometry, stageReleaseBox, stageSlidePos, stepHeroDirection } from './heroScrollProgress';
 
 const MOBILE_UP_DECK_DEPTH = 8;
 
@@ -32,6 +32,8 @@ export function useHeroStageMotion(rootId, mobile = false) {
     let lastLayoutRelease = null;
     let mobileUpPoseHandoff = null;
     let mobileHomeReverseEntry = null;
+    let mobileHomeReverseExit = null;
+    let lastHomeReversePose = null;
 
     const direction = { y: window.scrollY, mode: 'down', pos: 0 };
     let shellTop = 0;
@@ -71,6 +73,8 @@ export function useHeroStageMotion(rootId, mobile = false) {
       lastLayoutRelease = null;
       mobileUpPoseHandoff = null;
       mobileHomeReverseEntry = null;
+      mobileHomeReverseExit = null;
+      lastHomeReversePose = null;
       if (stageEl) {
         stageEl.style.top = '';
         stageEl.style.height = '';
@@ -133,7 +137,8 @@ export function useHeroStageMotion(rootId, mobile = false) {
         // without leaving a white tail under the outgoing banner. Fit the
         // banner to the shortest real strip in this Home deck, measured only
         // during layout work (never in the scroll frame).
-        const homeDeck = rootId === 'showcases' && root.hasAttribute('data-home-brand-deck');
+        const homeDeck = rootId === 'showcases'
+          && (root.hasAttribute('data-home-brand-deck') || root.hasAttribute('data-brand-category-deck'));
         if (homeDeck && window.innerWidth > 760 && window.innerWidth <= 1100) {
           const stripHeights = [...root.querySelectorAll('.home-brand__product-layer > .brand-strip')]
             .map((strip) => Math.round(strip.offsetHeight))
@@ -150,6 +155,8 @@ export function useHeroStageMotion(rootId, mobile = false) {
         lastLayoutRelease = null;
         mobileUpPoseHandoff = null;
         mobileHomeReverseEntry = null;
+        mobileHomeReverseExit = null;
+        lastHomeReversePose = null;
       }
 
       // Rebuild slides array and cache DOM references
@@ -228,31 +235,66 @@ export function useHeroStageMotion(rootId, mobile = false) {
 
       // Use cached geometry
       const span = geometryCache?.span ?? 0;
-      const local = Math.min(span, Math.max(0, y - (shellTop - headerOffset)));
+      const rawLocal = y - (shellTop - headerOffset);
+      const local = Math.min(span, Math.max(0, rawLocal));
       const pos = stageSlidePos(slides, local, stageHeight, geometryCache);
 
       const mobileShowcase = rootId === 'showcases' && mobile && !desktop.matches;
-      const isHomeDeck = rootId === 'showcases' && root.hasAttribute('data-home-brand-deck');
+      const isHomeDeck = rootId === 'showcases'
+        && (root.hasAttribute('data-home-brand-deck') || root.hasAttribute('data-brand-category-deck'));
       const mobileHomeDeck = isHomeDeck && mobileShowcase;
       const homeReverseDeck = isHomeDeck && (mobile || desktop.matches);
-      const previousLocal = Math.min(span, Math.max(0, direction.y - (shellTop - headerOffset)));
+      const rawPreviousLocal = direction.y - (shellTop - headerOffset);
+      const previousLocal = Math.min(span, Math.max(0, rawPreviousLocal));
       direction.mode = homeReverseDeck
-        ? latchHomeDeckMode(direction.mode, delta, previousLocal, local, slides, geometryCache, mobileHomeReverseEntry)
+        ? latchHomeDeckMode(direction.mode, delta, rawPreviousLocal, rawLocal, slides, geometryCache, mobileHomeReverseEntry)
         : latchStageMode(direction.mode, delta, direction.pos, pos, slides);
       if (direction.mode !== 'up') direction.mode = 'down';
       if (nextMode === direction.mode) direction.mode = nextMode;
 
+      if (homeReverseDeck && previousMode === 'up' && direction.mode === 'down' && delta > 0 && mobileHomeReverseEntry) {
+        mobileHomeReverseExit = {
+          startRawLocal: mobileHomeReverseEntry.startLocal,
+          startLocal: mobileHomeReverseEntry.startLocal,
+          motion: lastHomeReversePose || homeReverseMotion(
+            slides,
+            previousLocal,
+            stageHeight,
+            pinHeight,
+            geometryCache,
+            mobileHomeReverseEntry,
+          ).motion,
+        };
+      } else if (!homeReverseDeck || direction.mode === 'up') {
+        mobileHomeReverseExit = null;
+      }
+
       if (homeReverseDeck && direction.mode === 'up' && previousMode !== 'up') {
         mobileHomeReverseEntry = homeReverseEntry(
           slides,
-          previousLocal,
-          local,
+          rawPreviousLocal,
+          rawLocal,
           stageHeight,
           pinHeight,
           geometryCache,
         );
+        if (mobileHomeReverseEntry && mobileHomeReverseEntry.poseHandoffProgress < 1) {
+          mobileHomeReverseEntry.poseHandoffMotion = heroStageMotion({
+            slides,
+            local: mobileHomeReverseEntry.poseStartLocal,
+            stageHeight,
+            mode: 'down',
+            geometry: geometryCache,
+          });
+        }
       } else if (!homeReverseDeck || direction.mode !== 'up') {
         mobileHomeReverseEntry = null;
+      }
+      if (homeReverseDeck && direction.mode === 'up' && mobileHomeReverseEntry && delta < 0) {
+        const advanced = Math.min(1, Math.max(0,
+          (mobileHomeReverseEntry.poseStartLocal - local) / HOME_REVERSE_POSE_HANDOFF_DISTANCE,
+        ));
+        mobileHomeReverseEntry.poseHandoffProgress = advanced;
       }
 
       const mobileUp = !desktop.matches && direction.mode === 'up';
@@ -290,6 +332,42 @@ export function useHeroStageMotion(rootId, mobile = false) {
       if (!mobileHomeDeck && mobileShowcase && mobileUp) {
         motion = applyMobileUpHandoff(motion, slides, mobileUpPoseHandoff, local);
       }
+      let homeReverseExitActive = false;
+      let homeReverseExitForwardPose = null;
+      if (mobileHomeReverseExit && direction.mode === 'down') {
+        const handoffProgress = Math.min(1, Math.max(0,
+          (rawLocal - mobileHomeReverseExit.startRawLocal) / HOME_REVERSE_POSE_HANDOFF_DISTANCE,
+        ));
+        if (handoffProgress < 1) {
+          homeReverseExitActive = true;
+          const forwardLocal = Math.min(span, Math.max(mobileHomeReverseExit.startLocal, local));
+          homeReverseExitForwardPose = heroStageMotion({
+            slides,
+            local: forwardLocal,
+            stageHeight,
+            mode: 'down',
+            geometry: geometryCache,
+          });
+          motion = motion.map((pose, index) => {
+            const reversePose = mobileHomeReverseExit.motion[index];
+            const forwardPose = homeReverseExitForwardPose[index];
+            if (!reversePose) return pose;
+            return {
+              ...pose,
+              y: Math.round(reversePose.y + (forwardPose.y - reversePose.y) * handoffProgress),
+              clipTop: Math.round((reversePose.clipTop || 0)
+                + ((forwardPose.clipTop || 0) - (reversePose.clipTop || 0)) * handoffProgress),
+              clipBottom: Math.round((reversePose.clipBottom || 0)
+                + ((forwardPose.clipBottom || 0) - (reversePose.clipBottom || 0)) * handoffProgress),
+              z: handoffProgress < 1 ? reversePose.z : forwardPose.z,
+              hidden: handoffProgress < 1 ? reversePose.hidden : forwardPose.hidden,
+            };
+          });
+        } else {
+          mobileHomeReverseExit = null;
+          lastHomeReversePose = null;
+        }
+      }
       const release = stageReleaseBox(slides, stageHeight, pinHeight, y - (shellTop - headerOffset), direction.mode, geometryCache, motion);
       // The UP deck can expose a different number of clipped banner slices
       // from one frame to the next. Its visual pose must not resize the sticky
@@ -306,7 +384,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
         mobileUpLayoutAnchor = { local: previousLocal, shellHeight: previous.shellHeight, boxHeight: previous.boxHeight };
       }
       if (!mobileShowcase || (!mobileUp && delta > 0)) mobileUpLayoutAnchor = null;
-      const layoutRelease = homeReverse
+      const layoutRelease = homeReverse || homeReverseExitActive
         ? { ...downLayout, boxHeight: pinHeight, shellHeight: span + pinHeight }
         : mobileShowcase && mobileUpLayoutAnchor
           ? restoreMobileUpLayout(downLayout, mobileUpLayoutAnchor, local, pinHeight)
@@ -324,10 +402,15 @@ export function useHeroStageMotion(rootId, mobile = false) {
       lastLayoutRelease = layoutRelease;
       direction.pos = pos;
       direction.y = y;
+      lastHomeReversePose = homeReverse
+        ? homeReverse.motion.map((pose) => ({ ...pose }))
+        : homeReverseExitActive
+          ? motion.map((pose) => ({ ...pose }))
+          : null;
 
-      if (release.atEnd && !homeReverse) {
+      if (release.atEnd && !homeReverse && !homeReverseExitActive) {
         slides.forEach((slide, index) => {
-          if (index === slides.length - 1) return;
+          if (index === slides.length - 1 && !root.hasAttribute('data-brand-category-deck')) return;
           const away = slide.kind === 'strip' && slide.height > 0 ? Math.round(slide.height) : stageHeight;
           motion[index] = { y: -away, clipTop: 0, clipBottom: 0, hidden: slide.kind === 'strip', z: 1 };
         });
@@ -338,7 +421,8 @@ export function useHeroStageMotion(rootId, mobile = false) {
         document.body.classList.toggle('hero-stage-pin', pin);
       }
 
-      const activeHero = homeReverse?.activeHero ?? activeHeroIndex(slides, motion, stageHeight);
+      let activeHero = homeReverse?.activeHero ?? activeHeroIndex(slides, motion, stageHeight);
+      if (homeReverseExitForwardPose) activeHero = activeHeroIndex(slides, homeReverseExitForwardPose, stageHeight);
 
       // Apply styles using cached element references from slides array
       slides.forEach((slide, index) => {

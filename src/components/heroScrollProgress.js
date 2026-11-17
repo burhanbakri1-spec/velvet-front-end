@@ -27,6 +27,7 @@ export const HERO_SLICE = 64;
 export const HERO_SLICE_OVERLAP = 6;
 
 const HOME_REVERSE_STACK_ROOM = 436;
+export const HOME_REVERSE_POSE_HANDOFF_DISTANCE = 192;
 
 function homeReverseStackRoom(stageHeight, pinHeight) {
   // Taller mobile/tablet pins already provide a dedicated lower lane. Desktop
@@ -147,16 +148,23 @@ export function homeReverseEntry(slides, previousLocal, local, stageHeight, pinH
     const previousBoundary = geometry.offsets[heroes[ordinal - 1]];
     const ownerDistance = Math.max(0, boundary - previousBoundary);
     const ownerHandoff = Math.min(HERO_SLICE, Math.max(0, ownerDistance - 1));
-    return {
+    const lockLocal = Math.max(boundary - stackDistance, previousBoundary + ownerHandoff);
+    const poseStartLocal = ordinal === heroes.length - 1
+      ? Math.max(0, boundary - 1)
+      : Math.max(0, local);
+    const entry = {
       heroIndex: slides[slideIndex].heroIndex ?? ordinal,
       startLocal: boundary,
+      poseStartLocal,
+      poseHandoffProgress: poseStartLocal <= lockLocal ? 1 : 0,
       // Keep the same on-screen stack depth, but finish its entrance early
       // when it would otherwise consume the entire distance to the previous
       // hero boundary. The remaining scroll band lets that outgoing banner
       // clear continuously before ownership changes.
-      lockLocal: Math.max(boundary - stackDistance, previousBoundary + ownerHandoff),
+      lockLocal,
       stackDistance,
     };
+    return entry;
   }
   return null;
 }
@@ -493,6 +501,35 @@ export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedG
       hidden: false,
       z: 5,
     };
+  }
+
+  // Start a reverse entry on the same scroll-derived pose as the forward
+  // cover, then blend into the stacked deck over real scroll distance. This
+  // keeps the shared banner and product lane continuous when direction changes
+  // at a measured boundary, including a rapid reversal at the terminal banner.
+  if (entersHere && inEntrance && currentOrdinal === heroes.length - 1 && Number.isFinite(entry.poseStartLocal)) {
+    const handoffDistance = Math.max(0, entry.poseStartLocal - travel);
+    const handoffProgress = Number.isFinite(entry.poseHandoffProgress)
+      ? clamp01(entry.poseHandoffProgress)
+      : clamp01(handoffDistance / HOME_REVERSE_POSE_HANDOFF_DISTANCE);
+    if (handoffProgress < 1) {
+      const cover = Array.isArray(entry.poseHandoffMotion)
+        ? entry.poseHandoffMotion
+        : heroStageMotion({ slides, local: travel, stageHeight, mode: 'down', geometry });
+      motion.forEach((pose, index) => {
+        const coverPose = cover[index];
+        if (!coverPose) return;
+        pose.y = roundPx(coverPose.y + (pose.y - coverPose.y) * handoffProgress);
+        pose.clipTop = roundPx((coverPose.clipTop || 0)
+          + ((pose.clipTop || 0) - (coverPose.clipTop || 0)) * handoffProgress);
+        pose.clipBottom = roundPx((coverPose.clipBottom || 0)
+          + ((pose.clipBottom || 0) - (coverPose.clipBottom || 0)) * handoffProgress);
+        if (handoffProgress === 0) {
+          pose.z = coverPose.z;
+          pose.hidden = coverPose.hidden;
+        }
+      });
+    }
   }
 
   return {

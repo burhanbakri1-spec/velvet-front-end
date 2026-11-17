@@ -4,7 +4,7 @@ import { collectProductImages, getProductBadge, getProductName, isFeaturedBadgeL
 import { formatPrice } from '../data/currency';
 import { selectBrandStripProducts } from '../data/brandProductStrip';
 import { getHomePriority, getShopPriority } from '../data/displayPriority';
-import { getBrand, velvetProducts } from '../data/velvetCatalog';
+import { getBrand, getCategory, velvetProducts } from '../data/velvetCatalog';
 import { normalizeStripScroll, selectStripGroupCount } from '../hooks/stripScroll';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -21,14 +21,15 @@ export default function BrandProductStrip({
   const { copy, locale } = useI18n();
   const arrow = locale === 'ar' ? '←' : '→';
   const source = velvetProducts;
+  const scopedByCategory = Boolean(categorySlug);
   const scopedBySubcategory = Boolean(categorySlug && subcategorySlug);
-  const priority = scopedBySubcategory ? getShopPriority(brandSlug) : getHomePriority(brandSlug);
+  const priority = scopedBySubcategory ? getShopPriority(brandSlug) : scopedByCategory ? null : getHomePriority(brandSlug);
   const products = useMemo(
     () => selectBrandStripProducts(source, brandSlug, {
       priority,
-      ...(scopedBySubcategory ? { categorySlug, subcategorySlug } : {}),
+      ...(scopedByCategory ? { categorySlug, ...(subcategorySlug ? { subcategorySlug } : {}) } : {}),
     }),
-    [source, brandSlug, categorySlug, subcategorySlug, scopedBySubcategory, priority],
+    [source, brandSlug, categorySlug, subcategorySlug, scopedByCategory, priority],
   );
   const [paused, setPaused] = useState(false);
   const resumeTimerRef = useRef(null);
@@ -45,10 +46,11 @@ export default function BrandProductStrip({
 
   const stripGroups = scopedBySubcategory ? 1 : selectStripGroupCount(products.length);
   const brandName = getBrand(brandSlug)?.name?.[locale] || '';
-  const viewAllTo = scopedBySubcategory
-    ? `/products?brand=${encodeURIComponent(brandSlug)}&category=${encodeURIComponent(categorySlug)}&subcategory=${encodeURIComponent(subcategorySlug)}`
+  const categoryName = getCategory(brandSlug, categorySlug)?.name?.[locale] || '';
+  const viewAllTo = scopedByCategory
+    ? `/products?brand=${encodeURIComponent(brandSlug)}&category=${encodeURIComponent(categorySlug)}${subcategorySlug ? `&subcategory=${encodeURIComponent(subcategorySlug)}` : ''}`
     : `/products?brand=${encodeURIComponent(brandSlug)}`;
-  const sectionContext = subcategoryName || brandName;
+  const sectionContext = subcategoryName || categoryName || brandName;
 
   const renderCard = (product, focusable) => {
     const name = getProductName(product, locale);

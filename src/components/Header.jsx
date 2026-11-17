@@ -353,19 +353,34 @@ export default function Header({ introActive, solid = false }) {
           </button>
         </div>
 
-        <button
-          className="mobile-header-search-trigger"
-          type="button"
-          aria-label={copy.header.searchLabel}
-          aria-controls="mobile-navigation-drawer"
-          aria-expanded={mobileOpen}
-          onClick={openMobileSearch}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-            <path d="M16 16l4.2 4.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-        </button>
+        <div className="compact-header-actions">
+          <button
+            className="mobile-header-search-trigger"
+            type="button"
+            aria-label={copy.header.searchLabel}
+            aria-controls="mobile-navigation-drawer"
+            aria-expanded={mobileOpen}
+            onClick={openMobileSearch}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M16 16l4.2 4.2" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </button>
+          <button
+            className="compact-header-cart header-cart-link"
+            type="button"
+            aria-label={`${copy.header.cart}: ${itemCount}`}
+            onClick={() => setCartOpen(true)}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3.5 4.5h2l1.8 10.1a2 2 0 0 0 2 1.7h7.9a2 2 0 0 0 1.9-1.5l1.2-6.3H6.2" />
+              <circle cx="9.4" cy="19.2" r="1.1" />
+              <circle cx="17.4" cy="19.2" r="1.1" />
+            </svg>
+            {itemCount > 0 && <span className="header-cart-count">{itemCount > 99 ? '99+' : itemCount}</span>}
+          </button>
+        </div>
 
         <button
           className={`menu-toggle${mobileOpen ? ' is-open' : ''}`}
