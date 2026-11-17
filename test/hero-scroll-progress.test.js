@@ -179,9 +179,24 @@ test('Home reverse enters the stack as a group, then moves one banner while lock
   assert.deepEqual(entry, {
     heroIndex: currentOrdinal,
     startLocal: end,
+    poseStartLocal: end - 40,
+    poseHandoffProgress: 0,
     lockLocal: end - entry.stackDistance,
     stackDistance: entry.stackDistance,
   });
+
+  const terminalBoundary = geometry.offsets[(12 - 1) * 2];
+  const terminalEntry = homeReverseEntry(
+    list,
+    terminalBoundary + 2,
+    terminalBoundary - 2,
+    height,
+    pinHeight,
+    geometry,
+  );
+  assert.equal(terminalEntry.heroIndex, 11);
+  assert.equal(terminalEntry.poseStartLocal, terminalBoundary - 1);
+  assert.equal(terminalEntry.poseHandoffProgress, 0);
 
   const natural = heroStageMotion({ slides: list, local: end, stageHeight: height, mode: 'down', geometry });
   const beforeBoundary = homeReverseMotion(list, end + 0.5, height, pinHeight, geometry, entry);
@@ -190,7 +205,7 @@ test('Home reverse enters the stack as a group, then moves one banner while lock
   assert.equal(beforeBoundary.motion[currentIndex].y, natural[currentIndex].y);
   assert.equal(beforeBoundary.motion[currentIndex + 1].y, natural[currentIndex + 1].y);
 
-  const entranceMiddleLocal = (entry.startLocal + entry.lockLocal) / 2;
+  const entranceMiddleLocal = (entry.poseStartLocal + entry.lockLocal) / 2;
   const entranceMiddle = homeReverseMotion(list, entranceMiddleLocal, height, pinHeight, geometry, entry);
   const entranceEnd = homeReverseMotion(list, entry.lockLocal, height, pinHeight, geometry, entry);
   assert.equal(entranceMiddle.phase, 'stack-entrance');
@@ -253,6 +268,8 @@ test('Home reverse reserves a continuous owner handoff when stack depth fills th
   const boundary = geometry.offsets[entryOrdinal];
   const previousBoundary = geometry.offsets[entryOrdinal - 1];
   const entry = homeReverseEntry(list, boundary + 12, boundary - 12, height, pinHeight, geometry);
+  const coverAtEntry = heroStageMotion({ slides: list, local: entry.poseStartLocal, stageHeight: height, mode: 'down', geometry });
+  const reverseAtEntry = homeReverseMotion(list, entry.poseStartLocal, height, pinHeight, geometry, entry);
   const beforeHandoff = homeReverseMotion(list, previousBoundary + 1, height, pinHeight, geometry, entry);
   const handoff = homeReverseMotion(list, previousBoundary + 2, height, pinHeight, geometry, entry);
   const justBeforeSettle = homeReverseMotion(list, entry.lockLocal - 1, height, pinHeight, geometry, entry);
@@ -260,6 +277,11 @@ test('Home reverse reserves a continuous owner handoff when stack depth fills th
 
   assert.equal(entry.stackDistance, pinHeight - height,
     'the compact reverse stack still uses its existing depth');
+  assert.deepEqual(
+    reverseAtEntry.motion.map(({ y, clipTop, clipBottom }) => [y, clipTop, clipBottom]),
+    coverAtEntry.map(({ y, clipTop, clipBottom }) => [y, clipTop, clipBottom]),
+    'the terminal reverse entry begins on the existing forward cover pose',
+  );
   assert.equal(entry.lockLocal, previousBoundary + HERO_SLICE,
     'a full-depth stack reserves one logo-slice of travel after the previous hero boundary');
   assert.equal(handoff.currentHero, entryOrdinal);
@@ -415,6 +437,24 @@ test('Home direction latch accepts a settled banner within one pixel of its meas
     latchHomeDeckMode('up', 4, reverseEntry.startLocal - 1, reverseEntry.startLocal + 2, list, geometry, reverseEntry),
     'down',
     'the forward pose resumes only after the original reverse-entry boundary is crossed',
+  );
+  const terminalSlides = list.slice(0, -1);
+  const terminalGeometry = stageGeometry(terminalSlides, 386);
+  const terminalEntry = { heroIndex: 2, startLocal: terminalGeometry.span, lockLocal: terminalGeometry.span - 80 };
+  assert.equal(
+    latchHomeDeckMode('up', 2, terminalGeometry.span - 1, terminalGeometry.span + 1, terminalSlides, terminalGeometry, terminalEntry),
+    'up',
+    'terminal reverse ownership keeps its one-pixel release hysteresis',
+  );
+  assert.equal(
+    latchHomeDeckMode('up', 2, terminalGeometry.span - 1, terminalGeometry.span + 2, terminalSlides, terminalGeometry, terminalEntry),
+    'down',
+    'raw local scroll beyond the clamped terminal span releases reverse ownership',
+  );
+  assert.equal(
+    homeReverseEntry(terminalSlides, terminalGeometry.span + 2, terminalGeometry.span - 2, 386, 386, terminalGeometry)?.startLocal,
+    terminalGeometry.span,
+    'a reverse entry that starts beyond the terminal span captures the terminal boundary',
   );
 });
 
