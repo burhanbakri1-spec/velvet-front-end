@@ -3,6 +3,7 @@ import { artwork } from '../data/products';
 import { getBrand, getBrandAbout, getBrandPageHeaderMedia } from '../data/velvetCatalog';
 import { getStorefrontCategories } from '../data/storefrontVisibility';
 import BrandShowcase from '../components/BrandShowcase';
+import BrandProductStrip from '../components/BrandProductStrip';
 import { useHeroStageMotion } from '../components/useHeroStageMotion';
 import { PlayButton } from '../components/Hero';
 import { useStorefrontVideo } from '../components/useStorefrontVideo';
@@ -90,30 +91,36 @@ export default function BrandPage({ slug }) {
       ) : null}
 
       <section className="category-showcases" id="category-products" aria-label={`${brand.name[locale]} ${copy.shop.category}`}>
-        <div id="showcases">
+        <div id="showcases" data-brand-category-deck>
           <div className="hero-stage-shell">
             <div className="hero-stage">
               {categoryBanners.map((category, index) => (
                 <section className="home-brand" key={category.slug}>
-                  <BrandShowcase
-                    variant="full-banner"
-                    mediaLoading="eager"
-                    mediaFetchPriority={index === 0 ? 'high' : undefined}
-                    to={`/products?brand=${slug}&category=${category.slug}`}
-                    brand={{
-                      ...brand,
-                      slug: category.slug,
-                      name: category.name,
-                      image: category.heroImage || artwork(category.name.en, brand.home.palette, (index % 6) + 1),
-                      palette: brand.home.palette,
-                      scene: brand.home.scene,
-                      home: {
-                        logo: brand.home.logo,
-                        kickerEn: brand.home.kickerEn,
-                        kickerAr: brand.home.kickerAr,
-                      },
-                    }}
-                  />
+                  <div className="home-brand__banner-layer">
+                    <BrandShowcase
+                      variant="full-banner"
+                      mediaLoading="eager"
+                      mediaFetchPriority={index === 0 ? 'high' : undefined}
+                      to={`/products?brand=${encodeURIComponent(slug)}&category=${encodeURIComponent(category.slug)}`}
+                      brand={{
+                        ...brand,
+                        slug: category.slug,
+                        name: category.name,
+                        image: category.heroImage || artwork(category.name.en, brand.home.palette, (index % 6) + 1),
+                        palette: brand.home.palette,
+                        scene: brand.home.scene,
+                        home: {
+                          logo: brand.home.logo,
+                          kickerEn: category.description?.en || brand.home.kickerEn,
+                          kickerAr: category.description?.ar || brand.home.kickerAr,
+                        },
+                      }}
+                    />
+                    <div className="home-brand__runway" aria-hidden="true" />
+                  </div>
+                  <div className="home-brand__product-layer">
+                    <BrandProductStrip brandSlug={slug} deckIndex={index} categorySlug={category.slug} />
+                  </div>
                 </section>
               ))}
             </div>

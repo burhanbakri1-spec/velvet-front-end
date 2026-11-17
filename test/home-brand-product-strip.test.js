@@ -337,15 +337,14 @@ test('reduced-motion disables automatic strip movement', () => {
   assert.match(stripReduced, /animation: none/);
 });
 
-test('strip stays Home-only and does not touch BrandPage or the Shop grid', () => {
+test('brand category strips reuse the scoped stage without changing Shop grid layout', () => {
   const brandPage = read('pages/BrandPage.jsx');
   const styles = fs.readFileSync(stylesPath, 'utf8');
 
-  assert.doesNotMatch(brandPage, /BrandProductStrip/);
-  const categoryScope = styles.match(/\.category-showcases > \.brand-showcase\.brand-showcase--full-banner,[\s\S]*?\{[^}]*\}/);
-  assert.ok(categoryScope, 'BrandPage sticky scope missing');
-  assert.ok(!categoryScope[0].includes('brand-strip'));
-  assert.doesNotMatch(styles, /\.category-showcases[^{}]*brand-strip/);
+  assert.match(brandPage, /<BrandProductStrip brandSlug=\{slug\} deckIndex=\{index\} categorySlug=\{category\.slug\}/);
+  assert.match(brandPage, /home-brand__banner-layer/);
+  assert.match(brandPage, /home-brand__product-layer/);
+  assert.match(styles, /#showcases > \.hero-stage-shell/);
   assert.doesNotMatch(styles, /brand-strip-card[^{]*grid/);
 });
 

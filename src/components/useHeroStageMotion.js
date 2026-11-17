@@ -137,7 +137,8 @@ export function useHeroStageMotion(rootId, mobile = false) {
         // without leaving a white tail under the outgoing banner. Fit the
         // banner to the shortest real strip in this Home deck, measured only
         // during layout work (never in the scroll frame).
-        const homeDeck = rootId === 'showcases' && root.hasAttribute('data-home-brand-deck');
+        const homeDeck = rootId === 'showcases'
+          && (root.hasAttribute('data-home-brand-deck') || root.hasAttribute('data-brand-category-deck'));
         if (homeDeck && window.innerWidth > 760 && window.innerWidth <= 1100) {
           const stripHeights = [...root.querySelectorAll('.home-brand__product-layer > .brand-strip')]
             .map((strip) => Math.round(strip.offsetHeight))
@@ -239,7 +240,8 @@ export function useHeroStageMotion(rootId, mobile = false) {
       const pos = stageSlidePos(slides, local, stageHeight, geometryCache);
 
       const mobileShowcase = rootId === 'showcases' && mobile && !desktop.matches;
-      const isHomeDeck = rootId === 'showcases' && root.hasAttribute('data-home-brand-deck');
+      const isHomeDeck = rootId === 'showcases'
+        && (root.hasAttribute('data-home-brand-deck') || root.hasAttribute('data-brand-category-deck'));
       const mobileHomeDeck = isHomeDeck && mobileShowcase;
       const homeReverseDeck = isHomeDeck && (mobile || desktop.matches);
       const rawPreviousLocal = direction.y - (shellTop - headerOffset);
@@ -408,7 +410,7 @@ export function useHeroStageMotion(rootId, mobile = false) {
 
       if (release.atEnd && !homeReverse && !homeReverseExitActive) {
         slides.forEach((slide, index) => {
-          if (index === slides.length - 1) return;
+          if (index === slides.length - 1 && !root.hasAttribute('data-brand-category-deck')) return;
           const away = slide.kind === 'strip' && slide.height > 0 ? Math.round(slide.height) : stageHeight;
           motion[index] = { y: -away, clipTop: 0, clipBottom: 0, hidden: slide.kind === 'strip', z: 1 };
         });
