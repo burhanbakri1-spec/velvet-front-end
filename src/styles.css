@@ -551,6 +551,7 @@ button { color: inherit; }
 .header-icon-button svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 a.header-icon-button { text-decoration: none; }
 .menu-toggle { display: none; }
+.compact-header-actions { display: none; }
 .mobile-header-search-trigger { display: none; }
 .mobile-header-search-trigger:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 
@@ -2448,6 +2449,194 @@ body:has(#showcases[data-brand-category-deck]) .footer__callout {
   object-position: center;
 }
 .brand-showcase.brand-showcase--full-banner:hover .brand-showcase__image { transform: none; }
+
+:is([data-home-brand-deck], [data-brand-category-deck]) {
+  --notebook-rise: 32px;
+}
+
+#showcases[data-hero-motion]:is([data-home-brand-deck], [data-brand-category-deck]) > .hero-stage-shell > .hero-stage {
+  overflow: visible;
+  clip-path: inset(calc(-1 * var(--notebook-rise)) 0 0);
+}
+
+/* Opt-in local trial: override the inline sticky inset without changing the
+   header offset the motion engine uses for its scroll phase calculations. */
+html[data-notebook-clearance-preview] #showcases[data-hero-motion]:is([data-home-brand-deck], [data-brand-category-deck]) > .hero-stage-shell > .hero-stage {
+  top: calc(var(--header-height) + var(--notebook-pocket, var(--notebook-rise))) !important;
+}
+
+/* Review option: give the existing clearance the same surface as the
+   bottom of the header. This layer sits behind the tabs and takes no input. */
+html:is([data-notebook-clearance-preview="integrated"], :is([data-notebook-clearance-preview="combined"], [data-notebook-clearance-preview="release"]), [data-notebook-clearance-preview="flush"], [data-notebook-clearance-preview="dynamic"]) #showcases[data-hero-motion]:is([data-home-brand-deck], [data-brand-category-deck]) > .hero-stage-shell > .hero-stage::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 100%;
+  height: var(--notebook-pocket, var(--notebook-rise));
+  background: linear-gradient(#fdfdfe, #edf0f4);
+  pointer-events: none;
+}
+
+/* Retain the original dynamic trial for comparison. The combined trial
+   fixes the offset relative to the card and reserves only that protrusion. */
+html[data-notebook-clearance-preview="dynamic"] [data-home-brand-deck] {
+  --notebook-pocket-scale: 2.5;
+  --notebook-pocket: calc(var(--notebook-pocket-scale) * var(--notebook-rise));
+}
+
+html:is([data-notebook-clearance-preview="combined"], [data-notebook-clearance-preview="release"]) [data-home-brand-deck] {
+  --notebook-fixed-lift: 6px;
+  --notebook-pocket: calc(var(--notebook-rise) + var(--notebook-fixed-lift));
+}
+
+@media (max-width: 760px) {
+  html:is([data-notebook-clearance-preview="combined"], [data-notebook-clearance-preview="release"]) [data-home-brand-deck] {
+    --notebook-fixed-lift: 20px;
+  }
+}
+
+html:is(:is([data-notebook-clearance-preview="combined"], [data-notebook-clearance-preview="release"]), [data-notebook-clearance-preview="dynamic"]) #showcases[data-hero-motion] > .hero-stage-shell > .hero-stage {
+  clip-path: inset(calc(-1 * var(--notebook-pocket, var(--notebook-rise))) 0 0);
+}
+
+html:is(:is([data-notebook-clearance-preview="combined"], [data-notebook-clearance-preview="release"]), [data-notebook-clearance-preview="flush"], [data-notebook-clearance-preview="dynamic"]) #showcases .brand-showcase__notebook-tab {
+  --tab-clearance: 0px;
+  bottom: var(--notebook-fixed-lift, var(--notebook-lift, 0px));
+}
+
+html:is(:is([data-notebook-clearance-preview="combined"], [data-notebook-clearance-preview="release"]), [data-notebook-clearance-preview="dynamic"]) #showcases .brand-showcase__notebook-edge::before {
+  content: '';
+  position: absolute;
+  right: 5px;
+  bottom: 0;
+  width: 12px;
+  height: var(--notebook-fixed-lift, var(--notebook-connector, 0px));
+  border-radius: 3px 0 0 0;
+  background: var(--tab-surface);
+}
+
+/* Overlap the paint at the join without moving the tab or its parent. */
+html[data-notebook-shared-exit] #showcases[data-home-brand-deck] .brand-showcase__notebook-edge::before {
+  bottom: calc(-1px - var(--notebook-seam-clip, 0px));
+  height: calc(var(--notebook-fixed-lift) + 2px + var(--notebook-seam-clip, 0px));
+}
+
+/* Local trial: seat the tab at the artwork edge while retaining the pinned clearance. */
+html[data-notebook-joined-preview] #showcases[data-home-brand-deck] .brand-showcase__notebook-tab {
+  bottom: 0;
+}
+
+html[data-notebook-joined-preview] #showcases[data-home-brand-deck] .brand-showcase__notebook-edge::before {
+  content: none;
+}
+
+html[data-notebook-joined-preview] #showcases[data-home-brand-deck] .brand-showcase__notebook-tab::after,
+html[data-notebook-shared-exit] [data-brand-category-deck] .brand-showcase__notebook-tab::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 2px;
+  background: var(--tab-surface);
+}
+
+#showcases[data-hero-motion] > .hero-stage-shell > .hero-stage .brand-showcase.brand-showcase--full-banner:has(> .brand-showcase__notebook-edge),
+#showcases:not([data-hero-motion]) .brand-showcase:has(> .brand-showcase__notebook-edge) {
+  overflow: visible;
+}
+
+html[data-notebook-shared-exit] #showcases[data-hero-motion] .brand-showcase:has(> .brand-showcase__artwork) {
+  pointer-events: none;
+}
+
+.brand-showcase__artwork {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
+.brand-showcase__notebook-edge {
+  --tab-fill: var(--notebook-tab-bg, var(--c3, #eee5f4));
+  --tab-surface: color-mix(in srgb, var(--tab-fill) 89%, white);
+  position: absolute;
+  inset: auto 0 100%;
+  z-index: 3;
+  height: 0;
+  pointer-events: none;
+}
+
+.brand-showcase__notebook-tab {
+  --tab-clearance: var(--notebook-logo-clearance, 0px);
+  position: absolute;
+  inset: auto var(--tab-clearance) 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--notebook-rise);
+  min-width: calc(var(--notebook-rise) * 5);
+  max-width: calc(100% - var(--tab-clearance));
+  justify-content: center;
+  padding-inline: clamp(39px, 4vw, 58px);
+  isolation: isolate;
+  color: #241d31;
+  font-size: clamp(13px, 1.1vw, 16px);
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Only stacked Home tabs share a band with an earlier card's logo. */
+html[dir="rtl"] [data-home-brand-deck]:is([data-home-reverse-phase]:not([data-home-reverse-phase="locked"]), [data-notebook-unwinding]) {
+  --notebook-logo-clearance: calc(clamp(14px, 3.5vw, 56px) + 202px + 10px);
+}
+
+@media (max-width: 1024px) {
+  html[dir="rtl"] [data-home-brand-deck]:is([data-home-reverse-phase]:not([data-home-reverse-phase="locked"]), [data-notebook-unwinding]) {
+    --notebook-logo-clearance: 226px;
+  }
+}
+
+body.hero-stage-pin .category-page:has([data-brand-category-deck]) > .page-nav--sticky {
+  position: relative;
+  top: auto;
+}
+
+.brand-showcase__notebook-shape {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: var(--tab-surface);
+  stroke: rgb(255 255 255 / .75);
+  stroke-width: 1.25px;
+  filter: drop-shadow(0 -1px 1px color-mix(in srgb, var(--tab-fill) 30%, #51446255));
+}
+
+.brand-showcase__notebook-icon {
+  flex: none;
+  width: 1.2em;
+  height: 1.2em;
+}
+
+.brand-showcase__notebook-tab > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 760px) {
+  html[dir="rtl"] [data-home-brand-deck]:is([data-home-reverse-phase]:not([data-home-reverse-phase="locked"]), [data-notebook-unwinding]) {
+    --notebook-logo-clearance: calc(var(--mobile-gutter, 20px) + 139px + 10px);
+  }
+  :is([data-home-brand-deck], [data-brand-category-deck]) {
+    --notebook-rise: 28px;
+  }
+  .brand-showcase__notebook-tab {
+    gap: 6px;
+    padding-inline: 37px;
+    font-size: 13px;
+  }
+}
 /* ============================================================
    HOME — previous-brand banner slices above the active hero.
    Hidden while scrolling down: --brand-rail-height stays 0px, so the
@@ -4879,12 +5068,12 @@ html[dir="rtl"] .product-media__main img, html[dir="rtl"] .product-media__thumbs
 }
 .page-nav--sticky {
   position: sticky;
-  top: var(--header-height);
+  top: calc(var(--header-height) - var(--category-nav-reveal, 0px));
   z-index: 40;
   background: #fdfdfd;
 }
 body:has(.site-header.is-hidden) .page-nav--sticky {
-  top: 0;
+  top: calc(0px - var(--category-nav-reveal, 0px));
 }
 .product-detail-page > .page-nav {
   flex-shrink: 0;

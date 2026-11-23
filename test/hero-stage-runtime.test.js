@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import test from 'node:test';
 import * as math from '../src/components/heroScrollProgress.js';
 
-function mount(width = 375, reduced = false, heroCount = 1, homeDeck = false) {
+function mount(width = 375, reduced = false, heroCount = 1, homeDeck = false, notebookPreview = null) {
   let y = 0, top = 1000, stripHeight = 240, reads = 0, writes = 0, rafId = 0, viewportHeight = 812;
   const frames = new Map(), listeners = new Map(), cleanups = [], observers = [], motionInputs = [];
   const classes = () => { const values = new Set(); return { contains: key => values.has(key), add: key => values.add(key), remove: key => values.delete(key), toggle(key,on) { if (on) values.add(key); else values.delete(key); } }; };
@@ -37,7 +37,7 @@ function mount(width = 375, reduced = false, heroCount = 1, homeDeck = false) {
     heroStageMotion(input) { if (input.motionPurpose !== 'handoff-reference') motionInputs.push(input); return math.heroStageMotion(input); },
     useRef: current => ({current}),
     useLayoutEffect(effect) { const cleanup=effect(); if(cleanup) cleanups.push(cleanup); },
-    document: { getElementById: () => root, createElement:()=>probe, documentElement: {}, body:{classList:classes()} },
+    document: { getElementById: () => root, createElement:()=>probe, documentElement: { getAttribute: () => notebookPreview }, body:{classList:classes()} },
     getComputedStyle: () => ({getPropertyValue:()=> '72px'}),
     ResizeObserver: class { constructor(callback){this.callback=callback;this.disconnected=false;observers.push(this);} observe(){} unobserve(){} disconnect(){this.disconnected=true;} },
     MutationObserver: class { observe(){} disconnect(){} },
@@ -71,7 +71,11 @@ test('mobile Home reverse keeps card dimensions fixed and reveals Baby behind th
  home.scroll(1450);home.flush();
  const previous = home.sections[0].querySelector(':scope > .home-brand__banner-layer > .brand-showcase');
  const previousY=Number.parseFloat(previous.style.transform.split(',')[1]);
- const previousClipTop=Number.parseFloat(previous.style.clipPath.match(/inset\((\d+(?:\.\d+)?)px/)[1]);
+ const clipTop=previous.style.clipPath.match(/^inset\((?:(\d+(?:\.\d+)?)px|calc\(-1 \* var\(--notebook-rise\)\)) /);
+ assert.ok(clipTop, `expected an artwork inset or the notebook paint allowance, got ${previous.style.clipPath}`);
+ // The negative notebook inset exposes decoration above the card. The image
+ // itself starts at local y=0, so that allowance does not move its top edge.
+ const previousClipTop=clipTop[1] === undefined ? 0 : Number(clipTop[1]);
  assert.equal(previousY+previousClipTop,0,'Baby remains visually anchored at the first-banner boundary');
  assert.equal(previous.style.height,'370px','Baby keeps its measured card height throughout the reverse gesture');
  const outgoingY=Number.parseFloat(home.sections[1].querySelector(':scope > .home-brand__banner-layer > .brand-showcase').style.transform.split(',')[1]);
@@ -80,6 +84,64 @@ test('mobile Home reverse keeps card dimensions fixed and reveals Baby behind th
  assert.equal(home.stage.style.height,'740px','the pinned scene height stays fixed through an in-flight brand transition');
  assert.equal(home.sections.filter(section=>section.hasAttribute('data-active')).length,1,'active brand marker moves instead of accumulating');
  home.dispose();
+});
+
+test('Home switches to a continuous cover after crossing two earlier banner slots', () => {
+ const app=mount(390,false,8,true);
+ const start=928, step=370+240, turn=2*step+108;
+ const go=local=>{app.scroll(start+local);app.flush();};
+ const pose=hero=>app.sections[hero].querySelector(':scope > .home-brand__banner-layer > .brand-showcase').style.transform;
+
+ go(5*step+100);
+ go(5*step-12);
+ go(4*step-30);
+ go(3*step-30);
+ go(turn);
+ assert.equal(app.root.getAttribute('data-home-reverse-phase'),'banner');
+ const earlier=[pose(0),pose(1)];
+ const arrival=pose(3);
+
+ go(turn+34);
+ assert.equal(app.root.hasAttribute('data-notebook-unwinding'),true);
+ assert.deepEqual([pose(0),pose(1)],earlier);
+ assert.notEqual(pose(3),arrival);
+ const first=pose(3);
+ go(turn+72);
+ go(turn+34);
+ assert.equal(pose(3),first,'a repeat reversal within the unwind retraces the same pose');
+ go(3*step+80);
+ go(4*step+80);
+ assert.equal(app.root.hasAttribute('data-notebook-unwinding'),false);
+ assert.equal(app.root.hasAttribute('data-home-reverse-phase'),false);
+ const forwardPose=pose(4);
+ assert.equal(forwardPose,'translate3d(0, 0px, 0)');
+ go(4*step-8);
+ assert.equal(pose(4),forwardPose,'re-entering UP starts with the last rendered forward pose');
+ app.dispose();
+});
+
+test('fixed right tabs only extend the decorative clip and never change the stack pose', () => {
+ const standard=mount(390,false,8,true);
+ const raised=mount(390,false,8,true,'combined');
+ const flush=mount(390,false,8,true,'flush');
+ const apps=[standard,raised,flush];
+ const css=(app,index)=>app.sections[index].querySelector(':scope > .home-brand__banner-layer > .brand-showcase').style;
+ for(const local of [3150,3060,2390,1780,1328,1362,1400,1362,1920,2530]){
+  apps.forEach(app=>{app.scroll(928+local);app.flush();});
+  for(let i=0;i<8;i++){
+   const original=css(standard,i);
+   for(const app of [raised,flush]){
+    const trial=css(app,i);
+    assert.equal(trial.transform,original.transform);
+    assert.equal(trial.zIndex,original.zIndex);
+    assert.equal(trial.height,original.height);
+    assert.equal(trial.getPropertyValue('--notebook-lift'),'');
+   }
+   assert.equal(css(raised,i).clipPath,original.clipPath?.replace('--notebook-rise','--notebook-pocket'));
+   assert.equal(css(flush,i).clipPath,original.clipPath);
+  }
+ }
+ apps.forEach(app=>app.dispose());
 });
 
 test('scroll events coalesce into one frame using the latest position without geometry reads', () => {
@@ -207,6 +269,41 @@ test('mobile wheel-up restores released page geometry without a terminal jump', 
  }
  assert.ok(results.every(entry=>Math.abs(entry.shell-entry.expected.shellHeight)<=1&&Math.abs(entry.box-entry.expected.boxHeight)<=1));
  assert.ok(results.every((entry,index)=>index===0||entry.shell-results[index-1].shell<140),'restoring shell height must track the 120px scroll input without a terminal jump');
+ stage.dispose();
+});
+
+test('mobile Home keeps the terminal release box joined to the strip before and during reverse entry', () => {
+ const stage=mount(390,false,12,true);
+ const height=370,pin=740,start=928;
+ const slides=Array.from({length:24},(_,i)=>i%2
+  ? {kind:'strip',height:240,heroIndex:Math.floor(i/2)}
+  : {kind:'hero',heroIndex:i/2});
+ const geometry={...math.stageGeometry(slides,height),notebookCover:true};
+ const boundary=geometry.offsets[22];
+ const terminalStrip=stage.sections.at(-1).querySelector(':scope > .home-brand__product-layer > .brand-strip');
+ const scroll=local=>{stage.scroll(start+local);stage.flush();};
+ const assertAtStripEdge=local=>{
+  const stripY=Number.parseFloat(terminalStrip.style.transform.split(',')[1]);
+  const boxHeight=Number.parseFloat(stage.stage.style.height);
+  const spanProperty=stage.root.hasAttribute('data-mobile-hero-up')?'--mobile-up-stage-span':'--hero-stage-span';
+  const shellHeight=Number.parseFloat(stage.shell.style.getPropertyValue(spanProperty));
+  assert.equal(boxHeight,stripY+240);
+  assert.equal(shellHeight,Math.min(geometry.span,local)+boxHeight);
+ };
+
+ scroll(geometry.span+90);
+ for(const local of [geometry.span+44,geometry.span+2,boundary+152,boundary+100]){
+  scroll(local);
+  assert.equal(stage.root.hasAttribute('data-home-reverse-phase'),false);
+  assertAtStripEdge(local);
+ }
+ for(const local of [boundary+92,boundary+44,boundary-92,boundary-105,boundary+44]){
+  scroll(local);
+  assertAtStripEdge(local);
+ }
+ scroll(boundary+100);
+ assert.equal(stage.root.hasAttribute('data-home-reverse-phase'),false);
+ assertAtStripEdge(boundary+100);
  stage.dispose();
 });
 

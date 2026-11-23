@@ -5,6 +5,20 @@ import { bootstrapPlatformContent, platformContentConfig } from './data/platform
 import { initGtm } from './analytics/gtm';
 import './styles.css';
 
+const documentRoot = document.documentElement;
+const notebookClearance = import.meta.env.DEV
+  ? new URLSearchParams(window.location.search).get('notebookClearance')
+  : null;
+const comparisonPreviews = ['1', 'integrated', 'combined', 'flush', 'dynamic', 'release'];
+
+if (comparisonPreviews.includes(notebookClearance)) {
+  documentRoot.setAttribute('data-notebook-clearance-preview', notebookClearance);
+} else {
+  documentRoot.setAttribute('data-notebook-clearance-preview', 'release');
+  documentRoot.setAttribute('data-notebook-shared-exit', '');
+  if (notebookClearance !== 'final') documentRoot.setAttribute('data-notebook-joined-preview', '');
+}
+
 // Initialise GTM early so the container script loads promptly.
 // No-op when VITE_GTM_ID is missing.
 initGtm();

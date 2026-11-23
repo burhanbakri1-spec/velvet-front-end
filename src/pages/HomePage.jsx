@@ -54,6 +54,7 @@ export default function HomePage() {
                 <BrandShowcase
                   variant="full-banner"
                   showBrandLogo
+                  notebookTab
                   deckIndex={index}
                   // The reverse stack keeps every earlier poster/logo visible;
                   // eager fetching prevents a newly exposed card from waiting
