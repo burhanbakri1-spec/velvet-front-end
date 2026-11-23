@@ -99,6 +99,7 @@ export default function BrandPage({ slug }) {
                   <div className="home-brand__banner-layer">
                     <BrandShowcase
                       variant="full-banner"
+                      notebookTab
                       mediaLoading="eager"
                       mediaFetchPriority={index === 0 ? 'high' : undefined}
                       to={`/products?brand=${encodeURIComponent(slug)}&category=${encodeURIComponent(category.slug)}`}

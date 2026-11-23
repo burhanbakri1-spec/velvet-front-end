@@ -1,7 +1,8 @@
-import { useRef } from 'react';
+import { Fragment, useRef } from 'react';
 import { getBrandLogo, hasUploadedBrandLogo } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
+import CategoryBannerTab from './CategoryBannerTab';
 
 export default function BrandShowcase({
   brand,
@@ -11,8 +12,12 @@ export default function BrandShowcase({
   mediaLoading = 'lazy',
   mediaFetchPriority,
   deckIndex,
+  notebookTab = false,
 }) {
   const viewCursorRef = useRef(null);
+  const separateArtwork = notebookTab
+    && document.documentElement.hasAttribute('data-notebook-shared-exit');
+  const Artwork = separateArtwork ? 'div' : Fragment;
   const { copy, locale } = useI18n();
   const arrow = locale === 'ar' ? '←' : '→';
   const name = brand.name[locale];
@@ -32,6 +37,10 @@ export default function BrandShowcase({
 
   const hideViewCursor = () => viewCursorRef.current?.classList.remove('is-visible');
 
+  const tab = notebookTab
+    ? <CategoryBannerTab slug={brand.slug} name={showBrandLogo ? brand.short?.[locale] || name : name} isBrand={showBrandLogo} />
+    : null;
+
   return (
     <article
       className={`brand-showcase brand-showcase--${brand.scene}${isFullBanner ? ' brand-showcase--full-banner' : ''}`}
@@ -45,41 +54,45 @@ export default function BrandShowcase({
       onPointerMove={moveViewCursor}
       onPointerLeave={hideViewCursor}
     >
-      <img
-        className="brand-showcase__image"
-        src={brand.image}
-        alt=""
-        loading={mediaLoading}
-        decoding="async"
-        {...(mediaFetchPriority ? { fetchPriority: mediaFetchPriority } : {})}
-      />
-      <div className="brand-showcase__tint" aria-hidden="true" />
-      <Link className="brand-showcase__link" to={brandPath} aria-label={`${copy.home.view} ${name}`} />
-      {brandLogoSrc ? (
-        <span
-          className={`brand-logo-frame brand-showcase__brand-logo-frame${managedBrandLogo ? ' brand-logo-frame--managed' : ''}`}
-        >
-          <img
-            className={`brand-logo brand-showcase__brand-logo${managedBrandLogo ? ' brand-showcase__brand-logo--managed' : ''}`}
-            src={brandLogoSrc}
-            alt=""
-            aria-hidden="true"
-            loading={mediaLoading === 'eager' ? 'eager' : 'lazy'}
-            decoding="async"
-          />
-        </span>
-      ) : null}
-      <div className="brand-showcase__content">
-        <span className="brand-showcase__logo" aria-hidden="true">{logo}</span>
-        <p>{locale === 'ar' ? brand.home.kickerAr : brand.home.kickerEn}</p>
-        <h2>{name}</h2>
-      </div>
-      <span className="showcase-view-cursor" ref={viewCursorRef} aria-hidden="true">{copy.home.view}</span>
-      <Link className="showcase-more" to={brandPath}>
-        <span className="showcase-more__arrow showcase-more__arrow--left" aria-hidden="true">{arrow}</span>
-        <span className="showcase-more__label">{copy.home.seeMore}</span>
-        <span className="showcase-more__arrow showcase-more__arrow--right" aria-hidden="true">{arrow}</span>
-      </Link>
+      {separateArtwork && tab}
+      <Artwork {...(separateArtwork ? { className: 'brand-showcase__artwork' } : {})}>
+        <img
+          className="brand-showcase__image"
+          src={brand.image}
+          alt=""
+          loading={mediaLoading}
+          decoding="async"
+          {...(mediaFetchPriority ? { fetchPriority: mediaFetchPriority } : {})}
+        />
+        <div className="brand-showcase__tint" aria-hidden="true" />
+        {!separateArtwork && tab}
+        <Link className="brand-showcase__link" to={brandPath} aria-label={`${copy.home.view} ${name}`} />
+        {brandLogoSrc ? (
+          <span
+            className={`brand-logo-frame brand-showcase__brand-logo-frame${managedBrandLogo ? ' brand-logo-frame--managed' : ''}`}
+          >
+            <img
+              className={`brand-logo brand-showcase__brand-logo${managedBrandLogo ? ' brand-showcase__brand-logo--managed' : ''}`}
+              src={brandLogoSrc}
+              alt=""
+              aria-hidden="true"
+              loading={mediaLoading === 'eager' ? 'eager' : 'lazy'}
+              decoding="async"
+            />
+          </span>
+        ) : null}
+        <div className="brand-showcase__content">
+          <span className="brand-showcase__logo" aria-hidden="true">{logo}</span>
+          <p>{locale === 'ar' ? brand.home.kickerAr : brand.home.kickerEn}</p>
+          <h2>{name}</h2>
+        </div>
+        <span className="showcase-view-cursor" ref={viewCursorRef} aria-hidden="true">{copy.home.view}</span>
+        <Link className="showcase-more" to={brandPath}>
+          <span className="showcase-more__arrow showcase-more__arrow--left" aria-hidden="true">{arrow}</span>
+          <span className="showcase-more__label">{copy.home.seeMore}</span>
+          <span className="showcase-more__arrow showcase-more__arrow--right" aria-hidden="true">{arrow}</span>
+        </Link>
+      </Artwork>
     </article>
   );
 }

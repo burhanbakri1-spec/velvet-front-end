@@ -7,9 +7,11 @@ import {
   HERO_SLICE_OVERLAP,
   activeHeroIndex,
   canDeferOffscreenPoseWrite,
+  crossBannerUnwind,
   heroStageMotion,
   homeReverseEntry,
   homeReverseMotion,
+  joinCategoryHandoff,
   latchHomeDeckMode,
   latchStageMode,
   stageGeometry,
@@ -597,6 +599,24 @@ test('a short product strip keeps the next hero on its own height', () => {
   assert.deepEqual(mapped, original);
 });
 
+test('a notebook banner covers the docked product strip before the outgoing artwork', () => {
+  const height = 386;
+  const list = [{ kind: 'hero' }, { kind: 'strip', height: 238 }, { kind: 'hero' }];
+  const geometry = { ...stageGeometry(list, height), notebookCover: true };
+  const at = local => heroStageMotion({ slides: list, local, stageHeight: height, geometry });
+
+  const docked = at(386);
+  const coveringStrip = at(425);
+  const coveringArtwork = at(552);
+  assert.deepEqual(docked.map(pose => pose.y), [0, 148, 386]);
+  assert.equal(coveringStrip[0].y, 0);
+  assert.equal(coveringStrip[1].y, 148);
+  assert.ok(coveringStrip[2].z > coveringStrip[1].z && coveringStrip[2].y > 148);
+  assert.ok(coveringArtwork[2].y < 148);
+  assert.equal(coveringArtwork[0].y, 0);
+  assert.equal(at(624)[2].y, 0);
+});
+
 test('the full hero range has no meaningful pose plateau in either direction', () => {
   for (const [compact, stripHeight] of [[386, 235], [812, 306]]) {
     const list = Array.from({ length: 24 }, (_, index) => index % 2
@@ -687,4 +707,206 @@ test('terminal stage releases on the last slide without clipping the pose', () =
   assert.equal(desktopUp.atEnd, false);
   assert.equal(desktopUp.boxHeight, 812);
   assert.equal(desktopUp.shellHeight, desktopHeroSpan - 40 + 812);
+});
+test('a tall category reverse pin continues the banner and strip sequence below its active lane', () => {
+  const height = 386;
+  const pinHeight = 772;
+  const list = [
+    { kind: 'hero', heroIndex: 0 },
+    { kind: 'hero', heroIndex: 1 },
+    { kind: 'strip', heroIndex: 1, height: 238 },
+    { kind: 'hero', heroIndex: 2 },
+  ];
+  const geometry = stageGeometry(list, height);
+  const boundary = geometry.offsets[1];
+  const entry = homeReverseEntry(list, geometry.offsets[3], boundary, height, pinHeight, geometry);
+  const home = homeReverseMotion(list, boundary, height, pinHeight, geometry, entry);
+  const category = homeReverseMotion(list, boundary, height, pinHeight, geometry, entry, true);
+
+  assert.deepEqual(category.motion.slice(0, 3), home.motion.slice(0, 3));
+  assert.ok(home.motion[3].y >= pinHeight);
+  assert.equal(category.motion[3].y, category.motion[2].y);
+  assert.ok(category.motion[3].z < category.motion[2].z);
+  assert.ok(category.motion[3].y + height >= pinHeight);
+  const lead = homeReverseMotion(list, boundary - 35, height, pinHeight, geometry, entry, true);
+  assert.equal(lead.phase, 'strip');
+  assert.deepEqual(lead.motion.slice(0, 2), category.motion.slice(0, 2));
+  assert.equal(lead.motion[2].y, category.motion[2].y + 35);
+  assert.deepEqual(lead.motion[3], category.motion[3]);
+  const afterLead = homeReverseMotion(list, boundary - 230, height, pinHeight, geometry, entry, true);
+  assert.ok(afterLead.motion[1].y > lead.motion[1].y);
+});
+
+test('notebook reverse reveals earlier banners at fixed slots before moving the active strip independently', () => {
+  const height = 386;
+  const pinHeight = 772;
+  const slides = Array.from({ length: 12 }, (_, heroIndex) => [
+    { kind: 'hero', heroIndex },
+    { kind: 'strip', heroIndex, height: 238 },
+  ]).flat();
+  const geometry = { ...stageGeometry(slides, height), notebookCover: true };
+  const boundary = geometry.offsets[22];
+  const entry = homeReverseEntry(slides, boundary + 1, boundary - 2, height, pinHeight, geometry);
+  const at = (local) => homeReverseMotion(slides, local, height, pinHeight, geometry, entry);
+  const first = at(entry.lockLocal + 138);
+  const second = at(entry.lockLocal + 92);
+  const settled = at(entry.lockLocal);
+  const strip = at(entry.lockLocal - 35);
+
+  assert.equal(first.phase, 'stack-entrance');
+  assert.equal(second.phase, 'stack-entrance');
+  assert.ok(second.motion[22].y > first.motion[22].y);
+  for (let index = 0; index < 22; index += 2) {
+    assert.equal(first.motion[index].y, settled.motion[index].y);
+    assert.equal(second.motion[index].y, settled.motion[index].y);
+    assert.ok(second.motion[index].clipBottom <= first.motion[index].clipBottom);
+    assert.equal(strip.motion[index].y, settled.motion[index].y);
+  }
+
+  assert.equal(strip.phase, 'strip');
+  assert.equal(strip.motion[22].y, settled.motion[22].y);
+  assert.equal(strip.motion[23].y - settled.motion[23].y, 35);
+  assert.deepEqual(at(entry.lockLocal + 138), first);
+});
+
+test('terminal notebook entry scrubs the strip before moving its banner on Home and Create', () => {
+  for (const [height, pinHeight] of [[386, 772], [756, 756]]) {
+    const slides = Array.from({ length: 12 }, (_, heroIndex) => [
+      { kind: 'hero', heroIndex },
+      { kind: 'strip', heroIndex, height: 238 },
+    ]).flat();
+    const geometry = { ...stageGeometry(slides, height), notebookCover: true };
+    const boundary = geometry.offsets[22];
+    const entry = homeReverseEntry(slides, boundary + 160, boundary + 90, height, pinHeight, geometry);
+    const { start, end } = entry.initialStrip;
+
+    for (const categoryDeck of [false, true]) {
+      const poseAt = (local) => homeReverseMotion(slides, local, height, pinHeight, geometry, entry, categoryDeck);
+      const first = poseAt(start);
+      const middle = poseAt((start + end) / 2);
+      const last = poseAt(end);
+      const next = poseAt(end - 1);
+      const moving = poseAt(end - 64);
+
+      assert.deepEqual(first.motion, heroStageMotion({ slides, local: start, stageHeight: height, geometry }));
+      assert.equal(middle.phase, 'initial-strip');
+      assert.deepEqual(first.motion.slice(0, 23), middle.motion.slice(0, 23));
+      assert.deepEqual(middle.motion.slice(0, 23), last.motion.slice(0, 23));
+      assert.ok(first.motion[23].y < middle.motion[23].y && middle.motion[23].y < last.motion[23].y);
+      assert.equal(last.motion[23].y, last.motion[22].y + height);
+      assert.equal(next.phase, 'stack-entrance');
+      assert.ok(Math.abs(next.motion[22].y - last.motion[22].y) <= 1);
+      assert.ok(Math.abs(next.motion[23].y - last.motion[23].y) <= 1);
+      assert.ok(moving.motion[22].y > last.motion[22].y);
+      assert.ok(moving.motion[23].y <= moving.motion[22].y + height);
+      assert.deepEqual(poseAt((start + end) / 2), middle);
+    }
+
+    assert.equal(latchHomeDeckMode('down', -70, boundary + 160, boundary + 90, slides, geometry), 'up');
+    assert.equal(latchHomeDeckMode('down', -1, boundary + 44, boundary + 43, slides, geometry), 'up');
+    const earlyEntry = homeReverseEntry(slides, boundary + 44, boundary + 43, height, pinHeight, geometry);
+    assert.equal(earlyEntry.initialStrip.start, boundary + 44);
+    const beforeTurn = heroStageMotion({ slides, local: boundary + 44, stageHeight: height, geometry });
+    const afterTurn = homeReverseMotion(slides, boundary + 43, height, pinHeight, geometry, earlyEntry);
+    assert.deepEqual(afterTurn.motion[22], beforeTurn[22]);
+    assert.equal(latchHomeDeckMode('up', 30, end + 20, end + 50, slides, geometry, entry), 'up');
+    assert.equal(latchHomeDeckMode('up', 5, start - 1, start + 4, slides, geometry, entry), 'down');
+  }
+});
+
+test('the first category strip is already in place as the reverse deck reaches the locked scene', () => {
+  const height = 386;
+  const pinHeight = 772;
+  const slides = [
+    { kind: 'hero', heroIndex: 0 },
+    { kind: 'strip', heroIndex: 0, height: 238 },
+    { kind: 'hero', heroIndex: 1 },
+    { kind: 'strip', heroIndex: 1, height: 238 },
+    { kind: 'hero', heroIndex: 2 },
+  ];
+  const geometry = { ...stageGeometry(slides, height), notebookCover: true };
+  const before = homeReverseMotion(slides, 1, height, pinHeight, geometry, null, true);
+  const after = homeReverseMotion(slides, 0, height, pinHeight, geometry, null, true);
+  assert.equal(before.phase, 'banner');
+  assert.equal(after.phase, 'locked');
+  assert.deepEqual(before.motion[1], after.motion[1]);
+  assert.ok(Math.abs(before.motion[2].y - after.motion[2].y) <= 2);
+});
+
+test('after traversing two earlier notebook sections the next physical cover retracts the reverse stack', () => {
+  const height = 386;
+  const pin = 772;
+  const slides = Array.from({ length: 8 }, (_, heroIndex) => [
+    { kind: 'hero', heroIndex },
+    { kind: 'strip', heroIndex, height: 238 },
+  ]).flat();
+  const geometry = { ...stageGeometry(slides, height), notebookCover: true };
+  const boundary = geometry.offsets[10];
+  const entry = homeReverseEntry(slides, boundary + 92, boundary - 6, height, pin, geometry);
+  const up = [boundary - 6, geometry.offsets[8] - 30, geometry.offsets[6] - 30, geometry.offsets[4] + 105]
+    .map((local) => homeReverseMotion(slides, local, height, pin, geometry, entry));
+  assert.deepEqual(up.map((state) => state.currentHero), [5, 4, 3, 3]);
+  const index = 6;
+  const origin = up.at(-1).motion;
+  assert.equal(entry.heroIndex - up.at(-1).currentHero, 2);
+  const cover = heroStageMotion({ slides, local: geometry.offsets[index], stageHeight: height, geometry });
+  const poseAt = (p) => crossBannerUnwind(slides, height, pin, origin, cover, index, p);
+  const quarter = poseAt(.25);
+  const painted = (motion, y) => motion.reduce((best, pose, i) => {
+    const h = slides[i].kind === 'hero' ? height : slides[i].height;
+    return !pose.hidden && y >= pose.y + pose.clipTop && y < pose.y + h - pose.clipBottom
+      && (best < 0 || pose.z >= motion[best].z) ? i : best;
+  }, -1);
+  let priorExposure = Infinity;
+  for (const progress of [0, .1, .25, .5, .75, .9, 1]) {
+    const motion = poseAt(progress);
+    const visible = Array.from({ length: pin }, (_, y) => painted(motion, y));
+    assert.ok(visible.every((id) => id >= 0), `uncovered row at ${progress}`);
+    const exposure = visible.filter((id) => id < index).length;
+    assert.ok(exposure <= priorExposure, `old slice grew at ${progress}`);
+    priorExposure = exposure;
+    if (progress > 0 && progress < 1) {
+      assert.equal(motion[0].y, origin[0].y);
+      assert.equal(motion[2].y, origin[2].y);
+    }
+  }
+  assert.equal(priorExposure, 0);
+  assert.deepEqual(poseAt(0), origin);
+  assert.deepEqual(poseAt(1), heroStageMotion({ slides, local: geometry.offsets[index], stageHeight: height, geometry }));
+  assert.deepEqual(poseAt(.25), quarter, 'an intermediate pose retraces the same positions after reversing');
+});
+
+test('the category handoff closes a trailing strip seam using the arriving banner', () => {
+  const list = [
+    { kind: 'hero', heroIndex: 0 },
+    { kind: 'strip', heroIndex: 0, height: 238 },
+    { kind: 'hero', heroIndex: 1 },
+  ];
+  const motion = [
+    { y: 0, clipBottom: 90 },
+    { y: 295, clipBottom: 53 },
+    { y: 592, clipBottom: 0 },
+  ];
+
+  joinCategoryHandoff(list, motion, 386, 772);
+
+  assert.deepEqual(motion, [
+    { y: 0, clipBottom: 90 },
+    { y: 295, clipBottom: 0 },
+    { y: 533, clipBottom: 0 },
+  ]);
+});
+
+test('the preview unwind crosses the paint edge before entering a distant offscreen strip position', () => {
+  const slides = [{ kind: 'hero' }, { kind: 'strip', height: 240 }];
+  const hero = { y: 0, clipTop: 0, clipBottom: 0, hidden: false, z: 2 };
+  const strip = { y: 500, clipTop: 0, clipBottom: 0, hidden: false, z: 3 };
+  const origin = [hero, strip];
+  const cover = [hero, { ...strip, y: 3000 }];
+  const at = (progress) => crossBannerUnwind(slides, 756, 756, origin, cover, 0, progress, true);
+
+  assert.deepEqual(at(0), origin);
+  assert.equal(at(0.1)[1].y, 526);
+  assert.ok(at(0.999)[1].y >= 755);
+  assert.deepEqual(at(1), cover);
 });

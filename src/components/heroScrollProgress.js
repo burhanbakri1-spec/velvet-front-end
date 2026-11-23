@@ -29,6 +29,39 @@ export const HERO_SLICE_OVERLAP = 6;
 const HOME_REVERSE_STACK_ROOM = 436;
 export const HOME_REVERSE_POSE_HANDOFF_DISTANCE = 192;
 
+/** Keep the outgoing edge and the arriving edge joined during a category handoff. */
+export function joinCategoryHandoff(slides, motion, stageHeight, pinHeight) {
+  const bands = motion.flatMap((pose, index) => {
+    const slide = slides[index];
+    if (slide.kind === 'strip' && pose.hidden) return [];
+    const height = pose.height || slideLength(slide, stageHeight);
+    const top = pose.y + (pose.clipTop || 0);
+    const bottom = pose.y + height - (pose.clipBottom || 0);
+    return bottom > Math.max(0, top) ? [{ pose, top, bottom, height }] : [];
+  }).sort((a, b) => a.top - b.top);
+  let edge = 0;
+  let trailing = null;
+  for (const band of bands) {
+    if (band.top >= pinHeight || edge >= pinHeight) break;
+    if (trailing && band.top > edge) {
+      // Reveal only existing pixels between the two lanes. If the outgoing
+      // lane is already fully visible, the arriving lane meets its edge.
+      const extension = Math.min(band.top - edge, trailing.pose.clipBottom || 0);
+      if (extension > 0) trailing.pose.clipBottom -= extension;
+      edge += extension;
+      if (band.top > edge) {
+        const gap = band.top - edge;
+        band.pose.y -= gap;
+        band.bottom -= gap;
+      }
+    }
+    if (band.bottom > edge) {
+      edge = band.bottom;
+      trailing = band;
+    }
+  }
+}
+
 function homeReverseStackRoom(stageHeight, pinHeight) {
   // Taller mobile/tablet pins already provide a dedicated lower lane. Desktop
   // banners fill the viewport, so their compact reverse stack overlays the
@@ -100,6 +133,14 @@ export function latchStageMode(mode, delta, previousPos, pos, slides) {
   return mode;
 }
 
+function terminalStripEntranceDistance(slides, geometry, index) {
+  if (!geometry.notebookCover || index !== slides.length - 2 || slides[index + 1]?.kind !== 'strip') return 0;
+  // At the terminal boundary the strip already meets the banner's bottom.
+  // Enter reverse while they still overlap, so the strip can descend on its
+  // own without revealing an empty lane below the stationary banner.
+  return Math.min(geometry.lengths[index + 1] / 2, HOME_REVERSE_POSE_HANDOFF_DISTANCE / 2);
+}
+
 /** Native scrollY rounds to whole pixels while measured hero offsets can be fractional. */
 export function latchHomeDeckMode(mode, delta, previousLocal, local, slides, geometry, reverseEntry = null) {
   const wanted = stepHeroDirection(mode, delta);
@@ -109,7 +150,7 @@ export function latchHomeDeckMode(mode, delta, previousLocal, local, slides, geo
   // switching to the forward cover at an interior boundary drops every older
   // stacked banner in a single frame.
   if (mode === 'up' && delta > 0 && Number.isFinite(reverseEntry?.startLocal)) {
-    const boundary = reverseEntry.startLocal;
+    const boundary = reverseEntry.initialStrip?.start ?? reverseEntry.startLocal;
     if (previousLocal > boundary + 1 || local > boundary + 1) return 'down';
     return 'up';
   }
@@ -122,6 +163,11 @@ export function latchHomeDeckMode(mode, delta, previousLocal, local, slides, geo
     const boundary = geometry.offsets[index];
     if (delta < 0 && index === firstHeroIndex && previousLocal <= boundary + 1 && local <= boundary + 1) return 'up';
     if (delta < 0 && index === firstHeroIndex && previousLocal > boundary + 1 && local <= boundary + 1) return 'up';
+    const terminalLead = terminalStripEntranceDistance(slides, geometry, index);
+    const reverseBoundary = boundary + terminalLead;
+    // A user can turn around inside the overlap as well as cross its start
+    // from below. In that case the strip lead uses the last forward frame.
+    if (delta < 0 && terminalLead > 0 && previousLocal >= boundary + 2 && local < reverseBoundary - 1) return 'up';
     if (delta < 0 && previousLocal >= boundary - 1 && local < boundary - 1) return 'up';
     if (delta > 0 && previousLocal <= boundary + 1 && local > boundary + 1) return 'down';
   }
@@ -143,7 +189,10 @@ export function homeReverseEntry(slides, previousLocal, local, stageHeight, pinH
   for (let ordinal = heroes.length - 1; ordinal > 0; ordinal -= 1) {
     const slideIndex = heroes[ordinal];
     const boundary = geometry.offsets[slideIndex];
-    if (previousLocal < boundary - 1 || local > boundary + 1) continue;
+    const leadDistance = terminalStripEntranceDistance(slides, geometry, slideIndex);
+    const stripStart = Math.min(previousLocal, boundary + leadDistance);
+    const startsWithStrip = leadDistance > 0 && stripStart >= boundary + 2 && local < stripStart;
+    if (!startsWithStrip && (previousLocal < boundary - 1 || local > boundary + 1)) continue;
     const stackDistance = ordinal * step;
     const previousBoundary = geometry.offsets[heroes[ordinal - 1]];
     const ownerDistance = Math.max(0, boundary - previousBoundary);
@@ -164,6 +213,15 @@ export function homeReverseEntry(slides, previousLocal, local, stageHeight, pinH
       lockLocal,
       stackDistance,
     };
+    if (startsWithStrip) {
+      const stripIndex = slideIndex + 1;
+      const startPose = heroStageMotion({ slides, local: stripStart, stageHeight, geometry });
+      const stripEnd = Math.max(lockLocal, boundary - leadDistance);
+      const restingStripY = startPose[slideIndex].y + stageHeight;
+      if (stripEnd < stripStart && restingStripY > startPose[stripIndex].y) {
+        entry.initialStrip = { start: stripStart, end: stripEnd, index: stripIndex, startPose, restingStripY };
+      }
+    }
     return entry;
   }
   return null;
@@ -350,15 +408,43 @@ export function heroStageMotion({
   return downSequence(slides, local, stageHeight, geometry);
 }
 
+function continueCategoryLanes(slides, motion, last, stageHeight, pinHeight, stripIndex = -1) {
+  let edge = motion[last].y + slideLength(slides[last], stageHeight);
+  for (let index = last + 1; index < slides.length && edge < pinHeight; index += 1) {
+    if (index === stripIndex) continue;
+    motion[index] = { y: edge, clipTop: 0, clipBottom: 0, hidden: false, z: 3 };
+    edge += slideLength(slides[index], stageHeight);
+  }
+  return Math.min(pinHeight, edge);
+}
+
 /**
  * Home's upward deck uses measured banner/product distances. Every banner
  * keeps the measured card height; reverse motion changes only card position,
  * clipping and stacking. Product strips occupy their own lower lane.
  */
-export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedGeometry, entry = null) {
+export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedGeometry, entry = null, categoryDeck = false) {
   const geometry = cachedGeometry || stageGeometry(slides, stageHeight);
   const heroes = heroIndexesOf(slides);
   const travel = Math.min(Math.max(0, local), geometry.span);
+  const initialStrip = entry?.initialStrip;
+  if (initialStrip && travel >= initialStrip.end) {
+    const { start, end, index, startPose, restingStripY } = initialStrip;
+    const progress = clamp01((start - travel) / (start - end));
+    const motion = startPose.map((pose) => ({ ...pose }));
+    const strip = motion[index];
+    strip.y = roundPx(strip.y + (restingStripY - strip.y) * progress);
+    return {
+      motion,
+      activeHero: entry.heroIndex,
+      currentHero: entry.heroIndex,
+      entryHero: entry.heroIndex,
+      phase: 'initial-strip',
+      phaseProgress: progress,
+      retraceUntil: start,
+      sceneHeight: Math.min(pinHeight, strip.y + geometry.lengths[index]),
+    };
+  }
   let current = -1;
   for (let index = 1; index < heroes.length; index += 1) {
     const boundary = geometry.offsets[heroes[index]];
@@ -375,8 +461,11 @@ export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedG
     const firstStrip = slides.findIndex((slide) => slide.kind === 'strip' && slide.heroIndex === slides[firstHero].heroIndex);
     const firstStripHeight = firstStrip >= 0 ? slideLength(slides[firstStrip], stageHeight) : 0;
     if (firstStrip >= 0) {
-      motion[firstStrip] = { y: stageHeight, clipTop: 0, clipBottom: 0, hidden: false, z: 5 };
+      motion[firstStrip] = { y: stageHeight, clipTop: 0, clipBottom: 0, hidden: false, z: categoryDeck ? 2 : 5 };
     }
+    const firstSceneHeight = categoryDeck
+      ? continueCategoryLanes(slides, motion, firstStrip >= 0 ? firstStrip : firstHero, stageHeight, pinHeight)
+      : stageHeight + firstStripHeight;
     return {
       motion,
       activeHero: slides[firstHero].heroIndex,
@@ -386,7 +475,7 @@ export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedG
       // The first banner has no reverse card behind it. Let the real banner
       // and its real product strip define the scene edge so the pinned stage
       // cannot expose an empty tail before the preceding document section.
-      sceneHeight: stageHeight + firstStripHeight,
+      sceneHeight: firstSceneHeight,
     };
   }
 
@@ -401,17 +490,25 @@ export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedG
     : 0;
   const stackHeight = roundPx(currentOrdinal * step);
   const entersHere = entry?.heroIndex === slides[currentIndex].heroIndex && entry.stackDistance > 0;
-  const entranceStart = entersHere ? entry.startLocal : end;
+  const entranceStart = entersHere ? initialStrip?.end ?? entry.startLocal : end;
   const lockLocal = entersHere ? entry.lockLocal : end;
   const inEntrance = entersHere && travel <= entranceStart + 1 && travel > lockLocal + 0.5;
   const entranceProgress = inEntrance
     ? clamp01((entranceStart - travel) / Math.max(1, entranceStart - lockLocal))
     : 1;
-  const groupShift = inEntrance ? roundPx(-stackHeight * (1 - entranceProgress)) : 0;
+  const notebookEntrance = inEntrance && geometry.notebookCover;
+  const entranceOffset = inEntrance ? roundPx(-stackHeight * (1 - entranceProgress)) : 0;
   const progressStart = entersHere ? lockLocal : end;
+  const outgoingStrip = slides[currentIndex + 1]?.kind === 'strip' ? currentIndex + 1 : -1;
+  const distance = Math.max(1, progressStart - start);
+  const stripLead = (categoryDeck || geometry.notebookCover) && outgoingStrip >= 0
+    ? Math.min(geometry.lengths[outgoingStrip], distance / 2)
+    : 0;
+  const reverseDistance = Math.max(0, progressStart - travel);
+  const stripProgress = stripLead ? clamp01(reverseDistance / stripLead) : 1;
   const progress = inEntrance
     ? 0
-    : clamp01((progressStart - travel) / Math.max(1, progressStart - start));
+    : clamp01((reverseDistance - stripLead) / Math.max(1, distance - stripLead));
   const motion = slides.map((slide) => ({
     y: pinHeight,
     clipTop: 0,
@@ -461,16 +558,29 @@ export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedG
   // The outgoing banner only needs to clear the stationary previous banner.
   // Sending it to the bottom of the taller pin exposes unused space below that
   // fixed-size card, creating a white band inside the stage.
-  const exitY = previousY + stageHeight;
+  // At Create's first boundary the locked scene already contains the first
+  // strip. Reveal it under the descending card so both scenes meet there.
+  const firstStrip = categoryDeck && currentOrdinal === 1 && slides[previousIndex + 1]?.kind === 'strip'
+    ? previousIndex + 1
+    : -1;
+  const exitY = previousY + stageHeight + (firstStrip < 0 ? 0 : geometry.lengths[firstStrip]);
+  if (firstStrip >= 0) {
+    motion[firstStrip] = { y: previousY + stageHeight, clipTop: 0, clipBottom: 0, hidden: false, z: 2 };
+  }
   const currentY = inEntrance
-    ? roundPx(mainY + groupShift)
+    ? roundPx(mainY + entranceOffset)
     : roundPx(mainY + progress * Math.max(0, exitY - mainY));
   heroes.slice(0, currentOrdinal).forEach((index, stackIndex) => {
     const isPrevious = index === previousIndex;
-    const slotY = roundPx(stackIndex * step + groupShift);
-    const visibleHeight = isPrevious && !inEntrance
-      ? Math.max(slice, Math.min(stageHeight, currentY - slotY + HERO_SLICE_OVERLAP))
-      : slice;
+    // On notebook decks the active card reveals earlier cards in their own
+    // slots. Translating the slots as a group moves artwork that is already
+    // visible and makes those cards jump when the deck changes ownership.
+    const slotY = roundPx(stackIndex * step + (notebookEntrance ? 0 : entranceOffset));
+    const visibleHeight = notebookEntrance
+      ? Math.max(0, Math.min(slice, currentY - slotY + HERO_SLICE_OVERLAP))
+      : isPrevious && !inEntrance
+        ? Math.max(slice, Math.min(stageHeight, currentY - slotY + HERO_SLICE_OVERLAP))
+        : slice;
     motion[index] = {
       y: slotY,
       clipTop: 0,
@@ -489,17 +599,28 @@ export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedG
     z: 50,
   };
 
-  // The active brand's product lane follows its own banner during the handoff.
-  // Once the previous banner is fully revealed, restore that brand's strip.
+  // Give the outgoing strip its own travel before the banner begins to move.
+  // After the banner catches up, it carries the strip to the end of the slot.
   const stripHeroIndex = settledAtPrevious ? previousIndex : currentIndex;
   const stripIndex = slides.findIndex((slide) => slide.kind === 'strip' && slide.heroIndex === slides[stripHeroIndex].heroIndex);
+  const separateStrip = !inEntrance && !settledAtPrevious && stripLead > 0;
+  const terminalStrip = stripIndex >= 0 && stripIndex === slides.length - 1;
+  const terminalLead = terminalStrip && !settledAtPrevious && stripLead > 0;
   if (stripIndex >= 0) {
+    let stripY = (settledAtPrevious ? motion[previousIndex].y : currentY) + stageHeight;
+    if (terminalLead) {
+      // The final strip clears the banner before the stage releases. It has
+      // no following artwork to cover a space below the last banner.
+      stripY -= stripLead * (inEntrance ? entranceProgress : 1 - stripProgress);
+    } else if (separateStrip) {
+      stripY = Math.max(stripY, mainY + stageHeight + stripLead * stripProgress);
+    }
     motion[stripIndex] = {
-      y: (settledAtPrevious ? motion[previousIndex].y : currentY) + stageHeight,
+      y: roundPx(stripY),
       clipTop: 0,
       clipBottom: 0,
       hidden: false,
-      z: 5,
+      z: terminalLead ? 51 : 5,
     };
   }
 
@@ -507,7 +628,22 @@ export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedG
   // cover, then blend into the stacked deck over real scroll distance. This
   // keeps the shared banner and product lane continuous when direction changes
   // at a measured boundary, including a rapid reversal at the terminal banner.
-  if (entersHere && inEntrance && currentOrdinal === heroes.length - 1 && Number.isFinite(entry.poseStartLocal)) {
+  if (initialStrip && notebookEntrance && entersHere) {
+    const finish = Math.max(lockLocal, initialStrip.end - HOME_REVERSE_POSE_HANDOFF_DISTANCE);
+    const blend = clamp01((initialStrip.end - travel) / Math.max(1, initialStrip.end - finish));
+    const startBannerY = initialStrip.startPose[currentIndex].y;
+    motion[currentIndex].y = roundPx(startBannerY + (currentY - startBannerY) * blend);
+    const strip = motion[initialStrip.index];
+    strip.y = Math.min(
+      motion[currentIndex].y + stageHeight,
+      roundPx(initialStrip.restingStripY + (strip.y - initialStrip.restingStripY) * blend),
+    );
+    heroes.slice(0, currentOrdinal).forEach((index) => {
+      const pose = motion[index];
+      const visible = Math.max(0, motion[currentIndex].y - pose.y + HERO_SLICE_OVERLAP);
+      pose.clipBottom = Math.max(pose.clipBottom, stageHeight - visible);
+    });
+  } else if (!categoryDeck && entersHere && inEntrance && currentOrdinal === heroes.length - 1 && Number.isFinite(entry.poseStartLocal)) {
     const handoffDistance = Math.max(0, entry.poseStartLocal - travel);
     const handoffProgress = Number.isFinite(entry.poseHandoffProgress)
       ? clamp01(entry.poseHandoffProgress)
@@ -519,6 +655,7 @@ export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedG
       motion.forEach((pose, index) => {
         const coverPose = cover[index];
         if (!coverPose) return;
+        if (notebookEntrance && slides[index]?.kind === 'hero' && index < currentIndex) return;
         pose.y = roundPx(coverPose.y + (pose.y - coverPose.y) * handoffProgress);
         pose.clipTop = roundPx((coverPose.clipTop || 0)
           + ((pose.clipTop || 0) - (coverPose.clipTop || 0)) * handoffProgress);
@@ -532,20 +669,69 @@ export function homeReverseMotion(slides, local, stageHeight, pinHeight, cachedG
     }
   }
 
+  let sceneHeight = pinHeight;
+  if (initialStrip && notebookEntrance && entersHere) {
+    sceneHeight = Math.min(pinHeight, motion[initialStrip.index].y + geometry.lengths[initialStrip.index]);
+  } else if ((categoryDeck || stripLead > 0) && pinHeight > stageHeight) {
+    // Continue the actual category sequence below the active banner and strip.
+    // The next banner can already intersect a tall pin during a reverse entry.
+    const independentLane = stripIndex >= 0 && !terminalStrip;
+    sceneHeight = continueCategoryLanes(
+      slides,
+      motion,
+      independentLane || stripIndex < 0 ? stripHeroIndex : stripIndex,
+      stageHeight,
+      pinHeight,
+      independentLane ? stripIndex : -1,
+    );
+  }
+
   return {
     motion,
     activeHero: settledAtPrevious ? slides[previousIndex].heroIndex : slides[currentIndex].heroIndex,
     previousHero: slides[previousIndex].heroIndex,
     currentHero: slides[currentIndex].heroIndex,
     progress,
-    phase: inEntrance ? 'stack-entrance' : 'banner',
-    phaseProgress: inEntrance ? entranceProgress : progress,
+    phase: inEntrance ? 'stack-entrance' : stripProgress < 1 && separateStrip ? 'strip' : 'banner',
+    phaseProgress: inEntrance ? entranceProgress : stripProgress < 1 && separateStrip ? stripProgress : progress,
+    retraceUntil: initialStrip?.start ?? (categoryDeck ? entranceStart : null),
     entryHero: entersHere ? entry.heroIndex : null,
     stackStep: step,
     stackHeight: mainY,
     exitY,
-    sceneHeight: pinHeight,
+    sceneHeight,
   };
+}
+
+/**
+ * A return across multiple slots joins the forward cover at the next hero.
+ * Older cards remain parked; the incoming card covers their exposed slices
+ * from the bottom upward instead of rebuilding a larger reverse stack.
+ */
+export function crossBannerUnwind(slides, stageHeight, pinHeight, origin, cover, index, progress, clipStripTravel = false) {
+  if (progress <= 0) return origin.map((pose) => ({ ...pose }));
+  if (progress >= 1) return cover;
+  const mix = (start, end) => roundPx(start + (end - start) * progress);
+  const motion = origin.map((pose, slideIndex) => {
+    if (slideIndex < index) return { ...pose };
+    const target = cover[slideIndex];
+    const slide = slides[slideIndex];
+    const strip = slide.kind === 'strip';
+    const sourceY = pose.hidden && strip ? pinHeight : pose.y;
+    // Once a strip clears the stage, the distance to its offscreen layout
+    // position cannot affect its visible exit path.
+    const targetY = clipStripTravel && strip ? Math.min(pinHeight, target.y) : target.y;
+    return {
+      ...pose,
+      y: mix(sourceY, targetY),
+      clipTop: mix(pose.clipTop || 0, target.clipTop || 0),
+      clipBottom: mix(pose.clipBottom || 0, target.clipBottom || 0),
+      z: slideIndex === index ? 50 : Math.min(49, pose.hidden ? target.z : pose.z),
+      hidden: false,
+    };
+  });
+  joinCategoryHandoff(slides, motion, stageHeight, pinHeight);
+  return motion;
 }
 
 /** Pick the banner occupying the largest visible part of the stage. */
@@ -605,6 +791,29 @@ function progressOf(unit) {
   return clamp01(unit);
 }
 
+function notebookStripCover(slides, index, progress, stageHeight, geometry) {
+  const stripIsActive = slides[index].kind === 'strip';
+  const stripIndex = stripIsActive ? index : index + 1;
+  const current = stripIndex - 1;
+  const incoming = stripIndex + 1;
+  if (slides[current]?.kind !== 'hero' || slides[stripIndex]?.kind !== 'strip'
+    || slides[incoming]?.kind !== 'hero') return null;
+
+  const { offsets, lengths } = geometry;
+  const stripHeight = lengths[stripIndex];
+  const dock = Math.max(0, stageHeight - stripHeight);
+  // The outgoing strip slides into its dock, then holds while the next
+  // banner covers it. Keep the outgoing banner behind both until covered.
+  const stripY = stripIsActive ? dock : roundPx(stageHeight + (dock - stageHeight) * progress);
+  const nextY = stripIsActive ? roundPx((dock + stripHeight) * (1 - progress)) : stripY + stripHeight;
+  return slides.map((_, i) => {
+    if (i < current) return { ...blank(stageHeight), y: offsets[i] - offsets[current] };
+    if (i === current) return { ...blank(stageHeight), y: 0, z: 2 };
+    if (i === stripIndex) return { ...blank(stageHeight), y: stripY, z: 3 };
+    return { ...blank(stageHeight), y: nextY + offsets[i] - offsets[incoming], z: i === incoming ? 4 : 3 };
+  });
+}
+
 function downSequence(slides, local, stageHeight, cachedGeometry) {
   const pose = slides.map(() => blank(stageHeight));
   const { lengths, offsets, span } = cachedGeometry || stageGeometry(slides, stageHeight);
@@ -621,6 +830,11 @@ function downSequence(slides, local, stageHeight, cachedGeometry) {
   const unit = index >= maxIndex || length <= 0 ? 0 : (travel - offsets[index]) / length;
   const progress = progressOf(unit);
   const origin = offsets[index];
+
+  if (cachedGeometry?.notebookCover) {
+    const cover = notebookStripCover(slides, index, progress, stageHeight, cachedGeometry);
+    if (cover) return cover;
+  }
 
   // A strip is shorter than the stage. It and the next hero stay one piece
   // and travel that real height, so the seam cannot open into a white gap.
