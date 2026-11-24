@@ -85,7 +85,10 @@ function buildVariants(rawVariants, apiUrl) {
     colorValue: String(variant.colorValue || ''),
     size: localized(variant.size, 'en', ''),
     sizeAr: localized(variant.size, 'ar', ''),
-    price: finiteNumber(variant.price, 0),
+    price: typeof variant.price === 'number' || (typeof variant.price === 'string' && variant.price.trim())
+      ? finiteNumber(variant.price, null)
+      : null,
+    originalPrice: finiteNumber(variant.originalPrice, null),
     stock: Math.max(0, finiteNumber(variant.stock, 0)),
     image: absoluteUrl(variant.image, apiUrl),
   }));

@@ -8,8 +8,14 @@ export function productStock(product) {
   return Math.max(0, Number(product.stock || 0));
 }
 
+function variantDimensions(variant) {
+  return [[variant.colorName, variant.colorNameAr], [variant.size, variant.sizeAr]]
+    .map((labels) => labels.map(normalized).filter(Boolean))
+    .filter((labels) => labels.length);
+}
+
 function variantDescriptors(variant) {
-  return [variant.colorName, variant.colorNameAr, variant.size, variant.sizeAr].map(normalized).filter(Boolean);
+  return variantDimensions(variant).flat();
 }
 
 function knownVariantValues(product) {
@@ -20,14 +26,26 @@ function knownVariantValues(product) {
   return values;
 }
 
-export function selectedVariant(product, selections = {}) {
+export function selectedVariant(product, selections = {}, variantId) {
   if (!product?.inventoryManaged || !Array.isArray(product.variants) || !product.variants.length) return null;
+  if (variantId) return product.variants.find((variant) => variant.id === variantId) || null;
   if (product.variants.length === 1) return product.variants[0];
-  const selectedValues = Object.values(selections).map(normalized).filter(Boolean);
-  return product.variants.find((variant) => {
-    const descriptors = variantDescriptors(variant);
-    return descriptors.length > 0 && descriptors.every((descriptor) => selectedValues.includes(descriptor));
-  }) || null;
+  const known = knownVariantValues(product);
+  const selectedValues = Object.entries(selections).flatMap(([name, value]) => {
+    const option = product.options?.find((candidate) => candidate.name === name);
+    const isNonVariantOption = option?.values.length && !option.values.some((entry) =>
+      known.has(normalized(entry.label)) || known.has(normalized(entry.labelAr)));
+    const label = normalized(value);
+    return label && !isNonVariantOption ? [label] : [];
+  });
+  if (!selectedValues.length) return null;
+  const matches = product.variants.filter((variant) => {
+    const dimensions = variantDimensions(variant);
+    return dimensions.length === selectedValues.length
+      && selectedValues.every((value) => dimensions.some((labels) => labels.includes(value)))
+      && dimensions.every((labels) => selectedValues.some((value) => labels.includes(value)));
+  });
+  return matches.length === 1 ? matches[0] : null;
 }
 
 export function availableStock(product, selections = {}) {
@@ -91,4 +109,25 @@ export function coerceSelectionsToValidVariant(product, selections = {}) {
     if (match) next[option.name] = match.label;
   });
   return next;
+}
+
+export function resolveSelectionPrice(product, selections = {}, variant = selectedVariant(product, selections)) {
+  const variantPrice = Number(variant?.price);
+  const regular = Number(variant?.originalPrice);
+  const isExplicitZeroSale = (variant?.price === 0 || variant?.price === '0') && Number.isFinite(regular) && regular > 0;
+  if ((Number.isFinite(variantPrice) && variantPrice > 0) || isExplicitZeroSale) {
+    return {
+      price: variantPrice,
+      originalPrice: Number.isFinite(regular) && regular > variantPrice ? regular : null,
+    };
+  }
+
+  const delta = (product.options || []).reduce((sum, option) => {
+    const value = option.values.find((value) => value.label === selections[option.name]);
+    return sum + Number(value?.priceDelta || 0);
+  }, 0);
+  return {
+    price: product.price + delta,
+    originalPrice: product.originalPrice ? product.originalPrice + delta : null,
+  };
 }

@@ -9,7 +9,7 @@ import {
   isFeaturedBadgeLabel,
 } from '../data/products';
 import { PRODUCT_SWITCH_DURATION_MS, getProductSlidePercent } from '../hooks/productSiblings';
-import { optionValueUnavailable, coerceSelectionsToValidVariant } from '../data/inventory';
+import { optionValueUnavailable, coerceSelectionsToValidVariant, resolveSelectionPrice } from '../data/inventory';
 import { Link } from '../routing/Router';
 import { formatPrice } from '../data/currency';
 import FavoriteButton from './FavoriteButton';
@@ -50,11 +50,7 @@ export default function ProductDetailSlide({
       transition: `transform ${PRODUCT_SWITCH_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1), opacity ${PRODUCT_SWITCH_DURATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
     };
   };
-  const optionDelta = product.options.reduce(
-    (sum, option) => sum + Number(option.values.find((value) => value.label === selections[option.name])?.priceDelta || 0),
-    0,
-  );
-  const currentPrice = product.price + optionDelta;
+  const { price: currentPrice, originalPrice } = resolveSelectionPrice(product, selections);
   const facingOptions = getCustomerFacingOptions(product);
   const optionSummary = getCustomerFacingOptionLabels(product, locale).join(' · ');
 
@@ -86,7 +82,7 @@ export default function ProductDetailSlide({
         <div className="category-product-showcase__commerce">
           <div className="category-product-showcase__price">
             <strong>{formatPrice(currentPrice)}</strong>
-            {product.originalPrice && <del>{formatPrice(product.originalPrice + optionDelta)}</del>}
+            {originalPrice && <del>{formatPrice(originalPrice)}</del>}
           </div>
           <span className={`category-product-showcase__availability ${unavailable ? 'is-unavailable' : ''}`}>{getAvailability(product, locale)}</span>
           {optionSummary && <span className="category-product-showcase__variants">{copy.category.variants}: {optionSummary}</span>}

@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { trackPlatformEvent } from '../analytics/platformAnalytics';
 import { canonicalProductNames } from '../data/products';
 
+import { resolveSelectionPrice, selectedVariant } from '../data/inventory';
+
 const STORAGE_KEY = 'play-store-cart-v1';
 const CartContext = createContext(null);
 
@@ -26,17 +28,14 @@ export function CartProvider({ children }) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items]);
 
-  const addItem = (product, selections = {}, quantity = 1, selectedImage, variant = null) => {
+  const addItem = (product, selections = {}, quantity = 1, selectedImage, variant = selectedVariant(product, selections)) => {
+    const { price } = resolveSelectionPrice(product, selections, variant);
     const key = makeItemKey(product.id, selections);
     const maxStock = product.inventoryManaged ? Math.max(0, Number(variant?.stock ?? product.stock ?? 0)) : null;
     if (maxStock === 0) return;
     setItems((current) => {
       const existing = current.find((item) => item.key === key);
-      if (existing) return current.map((item) => item.key === key ? { ...item, quantity: maxStock == null ? item.quantity + quantity : Math.min(maxStock, item.quantity + quantity) } : item);
-      const optionDelta = (product.options || []).reduce((sum, option) => {
-        const selected = option.values.find((value) => value.label === selections[option.name]);
-        return sum + Number(selected?.priceDelta || 0);
-      }, 0);
+      if (existing) return current.map((item) => item.key === key ? { ...item, price, variantId: variant?.id || item.variantId || '', maxStock, quantity: maxStock == null ? item.quantity + quantity : Math.min(maxStock, item.quantity + quantity) } : item);
       const names = canonicalProductNames(product);
       return [...current, {
         key,
@@ -45,7 +44,7 @@ export function CartProvider({ children }) {
         name: names.en,
         nameAr: names.ar,
         image: selectedImage || product.image,
-        price: product.price + optionDelta,
+        price,
         selections,
         quantity: maxStock == null ? quantity : Math.min(maxStock, quantity),
         variantId: variant?.id || '',
