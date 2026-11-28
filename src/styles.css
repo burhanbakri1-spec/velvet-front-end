@@ -2453,6 +2453,9 @@ body:has(#showcases[data-brand-category-deck]) .footer__callout {
 :is([data-home-brand-deck], [data-brand-category-deck]) {
   --notebook-rise: 32px;
 }
+#showcases[data-home-brand-deck] {
+  --notebook-rise: 40px;
+}
 
 #showcases[data-hero-motion]:is([data-home-brand-deck], [data-brand-category-deck]) > .hero-stage-shell > .hero-stage {
   overflow: visible;
@@ -2618,6 +2621,29 @@ body.hero-stage-pin .category-page:has([data-brand-category-deck]) > .page-nav--
   height: 1.2em;
 }
 
+.brand-showcase__notebook-logo-frame {
+  display: inline-flex;
+  flex: 0 0 108px;
+  align-items: center;
+  justify-content: center;
+  width: 108px;
+  height: 40px;
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0;
+  background: transparent;
+}
+.brand-showcase__notebook-logo {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: 23px;
+  object-fit: contain;
+  object-position: center;
+  transform: scale(3.036);
+}
+
 .brand-showcase__notebook-tab > span {
   white-space: nowrap;
   overflow: hidden;
@@ -2628,7 +2654,7 @@ body.hero-stage-pin .category-page:has([data-brand-category-deck]) > .page-nav--
   html[dir="rtl"] [data-home-brand-deck]:is([data-home-reverse-phase]:not([data-home-reverse-phase="locked"]), [data-notebook-unwinding]) {
     --notebook-logo-clearance: calc(var(--mobile-gutter, 20px) + 139px + 10px);
   }
-  :is([data-home-brand-deck], [data-brand-category-deck]) {
+  [data-brand-category-deck] {
     --notebook-rise: 28px;
   }
   .brand-showcase__notebook-tab {
@@ -3727,8 +3753,8 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 40px;
+  padding: 3px 6px;
   border: 1px solid #e4e4e7;
   border-radius: 999px;
   background: #fff;
@@ -3739,6 +3765,27 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
   white-space: nowrap;
   text-decoration: none;
 }
+.brand-selector__logo-surface {
+  display: inline-flex;
+  flex: 0 0 92px;
+  align-items: center;
+  justify-content: center;
+  width: 92px;
+  height: 28px;
+  position: relative;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
+}
+.brand-selector__logo-surface img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  transform: scale(2.53);
+  pointer-events: none;
+}
 .brand-selector__chip:hover,
 .brand-selector__chip:focus-visible {
   border-color: rgba(var(--brand-rgb), .35);
@@ -3746,8 +3793,9 @@ html[dir="rtl"] .category-product-showcase__media img { direction: ltr; }
 }
 .brand-selector__chip.is-active {
   border-color: var(--red);
-  background: var(--red);
-  color: #fff;
+  background: #fff;
+  color: var(--red);
+  box-shadow: 0 0 0 2px var(--red);
 }
 /* Stack: FILTER card → bare tools row. No outer card on .shop-filters. */
 .shop-filters {

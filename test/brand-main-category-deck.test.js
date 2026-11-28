@@ -55,5 +55,5 @@ test('Brand category deck opts into the shared Home reverse choreography without
   assert.match(home, /id="showcases" data-home-brand-deck/);
   assert.match(motion, /root\.hasAttribute\('data-home-brand-deck'\) \|\| root\.hasAttribute\('data-brand-category-deck'\)/);
   assert.match(motion, /latchHomeDeckMode\(direction\.mode, delta, rawPreviousLocal, rawLocal, slides, geometryCache, mobileHomeReverseEntry\)/);
-  assert.match(motion, /homeReverseMotion\(slides, local, stageHeight, pinHeight, geometryCache, mobileHomeReverseEntry\)/);
+  assert.match(motion, /homeReverseMotion\(slides, local, stageHeight, pinHeight, geometryCache, mobileHomeReverseEntry, isBrandCategoryDeck\)/);
 });
