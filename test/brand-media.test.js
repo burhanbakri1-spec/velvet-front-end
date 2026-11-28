@@ -120,6 +120,7 @@ test('homepage BrandShowcase uses full-banner natural media on desktop and cover
 test('homepage brand banners overlay managed brand logos without affecting BrandPage', () => {
   const homePage = fs.readFileSync(new URL('../src/pages/HomePage.jsx', import.meta.url), 'utf8');
   const showcase = fs.readFileSync(new URL('../src/components/BrandShowcase.jsx', import.meta.url), 'utf8');
+  const notebookTab = fs.readFileSync(new URL('../src/components/CategoryBannerTab.jsx', import.meta.url), 'utf8');
   const brandPage = fs.readFileSync(new URL('../src/pages/BrandPage.jsx', import.meta.url), 'utf8');
   const styles = fs.readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');
 
@@ -129,6 +130,15 @@ test('homepage brand banners overlay managed brand logos without affecting Brand
   assert.match(showcase, /brand-showcase__brand-logo/);
   assert.match(showcase, /brand-showcase__brand-logo-frame|brand-logo-frame/);
   assert.match(showcase, /showBrandLogo = false/);
+  assert.match(showcase, /brandLogoInTab = notebookTab && showBrandLogo/);
+  assert.match(showcase, /logoSrc=\{brandLogoInTab \? brandLogoSrc : undefined\}/);
+  assert.match(showcase, /brandLogoSrc && !brandLogoInTab/);
+  assert.match(notebookTab, /brand-showcase__notebook-logo/);
+  assert.match(notebookTab, /!logoSrc && \(/);
+  assert.match(styles, /#showcases\[data-home-brand-deck\] \{\s*--notebook-rise:\s*40px/);
+  assert.match(styles, /\.brand-showcase__notebook-logo-frame \{[^}]*flex:\s*0 0 108px[^}]*width:\s*108px[^}]*height:\s*40px[^}]*background:\s*transparent/);
+  assert.match(styles, /\.brand-showcase__notebook-logo \{[^}]*height:\s*23px[^}]*object-fit:\s*contain[^}]*transform:\s*scale\(3\.036\)/);
+  assert.match(styles, /\.brand-showcase__notebook-logo \{[^}]*object-fit:\s*contain[^}]*transform:\s*scale\(3\.036\)/);
   assert.doesNotMatch(brandPage, /showBrandLogo/);
   assert.match(styles, /\.brand-showcase__brand-logo-frame[\s\S]{0,400}?position:\s*absolute/);
   assert.match(styles, /\.brand-logo-frame[\s\S]{0,400}?pointer-events:\s*none/);

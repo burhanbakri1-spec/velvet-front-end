@@ -26,6 +26,7 @@ export default function BrandShowcase({
   const isFullBanner = variant === 'full-banner';
   const brandLogoSrc = showBrandLogo ? getBrandLogo(brand.slug, locale) : '';
   const managedBrandLogo = showBrandLogo && hasUploadedBrandLogo(brand.slug, locale);
+  const brandLogoInTab = notebookTab && showBrandLogo;
 
   const moveViewCursor = (event) => {
     if (event.pointerType !== 'mouse' || window.innerWidth <= 760 || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -38,7 +39,14 @@ export default function BrandShowcase({
   const hideViewCursor = () => viewCursorRef.current?.classList.remove('is-visible');
 
   const tab = notebookTab
-    ? <CategoryBannerTab slug={brand.slug} name={showBrandLogo ? brand.short?.[locale] || name : name} isBrand={showBrandLogo} />
+    ? (
+      <CategoryBannerTab
+        slug={brand.slug}
+        name={showBrandLogo ? brand.short?.[locale] || name : name}
+        isBrand={showBrandLogo}
+        logoSrc={brandLogoInTab ? brandLogoSrc : undefined}
+      />
+    )
     : null;
 
   return (
@@ -67,7 +75,7 @@ export default function BrandShowcase({
         <div className="brand-showcase__tint" aria-hidden="true" />
         {!separateArtwork && tab}
         <Link className="brand-showcase__link" to={brandPath} aria-label={`${copy.home.view} ${name}`} />
-        {brandLogoSrc ? (
+        {brandLogoSrc && !brandLogoInTab ? (
           <span
             className={`brand-logo-frame brand-showcase__brand-logo-frame${managedBrandLogo ? ' brand-logo-frame--managed' : ''}`}
           >

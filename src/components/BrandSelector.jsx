@@ -1,4 +1,4 @@
-import { velvetBrands } from '../data/velvetCatalog';
+import { getBrandLogo, velvetBrands } from '../data/velvetCatalog';
 import { useI18n } from '../i18n/I18nContext';
 import { Link } from '../routing/Router';
 
@@ -17,8 +17,11 @@ export default function BrandSelector({ activeSlug = '' }) {
               className={`brand-selector__chip${active ? ' is-active' : ''}`}
               to={`/products?brand=${encodeURIComponent(brand.slug)}`}
               aria-current={active ? 'page' : undefined}
+              aria-label={brand.name[locale]}
             >
-              {brand.name[locale]}
+              <span className="brand-selector__logo-surface" aria-hidden="true">
+                <img src={getBrandLogo(brand.slug, locale)} alt="" loading="lazy" decoding="async" />
+              </span>
             </Link>
           );
         })}

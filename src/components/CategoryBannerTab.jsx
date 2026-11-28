@@ -32,7 +32,7 @@ const categoryTabs = {
 
 const folderIcon = 'M3 20V5h6l2 3h10v12H3Z';
 
-export default function CategoryBannerTab({ slug, name, isBrand = false }) {
+export default function CategoryBannerTab({ slug, name, isBrand = false, logoSrc }) {
   const [background, icon] = isBrand
     ? [undefined, brandIcons[slug] || folderIcon]
     : categoryTabs[slug.replace(/^create-/, '')] || [undefined, folderIcon];
@@ -47,10 +47,18 @@ export default function CategoryBannerTab({ slug, name, isBrand = false }) {
         <svg className="brand-showcase__notebook-shape" viewBox="0 0 300 60" preserveAspectRatio="none" focusable="false">
           <path d="M0 60C20 58 27 47 35 30C43 12 53 2 73 2H227C247 2 257 12 265 30C273 47 280 58 300 60Z" />
         </svg>
-        <svg className="brand-showcase__notebook-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" focusable="false">
-          <path d={icon} />
-        </svg>
-        <span>{name}</span>
+        {!logoSrc && (
+          <svg className="brand-showcase__notebook-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+            <path d={icon} />
+          </svg>
+        )}
+        {logoSrc ? (
+          <span className="brand-showcase__notebook-logo-frame">
+            <img className="brand-showcase__notebook-logo" src={logoSrc} alt="" />
+          </span>
+        ) : (
+          <span>{name}</span>
+        )}
       </span>
     </span>
   );
